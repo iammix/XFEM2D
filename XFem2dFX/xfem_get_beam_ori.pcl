@@ -1,0 +1,28 @@
+/* beam orientation vector */
+	FUNCTION xfem_get_beam_ori(i_ElemId, Ori_Vct)
+		real ori_vct()
+		integer ia_Elem(1), i_ElemId
+		integer reg_id(1)
+		integer prop_dat_type, i_val, coord_id, node_id, field_id, mat_id
+		real r_val(3)
+		string c_val[100], s_beam_ori[1]
+			
+		ia_Elem(1) = i_ElemId
+		db_get_region_for_elements(1,ia_Elem,reg_id)
+		    
+		db_get_prop_value ( reg_id(1),			@
+							6,		@
+							mat_id,			@
+							prop_dat_type,		@
+							i_val,			@
+							r_val,			@
+							c_val,			@
+							coord_id,			@
+							node_id,			@
+							field_id) 
+	
+		
+		ori_vct(1:3) = r_val(1:3)
+	
+		return (0)
+	END FUNCTION

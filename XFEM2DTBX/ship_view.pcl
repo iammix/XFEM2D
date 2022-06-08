@@ -1,0 +1,53 @@
+/************************************************************************************
+                iDEASoft ( Patran Modeling & Analysis Tools R2009 )
+                DEVELOPED BY JEONG WOO-YEOL
+*************************************************************************************/
+FUNCTION section_view
+	ga_view_aa_set( -90., 0., 90. )
+
+END FUNCTION
+
+FUNCTION rear_section_view
+	ga_view_aa_set( -90., 0., -90. )
+
+END FUNCTION
+
+FUNCTION elev_right_view
+	ga_view_aa_set( -90., 0., 0. )
+
+END FUNCTION
+
+FUNCTION elev_left_view
+	ga_view_aa_set( -90., 0., 180. )
+
+END FUNCTION
+
+FUNCTION plan_top_view
+	ga_view_aa_set( 0., 0., 0. )
+
+END FUNCTION
+
+FUNCTION plan_bottom_view
+	ga_view_aa_set( 180., 0., 0. )
+
+END FUNCTION
+
+FUNCTION iso_s1_view
+	ga_view_aa_set( -67., 0., 56. )
+
+END FUNCTION
+
+FUNCTION iso_s2_view
+	ga_view_aa_set( -67., 0., -23. )
+
+END FUNCTION
+
+FUNCTION iso_s3_view
+	ga_view_aa_set( 23., 56., 90. )
+
+END FUNCTION
+
+FUNCTION iso_s4_view
+	ga_view_aa_set( -67., 0., -124. )
+
+END FUNCTION

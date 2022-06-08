@@ -1,0 +1,619 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME Move_Nodes
+#define CLASS_STR "Move_Nodes"
+
+CLASS Move_Nodes
+
+/* Classwide Variables */
+   CLASSWIDE WIDGET form_id, opt_Action, opt_Object, opt_Method, sep_01
+   CLASSWIDE WIDGET selfrm_RefCoordFrame, seldbox_RefCoordFrame, frame_01, selfrm_Nodes
+   CLASSWIDE WIDGET tgl_AxisX, tgl_AxisY, tgl_AxisZ
+   CLASSWIDE WIDGET selfrm_RefNode, seldbox_RefNode, seldbox_Nodes
+   CLASSWIDE WIDGET btn_Apply, btn_Cancel, dbox_Input_value
+
+   FUNCTION init()
+      REAL yloc_main
+      REAL yloc_selfrm_RefCoordFrame=0., yloc_frame_01=0.
+      REAL yloc_selfrm_RefNode=0.
+
+      form_id=ui_form_create(                 @
+      /* callback */         "",              @
+      /*     x    */         FORM_X_LOC_SML,  @
+      /*     y    */         FORM_Y_LOC,      @
+      /* position */         "UL",            @
+      /*   width  */         FORM_WID_SML,    @
+      /*  height  */         FORM_HGT_TALL,   @
+      /*   label  */         "Move Nodes",    @
+      /*  unused  */         "")
+
+      yloc_main = ACTION_MENU_Y_LOC
+
+      opt_Action=ui_optionmenu_create(                @
+      /*    parent    */              form_id,        @
+      /*   callback   */              "",             @
+      /*       x      */              AOM_MENU_X_LOC,  @
+      /*       y      */              yloc_main,      @
+      /* label_length */              AOM_MENU_LABEL_LEN,             @
+      /*     label    */              "Action :",     @
+      /*  label_above */              FALSE)
+
+	  ui_item_create(opt_Action,"MOVE","Move",true)
+	  ui_item_create(opt_Action,"COPY","Copy",true)
+
+      yloc_main = OBJECT_MENU_Y_LOC
+
+      opt_Object=ui_optionmenu_create(                @
+      /*    parent    */              form_id,        @
+      /*   callback   */              "cb_Object",    @
+      /*       x      */              AOM_MENU_X_LOC,  @
+      /*       y      */              OBJECT_MENU_Y_LOC,      @
+      /* label_length */              AOM_MENU_LABEL_LEN,             @
+      /*     label    */              "Object :",     @
+      /*  label_above */              FALSE)
+
+	  ui_item_create(opt_Object,"NODE","Node",true)
+      ui_item_create(opt_Object,"ABS_Value","Absolut Value",true)
+      ui_item_create(opt_Object,"REL_Value","Relative Value",true)
+              
+      yloc_main = METHOD_MENU_Y_LOC
+
+      opt_Method=ui_optionmenu_create(                @
+      /*    parent    */              form_id,        @
+      /*   callback   */              "",             @
+      /*       x      */              AOM_MENU_X_LOC,  @
+      /*       y      */              METHOD_MENU_Y_LOC,      @
+      /* label_length */              AOM_MENU_LABEL_LEN,             @
+      /*     label    */              "Method :",     @
+      /*  label_above */              FALSE)
+
+	 ui_item_create(opt_Method,"COORDINATE","Coordinate",true)
+      ui_wid_set(opt_Method, "ENABLE", FALSE)
+      
+      yloc_main += OPT_MENU_HGT_NO_LABOVE  + @
+                   INTER_WIDGET_SPACE
+
+      sep_01=ui_separator_create(               @
+      /*   parent   */           form_id,       @
+      /*    name    */           "",            @
+      /*      x     */           0.0,           @
+      /*      y     */           yloc_main,     @
+      /*   length   */           FORM_WID_SML,  @
+      /* horizontal */           TRUE)
+
+
+      yloc_main += 5*PIXEL_HGT             - @
+                   0.5*INTER_WIDGET_SPACE  + @
+                   INTER_WIDGET_SPACE
+                   
+      selfrm_RefCoordFrame=ui_selectframe_create(                    @
+      /*  parent  */                             form_id,            @
+      /* callback */                             "",                 @
+      /*     x    */                             FORM_L_MARGIN,      @
+      /*     y    */                             yloc_main,          @
+      /*   width  */                             SFRAME_WID_SINGLE,  @
+      /*  height  */                             1.0,                @
+      /*   label  */                             "",                 @
+      /*  recycle */                             FALSE)
+
+      yloc_selfrm_RefCoordFrame = SFRAME_T_MARGIN
+
+      seldbox_RefCoordFrame=ui_selectdatabox_create(                            @
+      /*    parent    */                            selfrm_RefCoordFrame,       @
+      /*   callback   */                            "",                         @
+      /*       x      */                            FORM_L_MARGIN,              @
+      /*       y      */                            yloc_selfrm_RefCoordFrame,  @
+      /* label_length */                            0.0,                        @
+      /*  box_length  */                            SDBOX_WID_SINGLE,           @
+      /*     label    */                            "Refer. Coordinate Frame",  @
+      /*     value    */                            "",                         @
+      /*  label_above */                            TRUE,                       @
+      /*   datatype   */                            "CID",                     @
+      /*    prompt    */                            "")
+
+      yloc_selfrm_RefCoordFrame += SDBOX_HGT_LABOVE    + @
+                                   INTER_WIDGET_SPACE
+
+      ui_wid_set(selfrm_RefCoordFrame,"HEIGHT",yloc_selfrm_RefCoordFrame)
+
+      yloc_main += SFRAME_2EDGE               + @
+                   INTER_WIDGET_SPACE         + @
+                   yloc_selfrm_RefCoordFrame
+
+      frame_01=ui_frame_create(                   @
+      /* parent */             form_id,           @
+      /*  name  */             "",                @
+      /*    x   */             FRAME_X_LOC_COL1,  @
+      /*    y   */             yloc_main,         @
+      /*  width */             FRAME_WID_SINGLE,  @
+      /* height */             1.0,               @
+      /*  label */             "")
+
+      yloc_frame_01 = FRAME_T_MARGIN
+	  
+	  ui_label_create( frame_01, "", FRAME_L_MARGIN, yloc_frame_01, "Select Coordinate Axis" )
+         
+      yloc_frame_01 += LABEL_HGT + INTER_WIDGET_SPACE
+      
+	  real tgl_xloc
+	  tgl_xloc = FRAME_L_MARGIN 
+      tgl_AxisX=ui_toggle_create(                       @
+      /*  parent  */             frame_01,              @
+      /* callback */             "cb_tgl_AxisX",                    @
+      /*     x    */             tgl_xloc,         @
+      /*     y    */             yloc_frame_01,         @
+      /*   label  */             "X ")
+
+	  tgl_xloc = (FRAME_WID_SINGLE - FRAME_L_MARGIN - FRAME_R_MARGIN)/3
+      tgl_AxisY=ui_toggle_create(                       @
+      /*  parent  */             frame_01,              @
+      /* callback */             "cb_tgl_AxisY",                    @
+      /*     x    */             tgl_xloc,         @
+      /*     y    */             yloc_frame_01,         @
+      /*   label  */             "Y ")
+
+	 tgl_xloc = (FRAME_WID_SINGLE - FRAME_L_MARGIN - FRAME_R_MARGIN)*2/3
+      tgl_AxisZ=ui_toggle_create(                       @
+      /*  parent  */             frame_01,              @
+      /* callback */             "cb_tgl_AxisZ",                    @
+      /*     x    */             tgl_xloc,         @
+      /*     y    */             yloc_frame_01,         @
+      /*   label  */             "Z ")
+      
+      yloc_frame_01 += TOGGLE_HGT  + @
+                       INTER_WIDGET_SPACE
+
+
+      dbox_Input_value = ui_databox_create(                    @
+      /*    parent    */                    frame_01,     @
+      /*   callback   */                    "",                 @
+      /*       x      */                    SFRAME_L_MARGIN,      @
+      /*       y      */                    yloc_frame_01,   @
+      /* label_length */                    (FRAME_WID_SINGLE-FRAME_L_MARGIN - FRAME_R_MARGIN)/2,        @
+      /*  box_length  */                    DBOX_WID_SINGLE,         @
+      /*     label    */                    "Value",  @
+      /*     value    */                    0.0,              @
+      /*  label_above */                    TRUE,              @
+      /*   datatype   */                    "REAL",           @
+      /*   num_vals   */                    1)
+      
+       yloc_frame_01 += SDBOX_HGT_LABOVE + INTER_WIDGET_SPACE	  
+	  
+	  ui_wid_set(dbox_Input_value, "ENABLE", FALSE)
+
+	  real selframe_width
+       selframe_width = FRAME_WID_SINGLE - FRAME_L_MARGIN - FRAME_R_MARGIN
+	  real selbox_width
+          selbox_width = selframe_width - SFRAME_L_MARGIN - SFRAME_R_MARGIN
+	  real s_frame_hgt
+
+	  selfrm_Nodes = ui_selectframe_create(                    @
+      /*  parent  */                       frame_01,           @
+      /* callback */                       "cb_Apply",                 @
+      /*     x    */                       FORM_L_MARGIN,      @
+      /*     y    */                       yloc_frame_01,      @
+      /*   width  */                       selframe_width,  @
+      /*  height  */                       SFRAME_3SDB_HGT_LABOVE,     @
+      /*   label  */                       "Autoexec",                 @
+      /*  recycle */                       TRUE)
+
+      s_frame_hgt = INTER_WIDGET_SPACE
+      
+	  seldbox_RefNode=ui_selectdatabox_create(                          @
+      /*    parent    */                      selfrm_Nodes,           @
+      /*   callback   */                      "",                       @
+      /*       x      */                      SFRAME_L_MARGIN,            @
+      /*       y      */                      s_frame_hgt,      @
+      /* label_length */                      selbox_width/2,         @
+      /*  box_length  */                      selbox_width/2,         @
+      /*     label    */                      "Ref. Node",  @
+      /*     value    */                      "",                       @
+      /*  label_above */                      FALSE,                     @
+      /*   datatype   */                      "NODE",                   @
+      /*    prompt    */                      "Select Reference Node")
+	 
+	 s_frame_hgt += SDBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+      
+      seldbox_Nodes=ui_selectdatabox_create(                      @
+      /*    parent    */                    selfrm_Nodes,             @
+      /*   callback   */                    "",                   @
+      /*       x      */                    SFRAME_L_MARGIN,        @
+      /*       y      */                    s_frame_hgt ,  @
+      /* label_length */                    0.0,                  @
+      /*  box_length  */                    selbox_width,     @
+      /*     label    */                    "Select Nodes",       @
+      /*     value    */                    "",                   @
+      /*  label_above */                    TRUE,                 @
+      /*   datatype   */                    "NODE",               @
+      /*    prompt    */                    "Select Nodes")
+
+       s_frame_hgt += SDBOX_HGT_LABOVE + INTER_WIDGET_SPACE
+
+       ui_wid_set(selfrm_Nodes,"HEIGHT", s_frame_hgt)
+       
+       yloc_frame_01 += SFRAME_T_MARGIN + SFRAME_3SDB_HGT_LABOVE + SFRAME_B_MARGIN + INTER_WIDGET_SPACE + SFRAME_2EDGE
+
+	  ui_wid_set(frame_01,"HEIGHT", yloc_frame_01)
+
+      yloc_main += FRAME_2EDGE         + @
+                   INTER_WIDGET_SPACE  + @
+                   yloc_frame_01
+
+      btn_Apply=ui_button_create(                     @
+      /*   parent  */            form_id,             @
+      /*  callback */            "cb_Apply",          @
+      /*     x     */            BUTTON_HALF_X_LOC1,  @
+      /*     y     */            yloc_main,           @
+      /*   width   */            BUTTON_WID_HALF,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Apply",             @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            TRUE)
+
+      btn_Cancel=ui_button_create(                     @
+      /*   parent  */             form_id,             @
+      /*  callback */             "cb_Cancel",         @
+      /*     x     */             BUTTON_HALF_X_LOC2,  @
+      /*     y     */             yloc_main,           @
+      /*   width   */             BUTTON_WID_HALF,     @
+      /*   height  */             BUTTON_DEFAULT_HGT,  @
+      /*   label   */             "Cancel",            @
+      /*    TRUE   */             TRUE,                @
+      /* highlight */             FALSE)
+
+      yloc_main += BUTTON_DEFAULT_HGT  + @
+                   INTER_WIDGET_SPACE
+
+      ui_wid_set(form_id,"HEIGHT",yloc_main)
+
+	ui_wid_set(selfrm_RefCoordFrame, "ENABLE", FALSE)
+	
+   END FUNCTION /* init */
+
+   FUNCTION display()
+      ui_form_display("Move_Nodes")
+   END FUNCTION /* display */
+
+   FUNCTION cb_Object(sel_item)
+     string sel_item[]
+     
+     if(sel_item == "NODE") then
+          ui_wid_set(dbox_Input_value, "ENABLE", FALSE)
+          ui_wid_set(seldbox_RefNode, "ENABLE", TRUE)
+          ui_wid_set(seldbox_Nodes, "ENABLE", TRUE)
+               
+     else if(sel_item == "ABS_Value") then
+          ui_wid_set(dbox_Input_value, "ENABLE", TRUE)
+          ui_wid_set(seldbox_RefNode, "ENABLE", FALSE)
+          ui_wid_set(seldbox_Nodes, "ENABLE", TRUE)
+     
+     else if(sel_item == "REL_Value") then
+          ui_wid_set(dbox_Input_value, "ENABLE", TRUE)
+          ui_wid_set(seldbox_RefNode, "ENABLE", TRUE)
+          ui_wid_set(seldbox_Nodes, "ENABLE", TRUE)
+     
+     end if    
+   
+   END FUNCTION
+   
+   FUNCTION cb_tgl_AxisX(chk_item)
+     logical chk_item
+
+     string Object_Item[11]
+     ui_wid_get(opt_Object, "VALUE", Object_Item)
+     
+     if(Object_Item == "NODE") then
+          RETURN 0
+     end if     
+
+     if(chk_item == TRUE) then
+          ui_wid_set(tgl_AxisY, "VALUE", FALSE)
+          ui_wid_set(tgl_AxisZ, "VALUE", FALSE)
+     end if
+                    
+   END FUNCTION
+   
+   FUNCTION cb_tgl_AxisY(chk_item)
+     logical chk_item
+
+     string Object_Item[11]
+     ui_wid_get(opt_Object, "VALUE", Object_Item)
+     
+     if(Object_Item == "NODE") then
+          RETURN 0
+     end if     
+          
+     if(chk_item == TRUE) then
+          ui_wid_set(tgl_AxisX, "VALUE", FALSE)
+          ui_wid_set(tgl_AxisZ, "VALUE", FALSE)
+     end if
+   
+   END FUNCTION
+   
+   FUNCTION cb_tgl_AxisZ(chk_item)
+     logical chk_item
+
+     string Object_Item[11]
+     ui_wid_get(opt_Object, "VALUE", Object_Item)
+     
+     if(Object_Item == "NODE") then
+          RETURN 0
+     end if     
+          
+     if(chk_item == TRUE) then
+          ui_wid_set(tgl_AxisX, "VALUE", FALSE)
+          ui_wid_set(tgl_AxisY, "VALUE", FALSE)
+     end if
+   
+   END FUNCTION
+         
+   FUNCTION cb_Apply()
+/*
+ * This is a callback for the button named btn_Apply
+ */
+
+    uil_primary_file.db_save()
+
+    string RefNode[virtual]
+    ui_wid_get_vstring(seldbox_RefNode, "VALUE", RefNode)
+        
+    string obj_item[11]
+    ui_wid_get(opt_Object, "VALUE", obj_item)
+    
+    real r_value
+    ui_wid_get(dbox_Input_value, "VALUE", r_value)
+
+    switch(obj_item)
+          case("NODE");
+               CLASSNAME.Move_Node_Node(RefNode)
+          case("ABS_Value");
+               CLASSNAME.Move_Node_ABS_Value(r_value)
+          case("REL_Value");
+               CLASSNAME.Move_Node_REL_Value(RefNode, r_value)
+    end switch
+    
+   END FUNCTION
+        
+  FUNCTION Move_Node_Node(RefNode)
+  
+	string RefNode[]
+	
+	integer Ref_NodeId(1)
+	
+	fem_u_get_id_list(LP_SUBLIST_NODE, RefNode, 1, TRUE, Ref_NodeId)
+	
+	real new_xyz(3)
+	db_get_node(Ref_NodeId(1), new_xyz)
+	
+	string Nodes[virtual]
+	
+	ui_wid_get_vstring(seldbox_Nodes, "VALUE", Nodes)
+	
+	integer status, nNode
+
+	nNode = fem_u_count_id_list(LP_SUBLIST_NODE, Nodes, TRUE, status)
+	
+	integer NodeId(virtual)
+	real xyz(virtual)
+	
+	sys_allocate_array(NodeId, 1, nNode)
+	sys_allocate_array(xyz, 1, nNode, 1, 3)
+	
+	fem_u_get_id_list(LP_SUBLIST_NODE, Nodes, nNode, TRUE, NodeId)
+	
+	logical ChkX, ChkY, ChkZ
+	
+	ui_wid_get(tgl_AxisX, "VALUE", ChkX)
+	ui_wid_get(tgl_AxisY, "VALUE", ChkY)
+	ui_wid_get(tgl_AxisZ, "VALUE", ChkZ)
+	
+	integer idx
+
+	string sa_NodeId[virtual], sa_xyz[virtual]
+	
+	integer NodeStrLength, xyzStrLength
+	
+	NodeStrLength = str_length("Node")
+	
+	xyzStrLength = 1
+	sys_allocate_string(sa_NodeId, NodeStrLength)
+	sys_allocate_string(sa_NodeId, xyzStrLength)
+	sa_NodeId = "Node"
+	string s_xyz[virtual]
+
+	for(idx=1 to nNode)
+		db_get_node(NodeId(idx), xyz(idx, 1:3))
+		if(ChkX == TRUE) then xyz(idx, 1) = new_xyz(1)
+		if(ChkY == TRUE) then xyz(idx, 2) = new_xyz(2)
+		if(ChkZ == TRUE) then xyz(idx, 3) = new_xyz(3)
+		
+		NodeStrLength += str_length(str_from_integer(NodeId(idx))) + 1
+		sys_reallocate_string(sa_NodeId, NodeStrLength)
+		sa_NodeId = sa_NodeId // " " // str_from_integer(NodeId(idx))
+		
+		s_xyz = xfem_str_from_coordinate(xyz(idx, 1:3))
+		xyzStrLength += str_length(s_xyz) + 1
+		sys_reallocate_string(sa_xyz, xyzStrLength)
+		sa_xyz = sa_xyz // " " // s_xyz
+	end for
+	
+    string val_Action[8]
+    ui_wid_get(opt_Action, "VALUE", val_Action)
+   
+    string fem_modify_node__nodes_modified[VIRTUAL]
+	string fem_create_nodes__nodes_created[VIRTUAL]
+	
+	switch(val_Action)
+		case("MOVE")
+			fem_modify_nodes( sa_NodeId, "", "", "", sa_xyz, [0, 0, 0, 0, 1, 0, 0, 0, 0, 0], fem_modify_node__nodes_modified )		
+		case("COPY")
+			fem_create_nodes_1( "Coord 0", "Coord 0", 3, "#", sa_xyz, fem_create_nodes__nodes_created )
+	end switch
+
+	
+   END FUNCTION /* cb_Apply */
+
+  FUNCTION Move_Node_ABS_Value(r_value)
+  
+	real r_value
+	
+	string Nodes[virtual]
+	
+	ui_wid_get_vstring(seldbox_Nodes, "VALUE", Nodes)
+	
+	integer status, nNode
+
+	nNode = fem_u_count_id_list(LP_SUBLIST_NODE, Nodes, TRUE, status)
+	
+	integer NodeId(virtual)
+	real xyz(virtual)
+	
+	sys_allocate_array(NodeId, 1, nNode)
+	sys_allocate_array(xyz, 1, nNode, 1, 3)
+	
+	fem_u_get_id_list(LP_SUBLIST_NODE, Nodes, nNode, TRUE, NodeId)
+	
+	logical ChkX, ChkY, ChkZ
+	
+	ui_wid_get(tgl_AxisX, "VALUE", ChkX)
+	ui_wid_get(tgl_AxisY, "VALUE", ChkY)
+	ui_wid_get(tgl_AxisZ, "VALUE", ChkZ)
+	
+	integer idx
+
+	string sa_NodeId[virtual], sa_xyz[virtual]
+	
+	integer NodeStrLength, xyzStrLength
+	
+	NodeStrLength = str_length("Node")
+	
+	xyzStrLength = 1
+	sys_allocate_string(sa_NodeId, NodeStrLength)
+	sys_allocate_string(sa_NodeId, xyzStrLength)
+	
+	sa_NodeId = "Node"
+	string s_xyz[virtual]
+
+	for(idx=1 to nNode)
+		db_get_node(NodeId(idx), xyz(idx, 1:3))
+		if(ChkX == TRUE) then xyz(idx, 1) = r_value
+		if(ChkY == TRUE) then xyz(idx, 2) = r_value
+		if(ChkZ == TRUE) then xyz(idx, 3) = r_value
+		
+		NodeStrLength += str_length(str_from_integer(NodeId(idx))) + 1
+		sys_reallocate_string(sa_NodeId, NodeStrLength)
+		sa_NodeId = sa_NodeId // " " // str_from_integer(NodeId(idx))
+		
+		s_xyz = xfem_str_from_coordinate(xyz(idx, 1:3))
+		xyzStrLength += str_length(s_xyz) + 1
+		sys_reallocate_string(sa_xyz, xyzStrLength)
+		sa_xyz = sa_xyz // " " // s_xyz
+	end for
+	
+    string val_Action[8]
+    ui_wid_get(opt_Action, "VALUE", val_Action)
+   
+     string fem_modify_node__nodes_modified[VIRTUAL]
+	string fem_create_nodes__nodes_created[VIRTUAL]
+	
+	switch(val_Action)
+		case("MOVE")
+			fem_modify_nodes( sa_NodeId, "", "", "", sa_xyz, [0, 0, 0, 0, 1, 0, 0, 0, 0, 0], fem_modify_node__nodes_modified )		
+		case("COPY")
+			fem_create_nodes_1( "Coord 0", "Coord 0", 3, "#", sa_xyz, fem_create_nodes__nodes_created )
+	end switch
+
+	
+   END FUNCTION /* cb_Apply */
+   
+  FUNCTION Move_Node_REL_Value(RefNode, r_value)
+  
+	string RefNode[]
+	real r_value
+	
+	integer Ref_NodeId(1)
+	
+	fem_u_get_id_list(LP_SUBLIST_NODE, RefNode, 1, TRUE, Ref_NodeId)
+	
+	real new_xyz(3)
+	db_get_node(Ref_NodeId(1), new_xyz)
+	
+	string Nodes[virtual]
+	
+	ui_wid_get_vstring(seldbox_Nodes, "VALUE", Nodes)
+	
+	integer status, nNode
+
+	nNode = fem_u_count_id_list(LP_SUBLIST_NODE, Nodes, TRUE, status)
+	
+	integer NodeId(virtual)
+	real xyz(virtual)
+	
+	sys_allocate_array(NodeId, 1, nNode)
+	sys_allocate_array(xyz, 1, nNode, 1, 3)
+	
+
+	fem_u_get_id_list(LP_SUBLIST_NODE, Nodes, nNode, TRUE, NodeId)
+	
+	logical ChkX, ChkY, ChkZ
+	
+	ui_wid_get(tgl_AxisX, "VALUE", ChkX)
+	ui_wid_get(tgl_AxisY, "VALUE", ChkY)
+	ui_wid_get(tgl_AxisZ, "VALUE", ChkZ)
+	
+	integer idx
+
+	string sa_NodeId[virtual], sa_xyz[virtual]
+	
+	integer NodeStrLength, xyzStrLength
+	
+	NodeStrLength = str_length("Node")
+	
+	xyzStrLength = 1
+	sys_allocate_string(sa_NodeId, NodeStrLength)
+	sys_allocate_string(sa_NodeId, xyzStrLength)
+	sa_NodeId = "Node"
+	string s_xyz[virtual]
+
+	for(idx=1 to nNode)
+		db_get_node(NodeId(idx), xyz(idx, 1:3))
+		if(ChkX == TRUE) then xyz(idx, 1) = new_xyz(1) + r_value
+		if(ChkY == TRUE) then xyz(idx, 2) = new_xyz(2) + r_value
+		if(ChkZ == TRUE) then xyz(idx, 3) = new_xyz(3) + r_value
+		
+		NodeStrLength += str_length(str_from_integer(NodeId(idx))) + 1
+		sys_reallocate_string(sa_NodeId, NodeStrLength)
+		sa_NodeId = sa_NodeId // " " // str_from_integer(NodeId(idx))
+		
+		s_xyz = xfem_str_from_coordinate(xyz(idx, 1:3))
+		xyzStrLength += str_length(s_xyz) + 1
+		sys_reallocate_string(sa_xyz, xyzStrLength)
+		sa_xyz = sa_xyz // " " // s_xyz
+	end for
+	
+    string val_Action[8]
+    ui_wid_get(opt_Action, "VALUE", val_Action)
+   
+    string fem_modify_node__nodes_modified[VIRTUAL]
+	string fem_create_nodes__nodes_created[VIRTUAL]
+	
+	switch(val_Action)
+		case("MOVE")
+			fem_modify_nodes( sa_NodeId, "", "", "", sa_xyz, [0, 0, 0, 0, 1, 0, 0, 0, 0, 0], fem_modify_node__nodes_modified )		
+		case("COPY")
+			fem_create_nodes_1( "Coord 0", "Coord 0", 3, "#", sa_xyz, fem_create_nodes__nodes_created )
+	end switch
+
+	
+   END FUNCTION /* cb_Apply */
+   
+   FUNCTION cb_Cancel()
+/*
+ * This is a callback for the button named btn_Cancel
+ */
+	ui_form_hide("Move_Nodes")
+	$ ui_form_delete("Move_Nodes")
+	
+   END FUNCTION /* cb_Cancel */
+
+END CLASS /* Move_Nodes */

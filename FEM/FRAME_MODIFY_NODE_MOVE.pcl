@@ -1,0 +1,96 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME FRAME_MODIFY_NODE_MOVE
+#define CLASS_STR "FRAME_MODIFY_NODE_MOVE"
+
+CLASS CLASSNAME
+
+/* Classwide Variables */
+   CLASSWIDE WIDGET sframe_nodes, wa_sdbox_node(2)
+   CLASSWIDE WIDGET tgl_XYZ(6)
+
+FUNCTION UI_FRAME_MODIFY_NODE_MOVE(form_id, Y_LOC)
+WIDGET form_id
+REAL Y_LOC
+	
+	widget frame_wid
+ 	frame_wid = ui_frame_create(                   @
+      /* parent */             form_id,           @
+      /*  name  */             "",                @
+      /*    x   */             0.0,  @
+      /*    y   */             Y_LOC,         @
+      /*  width */             FORM_WID_SML,  @
+      /* height */             1.0,               @
+      /*  label */             "")
+      
+     REAL Y_LOCF = 0.
+	Y_LOCF += INTER_WIDGET_SPACE
+
+	string sa_dtype[16](2) = ["NODE", "POINT"]
+	string sa_label[64](2) = ["Node List", "New Node Location"]
+	string sa_callback[64](2) 
+	
+	sa_callback(1) = ""
+	sa_callback(2) = ""
+
+	sframe_nodes = ui_select_frame_set(				@
+	/* parent widget id(input) 	*/	frame_wid,		@
+	/*	select frame callback	*/	CLASS_STR // ".Apply_Click",	@	
+	/* 	select frame label		*/	"Autoexec",	@
+	/*		x				*/	FORM_L_MARGIN,	@	
+	/*		y				*/	Y_LOCF, 		@
+	/*	select databax array	*/	wa_sdbox_node,	@
+	/* 	data type	array		*/	sa_dtype,		@
+	/* 	select databox label array	*/ 	sa_label,	@
+	/*	select databox collback array	*/ 	sa_callback, @
+	/*	label avove logical	*/			TRUE)
+     
+	Y_LOCF += LABEL_HGT + INTER_WIDGET_SPACE
+	 
+	ui_wid_set(frame_wid,"HEIGHT",Y_LOCF)
+	
+	Y_LOC += Y_LOCF
+	
+	RETURN frame_wid
+	
+   END FUNCTION /* init */
+
+function Apply_Click()
+    uil_primary_file.db_save()
+	string node_list[virtual]
+	string new_location[virtual]
+	
+    ui_wid_get_vstring(wa_sdbox_node(1), "VALUE", node_list)
+	ui_wid_get_vstring(wa_sdbox_node(2), "VALUE", new_location)
+
+    STRING fem_modify_node__nodes_modified[VIRTUAL]
+	fem_modify_nodes(node_list, " ", " ", " ", new_location, [0, 0, 0, 0, 1, 0, 0, 0, 0, 0], fem_modify_node__nodes_modified )
+    
+    integer count, status
+    count = fem_u_count_id_list(LP_SUBLIST_NODE, node_list, FALSE, status)
+    integer nid(virtual)
+    sys_allocate_array(nid, 1, count)
+    fem_u_get_id_list(LP_SUBLIST_NODE, node_list, count, TRUE, nid)
+
+    integer ecnt, eid(virtual)
+	FemFx.get_elems_ass_nodes(count, nid, ecnt, eid)
+
+$	db_get_elem_use_all_node (count, nid, ecnt, eid)
+	dump ecnt
+	dump eid
+	integer sid(virtual)
+	sys_allocate_array(sid, 1, ecnt)
+	db_get_elem_shape_for_id(ecnt, eid, sid)
+
+	FemFx.CHECK_EDGE(ecnt, sid, eid)
+
+
+    $ integer fflag, nelem
+	$ db_count_elems_using_node(count, nid, nelem, fflag)
+
+
+	$ db_get_elems_using_nodes(count, nid, mxelem, nelem, eid)
+    
+end function
+
+END CLASS /* Move_Nodes */

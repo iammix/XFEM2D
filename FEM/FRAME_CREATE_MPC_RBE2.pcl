@@ -1,0 +1,253 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME FRAME_CREATE_MPC_RBE2
+#define CLASS_STR "FRAME_CREATE_MPC_RBE2"
+
+CLASS CLASSNAME
+
+/* Classwide Variables */
+   CLASSWIDE WIDGET sframe_nodes, wa_sdbox_node(3)
+   CLASSWIDE WIDGET tgl_XYZ(6)
+
+FUNCTION UI_FRAME_CREATE_MPC_RBE2(form_id, Y_LOC)
+WIDGET form_id
+REAL Y_LOC
+	
+	widget frame_wid
+ 	frame_wid = ui_frame_create(                   @
+      /* parent */             form_id,           @
+      /*  name  */             "",                @
+      /*    x   */             0.0,  @
+      /*    y   */             Y_LOC,         @
+      /*  width */             FRAME_WID_SINGLE,  @
+      /* height */             1.0,               @
+      /*  label */             "")
+      
+     REAL Y_LOCF = 0.
+	Y_LOCF += INTER_WIDGET_SPACE
+
+	string sa_dtype[5](3) = ["MPC", "NODE", "NODE"]
+	string sa_label[64](3) = ["Select MPC", "Dependent Node List", "Independent Node"]
+	string sa_callback[64](3) 
+	
+	sa_callback(1) = ""
+	sa_callback(2) = ""
+	
+	sframe_nodes = ui_select_frame_set(				@
+	/* parent widget id(input) 	*/	frame_wid,		@
+	/*	select frame callback	*/	CLASS_STR // ".Apply_Click",	@	
+	/* 	select frame label		*/	"Autoexec",	@
+	/*		x				*/	FORM_L_MARGIN,	@	
+	/*		y				*/	Y_LOCF, 		@
+	/*	select databax array	*/	wa_sdbox_node,	@
+	/* 	data type	array		*/	sa_dtype,		@
+	/* 	select databox label array	*/ 	sa_label,	@
+	/*	select databox collback array	*/ 	sa_callback, @
+	/*	label avove logical	*/			TRUE)
+     
+	Y_LOCF += LABEL_HGT + INTER_WIDGET_SPACE
+	 
+	ui_label_create( frame_wid, "", FRAME_L_MARGIN, Y_LOCF, "RBE2 DOFs" )
+	         
+	Y_LOCF += INTER_WIDGET_SPACE
+	      
+	string sa_cbs[2](6) = ["","","","","",""]
+	string sa_lab[16](6) = ["  UX     ", "  UY     ", "  UZ     ", "  RX     ", "  RY     ", "  RZ     "]
+	
+	widget frame_chk
+	frame_chk = ui_checkbox_set(frame_wid, tgl_XYZ, sa_cbs, Y_LOCF, sa_lab, 3)
+
+	ui_wid_set(frame_wid,"HEIGHT",Y_LOCF)
+	
+	Y_LOC += Y_LOCF + INTER_WIDGET_SPACE
+	
+	integer i
+     FOR(i = 1 TO 6)
+        ui_wid_set(tgl_XYZ(i),"VALUE", TRUE)
+     END FOR
+	
+	RETURN frame_wid
+	
+   END FUNCTION /* init */
+
+function Apply_Click()
+	uil_primary_file.db_save()
+	widget opt_Action
+	opt_Action = sys_class_get("Finite_Element_2D", "opt_Action")
+
+	string action[virtual]
+	ui_wid_get_vstring(opt_Action, "VALUE", action)
+
+	if(action == "CREATE")then
+		CLASSNAME.Action_Create()
+	else if(action == "MODIFY")then
+		CLASSNAME.Action_Modify()
+	end if
+end function
+
+FUNCTION Action_Create()
+ 
+   	logical ChkDOFs(6)
+	string DOFs[3](6) = ["UX", "UY", "UZ", "RX", "RY", "RZ"]
+
+	integer i
+	for(i=1 to 6)
+		ui_wid_get(tgl_XYZ(i), "VALUE", ChkDOFs(i))
+	end for
+	
+	string dof_list[64](2)
+	
+	dof_list(1) = ""
+	
+	for(i=1 to 6)
+		if(ChkDOFs(i) == TRUE) then
+			dof_list(1) = dof_list(1) // DOFs(i) // " "
+		end if
+	end for
+	
+	dof_list(1) = str_strip_trail(dof_list(1))
+	integer i_pos
+	while(str_index(dof_list(1), " ") != 0)
+     	i_pos = str_index(dof_list(1), " ")
+          str_assign(dof_list(1), i_pos, 1, ",")
+     end while
+	dump dof_list
+	 /* 1- def_node_list, 2- indef_node_list */
+	string node_list[1024](2)
+	
+	ui_wid_get(wa_sdbox_node(2), "VALUE", node_list(1))
+	ui_wid_get(wa_sdbox_node(3), "VALUE", node_list(2))
+
+
+    	dump node_list
+    	
+	if( node_list(2) == "") then
+     	CLASSNAME.RBE2_CREATE_CENTER(node_list)
+    	end if
+
+	integer mpc_id
+	db_get_max_mpc(mpc_id)
+	mpc_id += 1
+
+	fem_create_mpc_nodal2( mpc_id, "RBE2", 0., 2, [TRUE, FALSE], ["0", "0"],  node_list, dof_list )
+    	
+	ui_set_focus (wa_sdbox_node(2))
+   
+END FUNCTION
+
+FUNCTION Action_Modify()  
+	
+	logical ChkDOFs(6)
+	string DOFs[3](6) = ["UX", "UY", "UZ", "RX", "RY", "RZ"]
+
+	integer i
+	for(i=1 to 6)
+		ui_wid_get(tgl_XYZ(i), "VALUE", ChkDOFs(i))
+	end for
+	
+	string dof_list[64](2)
+	
+	dof_list(1) = ""
+	
+	for(i=1 to 6)
+		if(ChkDOFs(i) == TRUE) then
+			dof_list(1) = dof_list(1) // DOFs(i) // " "
+		end if
+	end for
+	
+	dof_list(1) = str_strip_trail(dof_list(1))
+	integer i_pos
+	while(str_index(dof_list(1), " ") != 0)
+     	i_pos = str_index(dof_list(1), " ")
+          str_assign(dof_list(1), i_pos, 1, ",")
+     end while
+	dump dof_list
+	 /* 1- def_node_list, 2- indef_node_list */
+	
+	string mpc_list[virtual]
+	ui_wid_get_vstring(wa_sdbox_node(1), "VALUE", mpc_list)
+	
+	integer mpc_id(virtual), notfound, idnoexist(virtual), nmpc
+	fem_get_mpc_ids(mpc_list, nmpc, mpc_id, notfound, idnoexist )
+	dump mpc_id
+	dump notfound
+	dump idnoexist
+	
+	fem_u_get_id_list(LP_SUBLIST_MPC, mpc_list, 1, TRUE, mpc_id)
+	dump mpc_id
+	return 0
+	
+	string node_list[1024](2)
+	ui_wid_get(wa_sdbox_node(2), "VALUE", node_list(1))
+	ui_wid_get(wa_sdbox_node(3), "VALUE", node_list(2))
+
+     if(node_list(1) == "") then
+     	return -1
+     end if
+     
+     if(node_list(2) == "") then
+     	return -1
+     end if
+     
+	fem_modify_mpc_nodal2( mpc_id, 0., 2, [TRUE, FALSE], ["0", "0"], node_list, dof_list)
+   	
+	ui_set_focus (wa_sdbox_node(1))
+END FUNCTION
+   
+FUNCTION RBE2_CREATE_CENTER(node_list)
+
+        string node_list[]()
+        integer nNode, i_status
+		
+        nNode= fem_u_count_id_list(LP_SUBLIST_NODE, node_list(1), TRUE, i_status)
+
+        integer idx, ia_node_id(virtual), ia_ref_coord(virtual), ia_analy_coord(virtual), group_id
+        integer new_node_id(1), max_node_id, status
+
+        real ra_xyz(3), ra_node(virtual)
+
+        sys_allocate_array(ia_ref_coord,1,nNode)
+        sys_allocate_array(ia_analy_coord,1,nNode)
+        sys_allocate_array(ra_node,1,nNode,1,3)
+        sys_allocate_array(ia_node_id,1,nNode)
+
+        fem_u_get_id_list(LP_SUBLIST_NODE, node_list(1), nNode, TRUE, ia_node_id)
+
+        db_get_nodes(nNode,ia_node_id, ia_ref_coord, ia_analy_coord, ra_node)
+
+        for(idx=1 to nNode)
+            ra_xyz(1) += ra_node(idx, 1)
+            ra_xyz(2) += ra_node(idx, 2)
+            ra_xyz(3) += ra_node(idx, 3)
+        end for
+
+            ra_xyz(1) = ra_xyz(1) / nNode
+            ra_xyz(2) = ra_xyz(2) / nNode
+            ra_xyz(3) = ra_xyz(3) / nNode
+
+        db_get_current_group_id(group_id)
+        db_get_max_node_id(max_node_id)
+        new_node_id(1) = max_node_id + 1
+
+        db_create_nodes(1, ia_ref_coord, ia_analy_coord, ra_xyz, group_id, new_node_id, status)
+
+        node_list(2) = "Node " // str_from_integer(new_node_id(1))
+
+END FUNCTION
+   
+FUNCTION Action_Click()
+	
+	widget opt_Action
+	opt_Action = sys_class_get("Finite_Element_2D", "opt_Action")
+	
+	string action[virtual]
+	ui_wid_get_vstring(opt_Action, "VALUE", action)
+
+	if(action == "CREATE")then
+		ui_wid_set(wa_sdbox_node(1), "VISIBLE", FALSE)
+	else if(action == "MODIFY")then
+		ui_wid_set(wa_sdbox_node(1), "VISIBLE", TRUE)
+	end if
+		
+END FUNCTION
+END CLASS /* Move_Nodes */

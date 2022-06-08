@@ -1,0 +1,19 @@
+/* get material name */
+	FUNCTION fx_get_mat_name_ass_elem(i_ElemId)
+	integer i_WordId, i_ElemId, i_RegId(1), i_Elem(1)
+	integer cnt, i_MatId
+	real r_val(3)
+	string MatName[31]
+	string s_val[5]
+	integer data_type, i_val,cid,nid, fid
+			
+			
+		i_Elem(1) = i_ElemId
+		db_get_region_for_elements(1, i_Elem,i_RegId)
+	
+	    db_get_prop_value(i_RegId(1), 13, i_MatId, data_type, i_val,@
+		                     r_val, s_val, cid, nid, fid)
+	
+		 db_get_material_name_from_id (i_MatId, MatName)
+		 return MatName
+	END FUNCTION

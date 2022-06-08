@@ -1,0 +1,927 @@
+#include "appforms.p"
+#include "lpenums.i"
+
+CLASS Local_Mesher
+
+/* Classwide Variables */
+  
+
+/* Classwide Variables */
+   CLASSWIDE WIDGET form_id, optAction, optMethod, btnLbc_Transfer, btnLocal_LC_Builder
+   CLASSWIDE WIDGET optRefAxis, sboxRefNode, sfraRefNode, fraMeshInfo, dboxLocalGrpName, optMesher, dboxMeshSize
+   CLASSWIDE WIDGET btnApply, btnCancel,  dboxExtension
+   CLASSWIDE STRING grp_name[32]
+
+   Function init()
+      REAL box_length=0.0
+      REAL yloc_main
+      REAL yloc_fraMeshInfo=0.
+
+      form_id=ui_form_create(                        @
+      /* callback */         "",                     @
+      /*     x    */         FORM_X_LOC_SML,         @
+      /*     y    */         FORM_Y_LOC,             @
+      /* position */         "UL",                   @
+      /*   width  */         FORM_WID_SML,           @
+      /*  height  */         FORM_HGT_TALL,          @
+      /*   label  */         "Global To Local",  @
+      /*  unused  */         "")
+
+      yloc_main = FORM_T_MARGIN
+
+      optAction=ui_optionmenu_create(                @
+      /*    parent    */             form_id,        @
+      /*   callback   */             "",    @
+      /*       x      */             FORM_L_MARGIN,  @
+      /*       y      */             yloc_main,      @
+      /* label_length */             1.,             @
+      /*     label    */             "Action",       @
+      /*  label_above */             FALSE)
+
+      yloc_main += OPT_MENU_HGT_NO_LABOVE  + @
+                   INTER_WIDGET_SPACE
+
+      ui_item_create(optAction, "OM", "Overwrite Model", TRUE)
+      ui_item_create(optAction, "AM", "Append Model", TRUE)
+
+      optMethod=ui_optionmenu_create(                @
+      /*    parent    */             form_id,        @
+      /*   callback   */             "Method_cb",    @
+      /*       x      */             FORM_L_MARGIN,  @
+      /*       y      */             yloc_main,      @
+      /* label_length */             1.,             @
+      /*     label    */             "Method",       @
+      /*  label_above */             FALSE)
+
+      yloc_main += OPT_MENU_HGT_NO_LABOVE  + @
+                   INTER_WIDGET_SPACE
+
+      ui_item_create(optMethod, "VM", "Variable Mesh", TRUE)
+	  ui_item_create(optMethod, "UM", "Uniform Mesh", TRUE)
+      
+	 fraMeshInfo=ui_frame_create(                     @
+      /* parent */          form_id,             @
+      /*  name  */          "",                  @
+      /*    x   */          FRAME_X_LOC_COL1,    @
+      /*    y   */          yloc_main,           @
+      /*  width */          FRAME_WID_SINGLE,    @
+      /* height */          1.0,                 @
+      /*  label */          "Mesh Information")
+
+      yloc_fraMeshInfo = FRAME_T_MARGIN
+
+      box_length = DBOX_WID_SINGLE
+
+      dboxLocalGrpName=ui_databox_create(                @
+      /*    parent    */             fraMeshInfo,          @
+      /*   callback   */             "",   @
+      /*       x      */             FORM_L_MARGIN,  @
+      /*       y      */             yloc_fraMeshInfo,     @
+      /* label_length */             1.,             @
+      /*  box_length  */             box_length,     @
+      /*     label    */             "Group Name",   @
+      /*     value    */             "",             @
+      /*  label_above */             FALSE,          @
+      /*   datatype   */             "STRING",       @
+      /*   num_vals   */             1)
+
+      yloc_fraMeshInfo += DBOX_HGT_NO_LABOVE  + @
+                    INTER_WIDGET_SPACE
+
+	   optMesher = ui_optionmenu_create(	fraMeshInfo,	@
+								"",				@
+								FORM_L_MARGIN,		@
+								yloc_fraMeshInfo,	@
+								1.0,				@
+								"Mesher",		@
+								FALSE)
+
+	  ui_item_create(optMesher,"IsoMesh","IsoMesh",TRUE)
+	  ui_item_create(optMesher, "Hybrid", "Hybrid",TRUE)
+	  ui_item_create(optMesher,"Paver","Paver",TRUE)
+	  
+	  ui_wid_set(optMesher,"VALUE","Hybrid")
+
+      yloc_fraMeshInfo += DBOX_HGT_NO_LABOVE  + INTER_WIDGET_SPACE
+
+      dboxMeshSize = ui_databox_create(                	@
+      /*    parent    */       fraMeshInfo,       		@
+      /*   callback   */       "",             			@
+      /*       x      */       FORM_L_MARGIN,  			@
+      /*       y      */       yloc_fraMeshInfo,  		@
+      /* label_length */       1.,            			@
+      /*  box_length  */       box_length,     			@
+      /*     label    */       "Mesh Size",   			@
+      /*     value    */       0.0,             		@
+      /*  label_above */       FALSE,          			@
+      /*   datatype   */       "REAL",         			@
+      /*   num_vals   */       1)
+
+      yloc_fraMeshInfo += DBOX_HGT_NO_LABOVE  + 		@
+                       INTER_WIDGET_SPACE
+	  
+      dboxExtension = ui_databox_create(                @
+      /*    parent    */             fraMeshInfo,          @
+      /*   callback   */             "",   @
+      /*       x      */             FORM_L_MARGIN,  @
+      /*       y      */             yloc_fraMeshInfo,     @
+      /* label_length */             1.,             @
+      /*  box_length  */             box_length,     @
+      /*     label    */             "Extension",   @
+      /*     value    */             0.0,             @
+      /*  label_above */             FALSE,          @
+      /*   datatype   */             "REAL",       @
+      /*   num_vals   */             1)
+
+
+		yloc_fraMeshInfo += DBOX_HGT_NO_LABOVE  + INTER_WIDGET_SPACE
+
+$$$
+		
+		sfraRefNode=ui_selectframe_create(										@
+		/*		parent		*/						fraMeshInfo,					@
+		/*		callback		*/						"",								@
+		/*		x				*/						SFRAME_L_MARGIN,								@
+		/*		y				*/						yloc_fraMeshInfo,				@
+		/*		width			*/						box_length,						@
+		/*		height		*/						DBOX_HGT_NO_LABOVE,			@
+		/*		label			*/						"",								@
+		/*		recycle		*/						FALSE								)
+		
+		sboxRefNode= ui_selectdatabox_create(						@
+		/*    parent    */						 sfraRefNode,		@
+		/*   callback   */						 "",					@
+		/*       x      */						 0.0,					@
+		/*       y      */						 0.0,					@
+		/* label_length */						 0.0,					@
+		/*  box_length  */						 box_length,		@
+		/*     label    */						 "Start Point ",					@
+		/*     value    */						 "",					@
+		/*  label_above */						 FALSE,				@
+		/*   datatype   */						 "NODE",				@
+		/*   prompt     */						 ""					)
+
+	
+      yloc_fraMeshInfo += DBOX_HGT_NO_LABOVE  + INTER_WIDGET_SPACE
+
+		ui_wid_set(fraMeshInfo,"HEIGHT",yloc_fraMeshInfo)
+
+      yloc_main += FRAME_2EDGE         + @
+                   FRAME_LABEL_HGT     + @
+                   INTER_WIDGET_SPACE  + @
+                   yloc_fraMeshInfo
+
+      btnApply=ui_button_create(                     @
+      /*   parent  */           form_id,             @
+      /*  callback */           "cbkApply",          @
+      /*     x     */           BUTTON_HALF_X_LOC1,  @
+      /*     y     */           yloc_main,           @
+      /*   width   */           BUTTON_WID_FULL,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Apply",             @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           FALSE)
+
+      yloc_main += DBOX_HGT_NO_LABOVE  + @
+                   INTER_WIDGET_SPACE*2
+		
+      btnLbc_Transfer=ui_button_create(               @
+      /*   parent  */           form_id,             @
+      /*  callback */           "cbkLbc_Transfer",@
+      /*     x     */           BUTTON_FULL_X_LOC1,  @
+      /*     y     */           yloc_main,           @
+      /*   width   */           BUTTON_WID_FULL,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Load Transfer",     @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           FALSE)
+
+
+      yloc_main += DBOX_HGT_NO_LABOVE  + @
+                   INTER_WIDGET_SPACE
+
+		btnLocal_LC_Builder=ui_button_create(           @
+      /*   parent  */           form_id,             @
+      /*  callback */           "cbkLocal_LC_Builder",@
+      /*     x     */           BUTTON_FULL_X_LOC1,  @
+      /*     y     */           yloc_main,           @
+      /*   width   */           BUTTON_WID_FULL,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Local Boundary and Loadcase",  @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           FALSE)
+
+      yloc_main += DBOX_HGT_NO_LABOVE  + @
+                   INTER_WIDGET_SPACE*2
+		
+		btnCancel=ui_button_create(                     @
+		/*   parent  */            form_id,             @
+		/*  callback */            "cbkCancel",         @
+		/*     x     */            BUTTON_HALF_X_LOC1,  @
+		/*     y     */            yloc_main,           @
+		/*   width   */            BUTTON_WID_FULL,     @
+		/*   height  */            BUTTON_DEFAULT_HGT,  @
+		/*   label   */            "Cancel",            @
+		/*    TRUE   */            TRUE,                @
+		/* highlight */            FALSE)                
+
+
+		yloc_main += BUTTON_DEFAULT_HGT  + @
+                   INTER_WIDGET_SPACE
+
+ 	   ui_wid_set(form_id,"HEIGHT",yloc_main)
+
+
+$		Lbc_Transfer.init()
+$	    Local_LC_Builder.init()
+$		Write_Bdf.init()
+
+   End Function /* init */
+
+   Function Method_cb(name)
+/*
+ * This is a callback for the optionmenu named optMethod
+ */
+   STRING  name[]
+	
+	SWITCH(name)
+	CASE("UM")
+			ui_wid_set(sfraRefNode, "ENABLE", FALSE)
+			ui_wid_set(dboxExtension, "ENABLE", FALSE)
+
+	CASE("VM")
+			ui_wid_set(optMesher,"VALUE","Hybrid")
+			ui_wid_set(sfraRefNode, "ENABLE", TRUE)
+			ui_wid_set(dboxExtension, "ENABLE", TRUE)
+
+	End SWITCH
+	
+   End Function /* Method_cb */
+
+   Function display()
+   INTEGER grp_id
+$   STRING grp_name[32]
+
+	ui_form_display("Local_Mesher")
+	db_get_current_group_id(grp_id)
+	db_get_group_name(grp_id,grp_name)
+	ui_wid_set(dboxLocalGrpName,"VALUE",grp_name)
+
+ 	ui_wid_set(optMethod, "VALUE", "VM")
+	
+	local_mesher.Method_cb("VM")
+	
+   End Function /* display */
+
+	$==============================================================================================
+   Function cbkLbc_Transfer()
+		Lbc_Transfer.display()
+   End Function
+   $==============================================================================================
+   Function cbkLocal_LC_Builder()
+		Local_LC_Builder.display()
+   End Function
+
+   $==============================================================================================
+   Function cbkWrite_Bdf()
+		Write_Bdf.display()
+   End Function
+   
+	$==============================================================================================
+   Function cbkCancel()
+	ui_form_hide("Local_Mesher")
+   End Function
+   
+	$==============================================================================================
+   Function cbkApply()
+		STRING  surf_id[15](virtual), curv_id[15](virtual)
+
+		INTEGER i , i_warning_message, fem_equiv_all_x_segment
+		REAL fem_equiv_all_x_equivtol, TOR
+		LOGICAL l_confirm
+
+$		STRING grp_name[32]
+		ui_wid_get(dboxLocalGrpName,"VALUE",grp_name)
+
+	integer grp_id
+		db_get_group_id(grp_name, grp_id)
+
+	integer nelem		
+		db_count_elems_in_group(grp_id, nelem)
+
+	integer elem_id(virtual)		
+		sys_allocate_array(elem_id,   1, nelem)
+		
+	integer topo_codes(virtual)
+		sys_allocate_array(topo_codes,1, nelem)
+	
+	integer shape_code(virtual)
+		sys_allocate_array(shape_code,1, nelem)
+
+	integer nnode(virtual)
+		sys_allocate_array(nnode,     1, nelem)
+
+		db_get_elem_ids_in_group ( nelem, grp_id, elem_id )
+		db_get_elem_etop(nelem, elem_id, topo_codes )
+		db_get_elem_topology_data( nelem, topo_codes,shape_code, nnode)
+
+	integer s_elem_id(virtual), b_elem_id(virtual)
+		sys_allocate_array(b_elem_id,1,1)
+		sys_allocate_array(s_elem_id,1,1)
+
+	integer b_nelem, s_nelem	
+		b_nelem=0
+		s_nelem=0
+		
+		FOR(i=1 TO nelem)
+			IF(shape_code(i)==2) THEN
+				b_nelem += 1
+				sys_reallocate_array(b_elem_id,1,b_nelem)
+				b_elem_id(b_nelem) = elem_id(i)
+			ELSE IF(shape_code(i)==3 || shape_code(i)==4 ) THEN
+				s_nelem += 1
+				sys_reallocate_array(s_elem_id,1,s_nelem)
+				s_elem_id(s_nelem) = elem_id(i)
+			End IF
+		End FOR
+
+	string rebuild_grp_name[64]
+		rebuild_grp_name = grp_name // "_rebuild"
+		ga_group_create( rebuild_grp_name )
+		ga_group_current_set( rebuild_grp_name )
+
+		IF(s_nelem != 0) THEN
+			Local_Mesher.create_surface(s_nelem, s_elem_id, surf_id)
+			dump "Error_1"
+			Local_Mesher.property_transfer(s_nelem, s_elem_id, surf_id)
+			dump "Error_2"
+		End IF
+
+		IF(b_nelem != 0) THEN
+			Local_Mesher.create_curve(b_nelem, b_elem_id, curv_id)
+			dump "Error_3"
+			Local_Mesher.property_transfer(b_nelem, b_elem_id, curv_id)
+			dump "Error_4"
+		End IF
+
+	string METHOD[3]
+		ui_wid_get(optMethod, "VALUE", METHOD)
+
+		IF(s_nelem != 0) THEN
+			IF(METHOD == "VM") THEN
+				Local_Mesher.variable_mesh("shell", s_nelem, s_elem_id, surf_id)
+				
+			ELSE IF(METHOD == "UM") THEN
+				Local_Mesher.uniform_mesh("shell", s_nelem, s_elem_id, surf_id)
+			End IF
+		End IF
+
+		IF(b_nelem != 0) THEN
+			IF(METHOD == "VM") THEN
+				Local_Mesher.variable_mesh("bar", b_nelem, b_elem_id, curv_id)
+			ELSE IF(METHOD == "UM") THEN
+				Local_Mesher.uniform_mesh("bar", b_nelem, b_elem_id, curv_id)
+			End IF
+		End IF
+		
+		pref_global_get(l_confirm,i_warning_message,TOR)
+
+		fem_equiv_all_group3( [" "], 0, "", 1, TOR, FALSE, fem_equiv_all_x_equivtol, fem_equiv_all_x_segment )
+
+		Local_Mesher.Load_Transfer(s_nelem, s_elem_id, surf_id)
+				
+		
+		sys_free_array(elem_id)
+		sys_free_array(topo_codes)
+		sys_free_array(shape_code)
+		sys_free_array(nnode)
+
+		sys_free_array(s_elem_id)
+		sys_free_array(b_elem_id)
+
+		sys_free_array(surf_id)
+		sys_free_array(curv_id)
+
+	End Function
+   
+	$==============================================================================================
+	Function create_surface(nelem, elem_id, surf_id)
+	integer elem_id(), nelem, node_id(virtual), fesl_id, file_name_length, i
+	string surf_id[](), sgm_create_surface_created_ids[VIRTUAL], fesl[virtual]
+	real r_tmp
+
+		sys_allocate_array(surf_id, 1, nelem)
+		sys_allocate_array(node_id, 1, nelem, 1, 4)
+
+		db_get_nodes_for_elems(nelem, 4, elem_id, node_id)
+		
+		FOR(i=1 TO nelem)
+			IF(node_id(i,4)==0) THEN
+				node_id(i,4) = node_id(i,1)		
+			End IF
+		End FOR
+
+		FOR(i=1 TO nelem)
+			sgm_const_surface_vertex( "",	"Node " // str_from_integer(node_id(i,4)) , @
+													"Node " // str_from_integer(node_id(i,3)) , @
+													"Node " // str_from_integer(node_id(i,2)) , @
+													"Node " // str_from_integer(node_id(i,1)) , @
+													sgm_create_surface_created_ids )
+
+			surf_id(i) = sgm_create_surface_created_ids
+		End FOR
+
+		file_name_length = str_length(grp_name // ".esl")
+		sys_allocate_string(fesl, file_name_length)
+		fesl = grp_name // ".esl"
+
+		IF(file_exists(fesl,"") == TRUE) THEN
+			file_delete(fesl)
+		End IF
+
+		text_open(fesl,"NOW", 0,0, fesl_id)
+		
+		text_write(fesl_id,"%I%", nelem, r_tmp, "")
+		
+		FOR(i=1 TO nelem)
+			text_write(fesl_id, "%I10%%A15%", elem_id(i), r_tmp, surf_id(i))
+		End FOR
+
+		text_close(fesl_id,"")
+		
+		sys_free_array(node_id)
+	RETURN 0	
+	End Function
+	
+	$==============================================================================================
+	Function create_curve(nelem, elem_id, curv_id)
+	integer nelem, elem_id(), node_id(virtual), i, file_name_length, fecl_id
+	string curv_id[](), asm_line_2point_created_ids[VIRTUAL], fecl[virtual]
+	real r_tmp
+		
+		sys_allocate_array(node_id, 1, nelem, 1, 2)
+		sys_allocate_array(curv_id,1, nelem)
+		db_get_nodes_for_elems(nelem, 2, elem_id, node_id)
+
+		FOR(i=1 TO nelem)
+			asm_const_line_2point( "", "Node " // str_from_integer(node_id(i,1)) , @
+												"Node " // str_from_integer(node_id(i,2)) , @
+												0, "", 50., 1, asm_line_2point_created_ids )
+			curv_id(i)= "Curve " // str_token(asm_line_2point_created_ids," ",2)
+		End FOR
+
+		file_name_length = str_length(grp_name // ".ecl")
+		sys_allocate_string(fecl, file_name_length)
+		fecl = grp_name // ".ecl"
+
+		IF(file_exists(fecl,"") == TRUE) THEN
+			file_delete(fecl)
+		End IF
+
+		text_open(fecl,"NOW", 0,0, fecl_id)
+		
+		text_write(fecl_id,"%I%", nelem, r_tmp, "")
+		
+		FOR(i=1 TO nelem)
+			text_write(fecl_id, "%I10%%A15%", elem_id(i), r_tmp, curv_id(i))
+		End FOR
+
+		text_close(fecl_id,"")
+
+		sys_free_array(node_id)
+	RETURN 0	
+	End Function
+	
+	$==============================================================================================
+	Function property_transfer(nelem, elem_id, subtype_id)
+	string  c_val[31], subtype_id[](), mat_name[31], prop_dat[128](virtual), @
+		   elem_list[virtual], prop_set_name[32], mat_des[100], sub_list[10000](virtual), @
+		   shape_name[5]
+	integer nelem, elem_id(), i, prop_dat_type(virtual), mat_id, i_val, coord_id, @
+		   node_id, field_id, region_id(virtual), j, elem_type_id, dof_set_id,con_id, @
+		   geom_id,for_opt_id, lam_id,layer_count, mat_lin,mat_dir, word_id(virtual), nword, @
+		   material_id, nelem_in_reg, elem_id_in_reg(virtual), cat_id, lin_code, dir_code,  @
+		   mat_type, data_exists, reg_id(virtual), nreg, nrec, rec
+	real r_val(3)
+	logical TNF(virtual)
+
+		sys_allocate_array(region_id,1,nelem)
+		sys_allocate_array(reg_id,1,nelem)
+		sys_allocate_array(TNF,1, nelem)
+		db_get_region_for_elements(nelem,elem_id,region_id)
+		
+		reg_id = region_id
+		
+		mth_sort(reg_id, TRUE, nreg)
+		
+		sys_allocate_array(sub_list,1, nreg)
+
+		FOR(i=1 TO nreg)
+			sub_list(i) = ""
+			FOR(j=1 TO nelem)
+				IF(reg_id(i) == region_id(j)) THEN
+					sub_list(i) = sub_list(i) //" " // subtype_id(j)
+				End IF
+			End FOR
+		End FOR
+
+		FOR(i=1 TO nreg)
+
+				db_get_region_definition (	reg_id(i),		@
+										prop_set_name,		@
+										elem_type_id,		@
+										dof_set_id,		@
+										con_id,		@
+										geom_id,		@
+										for_opt_id,		@
+										lam_id,			@
+										layer_count,		@
+										material_id,		@
+										mat_lin,		@
+										mat_dir )
+
+				db_count_props(reg_id(i), nword)
+				sys_allocate_array(word_id,1,nword)
+				sys_allocate_array(prop_dat_type,1,nword)
+				sys_allocate_array(prop_dat,1,nword)
+				db_get_props_by_region( nword, reg_id(i), word_id )
+
+				FOR(j=1 TO nword)
+					db_get_prop_value ( reg_id(i),		@
+									word_id(j),		@
+									mat_id,			@
+									prop_dat_type(j),	@
+									i_val,			@
+									r_val,			@
+									c_val,			@
+									coord_id,			@
+									node_id,			@
+									field_id ) 
+
+
+					SWITCH(prop_dat_type(j))
+
+						CASE(1)	
+								prop_dat(j)= str_from_real(r_val(1))		
+						CASE(2)	
+								prop_dat(j)= "< " // str_from_real(r_val(1)) // ", "	@
+										   // str_from_real(r_val(2)) // ", "		@
+										   // str_from_real(r_val(3)) // " >"
+						CASE(3)	
+								prop_dat(j)= str_from_integer(i_val)
+						CASE(4)	
+								prop_dat(j)= c_val
+						CASE(5)	
+								db_get_material (	mat_id,		@
+												mat_name,		@
+												cat_id,		@
+												lin_code,		@
+												dir_code,		@
+												mat_des,		@
+												mat_type,		@
+												data_exists ) 
+							
+								prop_dat(j)= "m:" // mat_name
+
+	$					CASE(6)	prop_dat(j)=
+	$					CASE(7)	prop_dat(j)=
+	$					CASE(8)	prop_dat(j)=
+	$					CASE(9)	prop_dat(j)=
+						CASE(11)	
+								db_get_beam_section( i_val, shape_name, prop_dat(j), nrec, rec)
+								
+	$					CASE(12)	prop_dat(j)=
+					End SWITCH
+				End FOR
+
+				db_count_elements_in_region (reg_id(i), nelem_in_reg)
+				sys_allocate_array(elem_id_in_reg,1,nelem_in_reg)
+				db_get_elements_in_region ( nelem_in_reg, reg_id(i), elem_id_in_reg)
+				
+				app_int_array_to_vstring("Element", nelem_in_reg, elem_id_in_reg, elem_list)
+				
+				sys_reallocate_string(elem_list, str_length(elem_list) + str_length(sub_list(i)) + 10 )
+				elem_list = elem_list // " " // sub_list(i)
+				
+				elementprops_modify(prop_set_name,		@
+									prop_set_name,		@
+									elem_type_id,		@
+									geom_id,			@
+									con_id,			@
+									for_opt_id,		@
+									lam_id,			@
+									dof_set_id,		@
+									word_id,			@
+									prop_dat_type,		@
+									prop_dat,			@
+									elem_list )
+
+		End FOR
+
+		sys_free_array(region_id)
+		sys_free_array(reg_id)
+		sys_free_array(TNF)
+		sys_free_array(sub_list)				
+		sys_free_array(word_id)
+		sys_free_array(prop_dat_type)
+		sys_free_array(prop_dat)
+		sys_free_string(elem_list)
+		sys_free_array(elem_id_in_reg)
+
+	End Function
+	$==============================================================================================
+	
+	Function uniform_mesh(elem_type, nelem, elem_id, geom_id)
+	integer nelem, i, flag, nval, elem_id()
+	string  geom_id[](), Mesher[8], MeshSize[10](virtual), Action[2], elem_type[], elem_lst[virtual]
+	
+
+	string fem_create_mesh_nodes_created[VIRTUAL], fem_create_mesh_elems_created[VIRTUAL]
+	integer fem_create_mesh_geom_num_nodes, fem_create_mesh_geom_num_elems
+
+		ui_wid_get(optMesher,"VALUE",Mesher)
+
+		IF(Mesher == "IsoMesh") THEN
+			flag = 49152
+			nval = 1
+			sys_allocate_array(MeshSize,1,nval)
+		ELSE 
+			flag = 49680
+			nval = 4
+			sys_allocate_array(MeshSize,1,nval)
+
+			MeshSize(2) = "0.1"
+			MeshSize(3) = "0.2"
+			MeshSize(4) = "1.0"
+		End IF
+
+	app_int_array_to_vstring("Element", nelem, elem_id, elem_lst)
+
+	integer fem_delete_element_deleted_ids
+	IF(Action == "OM") THEN
+		fem_delete_elem_and_node( elem_lst, fem_delete_element_deleted_ids )
+	End IF
+
+	ui_wid_get(dboxMeshSize,"VALUE",MeshSize)
+
+	IF(elem_type == "shell") THEN
+			MeshSize(1) = str_from_real(MeshSize)
+			FOR(i=1 TO nelem)
+			fem_create_mesh_surf_4(	Mesher, flag, geom_id(i), nval, MeshSize, @
+									"Quad4", "#", "#", "Coord 0", "Coord 0",  @
+									fem_create_mesh_geom_num_nodes, fem_create_mesh_geom_num_elems,  @
+									fem_create_mesh_nodes_created, fem_create_mesh_elems_created )
+			End FOR
+	ELSE IF(elem_type == "bar") THEN
+		FOR(i=1 TO nelem)
+			fem_create_mesh_curv_1( geom_id(i), 16384, MeshSize, "Bar2", "#", "#", "Coord 0",  "Coord 0", @
+									fem_create_mesh_geom_num_nodes, fem_create_mesh_geom_num_elems,  @
+									fem_create_mesh_nodes_created, fem_create_mesh_elems_created )
+			
+		dump fem_create_mesh_elems_created
+$		FemFx.Beam2Shell("Element " // fem_create_mesh_elems_created, 1)
+		End FOR
+
+		
+	End IF
+	
+	End Function
+	
+	$==============================================================================================
+	Function variable_mesh(elem_type, nelem, elem_id, geom_id)
+	string elem_type[]
+	integer nelem, elem_id()
+	string geom_id[]()
+
+	integer i, j, k, idx, i_tmp
+	real r_tmp
+
+	string Mesher[8]
+		ui_wid_get(optMesher,"VALUE",Mesher)
+
+	integer flag, nval
+	string VMeshSize[100](virtual)
+
+		IF(Mesher == "IsoMesh") THEN
+			flag = 49152
+			nval = 1
+			sys_allocate_array(VMeshSize,1,nval)
+		ELSE
+			flag = 49680
+			nval = 4
+			sys_allocate_array(VMeshSize,1,nval)
+
+			VMeshSize(2) = "0.1"
+			VMeshSize(3) = "0.2"
+			VMeshSize(4) = "1.0"
+		End IF
+
+	string Refnode[20]
+		ui_wid_get(sboxRefNode, "VALUE", Refnode)
+
+	integer Refnid(1)
+		fem_u_get_id_list (LP_SUBLIST_NODE, Refnode, 1, TRUE, Refnid)
+			
+	real RefXYZ(3)
+		db_get_node(Refnid(1),	RefXYZ)
+
+	string elem_lst[virtual]
+		app_int_array_to_vstring("Element", nelem, elem_id, elem_lst)
+			
+	real ElmXYZ(virtual)
+	integer i_nelm
+		fem_geom_elem_location(elem_lst, ElmXYZ, i_nelm)
+
+	real ref_dist(virtual)
+	sys_allocate_array(ref_dist, 1, nelem)
+	
+	for(i=1 to nelem)
+		ref_dist(i) = mth_sqrt((ElmXYZ(i, 1)-RefXYZ(1))**2 + (ElmXYZ(i, 2)-RefXYZ(2))**2 + (ElmXYZ(i, 3)-RefXYZ(3))**2)
+	end for
+
+	real MeshSizeL1
+		ui_wid_get(dboxMeshSize,"VALUE",MeshSizeL1)
+
+	real EXT	
+		ui_wid_get(dboxExtension, "VALUE", EXT)
+
+
+string fem_create_mesh_nodes_created[VIRTUAL], fem_create_mesh_elems_created[VIRTUAL]
+integer fem_create_mesh_geom_num_nodes, fem_create_mesh_geom_num_elems, fem_delete_element_deleted_ids
+real MeshSize
+	IF(elem_type == "shell") THEN
+
+		FOR(i=1 TO nelem)
+			MeshSize = MeshSizeL1*ref_dist(i)/EXT
+			VMeshSize(1) = str_from_real(MeshSize)
+			fem_create_mesh_surf_4(	Mesher, flag, geom_id(i), nval, VMeshSize, @
+										"Quad4", "#", "#", "Coord 0", "Coord 0",  @
+										fem_create_mesh_geom_num_nodes, @
+										fem_create_mesh_geom_num_elems,  @
+										fem_create_mesh_nodes_created, @
+										fem_create_mesh_elems_created )
+		End FOR
+	ELSE IF(elem_type == "bar") THEN
+		FOR(i=1 TO nelem)
+			MeshSize = MeshSize*ref_dist(i)/EXT
+			fem_create_mesh_curv_1( geom_id(i), 16384, MeshSize, "Bar2", "#", "#", "Coord 0",  "Coord 0", @
+									fem_create_mesh_geom_num_nodes, @
+									fem_create_mesh_geom_num_elems,  @
+									fem_create_mesh_nodes_created, @
+									fem_create_mesh_elems_created )
+
+									dump fem_create_mesh_geom_num_nodes
+									dump fem_create_mesh_geom_num_elems
+									dump fem_create_mesh_nodes_created
+									dump fem_create_mesh_elems_created
+$			FemFx.Beam2Shell("Element " // fem_create_mesh_elems_created, 1)
+		End FOR
+	End IF
+
+sys_free_array(ref_dist)
+sys_free_array(ElmXYZ)
+
+return 0
+
+End Function	
+	$==============================================================================================
+	Function Load_Transfer(nelem, elem_id, surf_id)
+	integer nelem, elem_id(), lbc_id(virtual), lbc_type_id, cat_id, dyn_flag, 		@
+			elem_dim(3), cid_id, var_id(3), i, j, k, geo_fem(3), cnt, app_reg_couple,				@
+			app_reg_order, equiv_flag, acid_mod, field_id(3), field_var(3), n, i_surf_id(virtual),	@
+		    status, nlbc, nbr, lbc_for_elem(virtual), flbc_id
+			
+
+	string surf_id[](), flbc[63], lbc_name[31](virtual),@
+		   global_lbc_name[32], field_name[31](3), @
+		   surf_list[100000](virtual), elem_lst1_for_lbc[virtual], @
+			sel_elem_lst[virtual](1),elem_lst2_for_lbc[virtual], lbc_type_name[32]
+
+
+	real lbc_sf, r_value(3), lbc_sf2(3)
+
+	integer nvar = 3, apprid(2), max_elem_id, nelem_for_lbc(2), elem_id_for_lbc(virtual), len_sel_elem_lst
+	
+	sys_allocate_array(i_surf_id, 1, nelem)
+
+	FOR(i=1 TO nelem)
+		i_surf_id(i) = str_to_integer(str_token(surf_id(i)," ",2))
+	End FOR
+
+	db_get_all_lbc_names_by_type(8)
+	cnt = 0
+	while( status == 0 )
+		cnt += 1
+		sys_reallocate_array(lbc_id,1, cnt)
+		sys_reallocate_array(lbc_name,1, cnt)
+		status = db_get_next_lbc_name_by_type(lbc_id(cnt), lbc_name(cnt))
+	End while
+
+	nlbc = cnt - 1
+	
+	sys_allocate_array(surf_list, 1, nlbc)
+
+	FOR(i=1 TO nlbc)
+		surf_list(i) = "Surface"
+		FOR(j=1 TO nelem)
+			db_count_loads_for_element(elem_id(j), nbr)
+				IF(nbr != 0) THEN
+					sys_allocate_array(lbc_for_elem, 1, nbr)
+					db_get_loads_for_element(nbr, elem_id(j), lbc_for_elem)
+					FOR(k=1 TO nbr)
+						IF(lbc_id(i) == lbc_for_elem(k)) THEN
+							surf_list(i) = surf_list(i) //" "// str_from_integer(i_surf_id(j))
+						End IF
+					End FOR
+				End IF
+		End FOR
+	End FOR
+
+	flbc =  grp_name// ".lbc"
+
+	IF(file_exists(flbc,"") == TRUE) THEN
+		file_delete(flbc)
+	End IF
+
+	text_open(flbc,"NW", 0,0, flbc_id)
+	
+	FOR(i=1 TO nlbc)	next_lbc
+		IF(surf_list(i) == "Surface") THEN
+			continue next_lbc
+		End IF
+		
+		text_write_string(flbc_id, lbc_name(i))
+		text_write_string(flbc_id, surf_list(i))
+
+		db_count_lbc_appl_region_entity(lbc_id(i), apprid, nelem_for_lbc)
+		sys_allocate_array(elem_id_for_lbc, 1, nelem_for_lbc(1))
+		db_get_max_elem_id(max_elem_id)
+		db_get_elems_by_lbc(lbc_id(i), max_elem_id, nelem_for_lbc(1), elem_id_for_lbc)
+		
+		app_int_array_to_vstring("Element", nelem_for_lbc(1), elem_id_for_lbc, elem_lst1_for_lbc)
+		
+		uil_list_a.clear()
+		list_create_elem_ass_geo (3, surf_list(i), "lista", elem_lst2_for_lbc)
+		list_create_elem_ass_geo (4, surf_list(i), "lista", elem_lst2_for_lbc)
+		
+		len_sel_elem_lst = str_length(elem_lst1_for_lbc) + str_length(elem_lst2_for_lbc)
+		sys_allocate_string(sel_elem_lst, len_sel_elem_lst + 1)
+		sel_elem_lst(1) = elem_lst1_for_lbc // " " //elem_lst2_for_lbc
+ 
+		ga_group_create(grp_name // "_" // lbc_name(i))
+		ga_group_entity_add(grp_name // "_" // lbc_name(i), "Elm " // elem_lst2_for_lbc)
+		ga_group_entity_add(grp_name // "_" // lbc_name(i), surf_list(i))
+
+		db_get_lbc_new (											lbc_id(i),				@ 
+								/*	new_name 				*/		global_lbc_name,			@
+								/*	lbc_category			*/		cat_id,					@
+								/*	lbc_type					*/		lbc_type_id,				@
+								/*	target_element			*/		elem_dim,					@
+								/*	load_case_type 		*/		dyn_flag,					@
+								/*	ap_list					*/		cid_id,					@
+								/*	lbc_scale_factor		*/		lbc_sf,					@
+								/*	geo_filter				*/		geo_fem,					@
+								/*	alt_coord_frame		*/		app_reg_couple,			@
+								/*	alt_coord_frame		*/		app_reg_order,				@
+								/*	static_data				*/		equiv_flag,				@
+								/*	dynamic_field_name	*/		acid_mod					)
+
+
+
+		db_get_valid_lbc_var_ids( lbc_type_id, cat_id, elem_dim(1), nvar, var_id )
+		db_bulk_get_lbc_ss(lbc_id(i), 1, nvar, var_id, r_value, field_id, lbc_sf2)
+		
+		FOR(n=1 TO 3)
+			db_get_field_name ( field_id(n), field_name(n), field_var(n))
+			IF(field_name(n)!= "") THEN
+				field_name(n) = "f:" // field_name(n)
+			End IF
+		End FOR
+
+		lbc_type_name = "Pressure"
+		loadsbcs_modify2(	/*	load_case_name			*/		global_lbc_name,		@    
+								/*	new_name 				*/		global_lbc_name,		@   
+								/*	lbc_type					*/		lbc_type_name,			@      
+								/*	lbc_category			*/		"Element Uniform",	@            
+								/*	target_element			*/		"2D",						@         
+								/*	load_case_type 		*/		"Static",				@      
+								/*	ap_list					*/		sel_elem_lst,			@      
+								/*	geo_filter				*/		"FEM" ,					@         
+								/*	alt_coord_frame		*/		"",						@         
+								/*	lbc_scale_factor		*/		str_from_real(lbc_sf),	@
+								/*	static_data				*/		field_name,			@      
+								/*	dynamic_field_name	*/		["","",""])              
+	
+		ui_override_message ( 26002704, "YES")
+
+	End FOR
+
+	text_close(flbc_id,"")
+	
+	sys_free_array(lbc_id)
+	sys_free_array(lbc_name)
+
+	
+	End Function
+
+End CLASS /* BuliderLocalModel */

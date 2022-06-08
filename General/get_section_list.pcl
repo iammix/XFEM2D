@@ -1,0 +1,33 @@
+function get_section_list()
+     
+     string section_name[64](virtual)
+     string shape_name[64](virtual)
+     integer section_id(virtual)
+     
+     integer count
+     
+     count = ideasx_beam_section_list(section_name, shape_name, section_id)
+
+     integer idx
+     
+     string fname[64]
+     fname = "beam_list.csv"
+     
+     integer fid
+     text_open(fname,"nowv",0,0,fid)
+
+     integer i_temp
+     string s_temp[63](2)
+     real r_temp
+     
+     for(idx=1 to count)
+          i_temp = section_id(idx)
+          s_temp(1) = section_name(idx)
+          s_temp(2) = shape_name(idx)
+     
+          text_write(fid,"%2A%, %I%", i_temp, r_temp, s_temp )
+     end for     
+     
+     text_close(fid,"")
+
+end function

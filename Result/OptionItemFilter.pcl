@@ -1,0 +1,151 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME OptionItemFilter
+#define CLASS_STR "OptionItemFilter"
+
+class CLASSNAME
+
+classwide widget mform_id, optFilter, wdbox_option, DBOX_RANGE_MIN, DBOX_RANGE_MAX
+CLASSWIDE WIDGET BTN_OK
+
+function init()
+real YLOC = 0.0
+
+   mform_id = ui_modalform_create(CLASS_STR,       @
+          /* x location */  FORM_X_LOC ,     @
+          /* y location */  FORM_Y_LOC,"UL", @
+          /* width      */  FORM_WID_SML,    @
+          /* height     */  LBOX_5L_HGT_LABOVE + FORM_T_MARGIN + FORM_B_MARGIN,   @
+          /* label      */  "",       @
+                            0)
+    YLOC = FORM_T_MARGIN
+      optFilter = ui_optionmenu_create(                @
+      /*    parent    */              mform_id,        @
+      /*   callback   */              "cb_optFilter",     @
+      /*       x      */              FORM_L_MARGIN,  @
+      /*       y      */              YLOC,      @
+      /* label_length */              FORM_WID_SML/3,            @
+      /*     label    */              "Filter :",        @
+      /*  label_above */              FALSE)
+        
+        ui_item_create(optFilter,"None", "None", TRUE)
+        ui_item_create(optFilter,"Minimum", "Minimum", TRUE)
+        ui_item_create(optFilter,"Maximum", "Maximum", TRUE)
+        ui_item_create(optFilter,"Range", "Range", TRUE)
+        ui_item_create(optFilter,"Exclude", "Exclude", TRUE)
+        
+    YLOC =+ OPT_MENU_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+    
+    DBOX_RANGE_MIN = ui_databox_create(                    @
+      /*    parent    */            mform_id,                @
+      /*   callback   */            "",                    @
+      /*       x      */            FORM_L_MARGIN,    @
+      /*       y      */            YLOC,            @
+      /* label_length */            FORM_WID_SML/3,  @
+      /*  box_length  */            FORM_WID_SML/3,    @
+      /*     label    */            "Minimum:",        @
+      /*     value    */            0.0,                    @
+      /*  label_above */            FALSE,                @
+      /*   datatype   */            "REAL",                @
+      /*   num_vals   */            1)
+
+    YLOC += DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+     
+    DBOX_RANGE_MAX = ui_databox_create(                    @
+      /*    parent    */            mform_id,                @
+      /*   callback   */            "",                    @
+      /*       x      */            FORM_L_MARGIN,    @
+      /*       y      */            YLOC,            @
+      /* label_length */            FORM_WID_SML/3,  @
+      /*  box_length  */            FORM_WID_SML/3,    @
+      /*     label    */            "Maximum:",        @
+      /*     value    */            0.0,                    @
+      /*  label_above */            FALSE,                @
+      /*   datatype   */            "REAL",                @
+      /*   num_vals   */            1)    
+    
+    YLOC += DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+    
+    BTN_OK = ui_button_create(                     @
+      /*   parent  */              mform_id,             @
+      /*  callback */              "cb_OK",       @
+      /*     x     */              BUTTON_HALF_X_LOC1 + BUTTON_WID_HALF/2,  @
+      /*     y     */              YLOC,           @
+      /*   width   */              BUTTON_WID_HALF,     @
+      /*   height  */              BUTTON_DEFAULT_HGT,  @
+      /*   label   */              "OK",    @
+      /*    TRUE   */              TRUE,                @
+      /* highlight */              FALSE)
+    
+            ui_wid_set(DBOX_RANGE_MIN, "VISIBLE", FALSE)
+            ui_wid_set(DBOX_RANGE_MAX, "VISIBLE", FALSE)    
+    
+end function
+
+function display()
+
+    ui_form_display(CLASS_STR)
+    
+end function
+
+function cb_OK()
+    string FilterOption[32], Filter[32]
+    REAL MinValue, MaxValue
+
+    ui_wid_get(optFilter, "VALUE", FilterOption)
+  
+    
+    switch(FilterOption)
+        case("None");
+            Filter = FilterOption
+        case("Minimum");
+            ui_wid_get(DBOX_RANGE_MIN, "VALUE", MinValue)
+            Filter = FilterOption //"="//str_from_real(MinValue)
+
+        case("Maximum");            
+            ui_wid_get(DBOX_RANGE_MAX, "VALUE", MaxValue)
+            Filter = FilterOption //"="//str_from_real(MaxValue)
+                    
+        case("Range");
+            ui_wid_get(DBOX_RANGE_MIN, "VALUE", MinValue)
+            ui_wid_get(DBOX_RANGE_MAX, "VALUE", MaxValue)
+            Filter = FilterOption //"="//str_from_real(MaxValue) //","// str_from_real(MinValue)         
+        case("Exclude");
+            ui_wid_get(DBOX_RANGE_MIN, "VALUE", MinValue)
+            ui_wid_get(DBOX_RANGE_MAX, "VALUE", MaxValue)
+            Filter = FilterOption //"="//str_from_real(MaxValue) //","// str_from_real(MinValue)          
+   end switch
+
+            ui_wid_set(wdbox_option, "VALUE", Filter)
+              
+    ui_form_hide(CLASS_STR)
+  
+end function
+
+function cb_optFilter(sel_item)
+string sel_item[]
+integer idx
+
+    $ ui_wid_get(optFilter, "VALUE", FilterOption)
+    
+    switch(sel_item)
+        case("None");
+            ui_wid_set(DBOX_RANGE_MIN, "VISIBLE", FALSE)
+            ui_wid_set(DBOX_RANGE_MAX, "VISIBLE", FALSE)
+        case("Minimum");
+            ui_wid_set(DBOX_RANGE_MIN, "VISIBLE", TRUE)
+            ui_wid_set(DBOX_RANGE_MAX, "VISIBLE", FALSE)
+        case("Maximum");            
+            ui_wid_set(DBOX_RANGE_MIN, "VISIBLE", FALSE)
+            ui_wid_set(DBOX_RANGE_MAX, "VISIBLE", TRUE)
+        case("Range");
+            ui_wid_set(DBOX_RANGE_MIN, "VISIBLE", TRUE)
+            ui_wid_set(DBOX_RANGE_MAX, "VISIBLE", TRUE)
+        case("Exclude");
+            ui_wid_set(DBOX_RANGE_MIN, "VISIBLE", TRuE)
+            ui_wid_set(DBOX_RANGE_MAX, "VISIBLE", TRUE)
+   end switch
+                            
+end function
+
+end class

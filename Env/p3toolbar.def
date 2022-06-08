@@ -1,0 +1,427 @@
+
+
+*START TOOLBAR    =Transforms
+
+  *ICON     = tbrotatexy.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = rotate_xy
+  *HELP     = Mouse rotate XY
+*LOAD ITEM
+
+  *ICON     = tbrotatez.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = rotate_z
+  *HELP     = Mouse rotate Z
+*LOAD ITEM
+
+  *ICON     = tbtranslatexy.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = translate_xy
+  *HELP     = Mouse translate XY
+*LOAD ITEM
+
+  *ICON     = tbzoom.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = zoom
+  *HELP     = Mouse zoom
+*LOAD ITEM
+
+*END TOOLBAR
+
+*START TOOLBAR    =Viewport 
+
+  *ICON     = tbcorners.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = corners
+  *HELP     = View corners
+*LOAD ITEM
+
+  *ICON     = tbfit.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = fit
+  *HELP     = Fit view
+*LOAD ITEM
+
+  *ICON     = tbcenter.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = center
+  *HELP     = View Center
+*LOAD ITEM
+
+  *ICON     = tbrotcenter.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = rotation_center
+  *HELP     = Rotation center
+*LOAD ITEM
+
+  *ICON     = tbmodelcenter.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = tb_model_center
+  *HELP     = Model center
+*LOAD ITEM
+
+  *ICON     = tbtileviewports.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = tb_tile_viewports
+  *HELP     = Tile Viewports
+*LOAD ITEM
+
+  *ICON     = tbzoomout.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = zoom_out
+  *HELP     = Zoom out
+*LOAD ITEM
+
+  *ICON     = tbzoomin.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = zoom_in
+  *HELP     = Zoom in
+*LOAD ITEM
+
+*END TOOLBAR
+
+*START TOOLBAR    =Display
+
+  *ICON     = tbwireframe.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = tb_wireframe
+  *HELP     = Wireframe
+*LOAD ITEM
+
+  *ICON     = tbhiddenline.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = tb_hidden_line
+  *HELP     = Hidden line
+*LOAD ITEM
+
+  *ICON     = tbshadedsmooth.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = tb_shaded_smooth
+  *HELP     = Smooth shaded
+*LOAD ITEM
+
+  *ICON     = tbelemshrink.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = tb_shrink_elems
+  *HELP     = Element Shrink
+*LOAD ITEM
+
+  *ICON     = tbbwexchg.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = bw_reverse
+  *HELP     = Cycle Background
+*LOAD ITEM
+
+  *ICON     = tblabelscyc.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = tb_labels
+  *HELP     = Cycle Show labels
+*LOAD ITEM
+
+  *ICON     = tbmpc.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = tb_display_mpc_marker
+  *HELP     = MPC Markers On/Off
+*LOAD ITEM
+
+  *ICON     = tbpointelement.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = tb_display_0d_element
+  *HELP     = Point (0D) Element Marker On/Off
+*LOAD ITEM
+
+  *ICON     = tbconnectorelement.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = tb_display_conn_elem_marker
+  *HELP     = Connector Element Markers On/Off
+*LOAD ITEM
+
+*END TOOLBAR
+
+*START TOOLBAR    =ShipView
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\section_view.bmp
+  *CLASS    =
+  *FUNCTION = section_view
+  *HELP     = Section
+  *LOAD ITEM
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\section_front_view.bmp
+  *CLASS    =
+  *FUNCTION = rear_section_view
+  *HELP     = Rear Section
+  *LOAD ITEM
+
+  *ICON     = C:\MSC.Software\IDEAS.ITOP\icons\elev_view.bmp
+  *CLASS    =
+  *FUNCTION = elev_right_view
+  *HELP     = Elevation Right
+  *LOAD ITEM
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\elev_left_view.bmp
+  *CLASS    =
+  *FUNCTION = elev_left_view
+  *HELP     = Elevation Left
+  *LOAD ITEM
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\plan_view.bmp
+  *CLASS    =
+  *FUNCTION = plan_top_view
+  *HELP     = Plan Top
+  *LOAD ITEM
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\plan_bottom_view.bmp
+  *CLASS    =
+  *FUNCTION = plan_bottom_view
+  *HELP     = Plan Bottom
+  *LOAD ITEM
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\iso_s1_view.bmp
+  *CLASS    =
+  *FUNCTION = iso_s1_view
+  *HELP     = Iso s1 view
+  *LOAD ITEM
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\iso_s2_view.bmp
+  *CLASS    =
+  *FUNCTION = iso_s2_view
+  *HELP     = Iso s2 view
+  *LOAD ITEM
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\iso_s3_view.bmp
+  *CLASS    =
+  *FUNCTION = iso_s3_view
+  *HELP     = Iso s3 view
+  *LOAD ITEM
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\iso_s4_view.bmp
+  *CLASS    =
+  *FUNCTION = iso_s4_view
+  *HELP     = Iso s4 view
+  *LOAD ITEM
+  
+*END TOOLBAR
+
+*START TOOLBAR    =Misc.
+
+  *ICON     = tbploterase.bmp
+  *CLASS    =
+  *FUNCTION = tbd(uil_imaging_plot_erase)
+  *HELP     = Plot/Erase
+*LOAD ITEM
+
+  *ICON     = tberasefem.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = plot_erase_fem
+  *HELP     = Plot/Erase FEM
+*LOAD ITEM
+
+  *ICON     = tberasegeometry.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = plot_erase_geom
+  *HELP     = Plot/Erase Geometry
+*LOAD ITEM
+
+  *ICON     = tbplotlbcmarkers.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = plot_lbc_markers
+  *HELP     = Plot LBC Markers
+*LOAD ITEM
+
+  *ICON     = tblabels.bmp
+  *CLASS    = uil_toolbar_labels
+  *FUNCTION = display
+  *HELP     = Label Control
+*LOAD ITEM
+
+  *ICON     = tbpointsize.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = tb_point_size
+  *HELP     = Point size
+*LOAD ITEM
+
+  *ICON     = tbnodesize.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = tb_node_size
+  *HELP     = Node size
+*LOAD ITEM
+
+  *ICON     = tbgeomlines.bmp
+  *CLASS    = uil_toolbar
+  *FUNCTION = geom_zero_lines
+  *HELP     = Display lines
+*LOAD ITEM
+
+*END TOOLBAR
+
+*START TOOLBAR    = Display 2
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\pick_any_entity.bmp
+  *CLASS    = IDEAS_DISPLAY
+  *FUNCTION = set_any_portion
+  *HELP     = Enclose any portion entity
+*LOAD ITEM
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\pick_cen_entity.bmp
+  *CLASS    = IDEAS_DISPLAY
+  *FUNCTION = set_centroid
+  *HELP     = Enclose centroid entity
+*LOAD ITEM
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\pick_entire_entity.bmp
+  *CLASS    = IDEAS_DISPLAY
+  *FUNCTION = set_entire
+  *HELP     = Enclose entire entity
+*LOAD ITEM
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\my3DBeam.bmp
+  *CLASS    = IDEAS_DISPLAY
+  *FUNCTION = plot_beam_shape
+  *HELP     = Plot 3D Beam Shape
+*LOAD ITEM
+*
+  *ICON     = C:\MSC.Software\IDEASX\icons\nor_vec.bmp
+  *CLASS    = IDEAS_DISPLAY
+  *FUNCTION = plot_elem_normal
+  *HELP     = Plot element normal vector
+*LOAD ITEM
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\thickness_fringe.bmp
+  *CLASS    = IDEAS_DISPLAY
+  *FUNCTION = tFringe
+  *HELP     = Thickness Fringe Plot
+*LOAD ITEM
+
+*END TOOLBAR
+*
+*START TOOLBAR    = Groups/Plot
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\auto_plot_fem.bmp
+  *CLASS    = IDEAS_GROUP
+  *FUNCTION = auto_plot_fem
+  *HELP     = Auto Plot/Erase FEM
+*LOAD ITEM
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\gh_group_1.bmp
+  *CLASS    = IDEAS_GROUP
+  *FUNCTION = GRP_TOOLS
+  *HELP     = Group/Plot/Erase Utility Tools
+  *LOAD ITEM
+*
+  *ICON     = C:\MSC.Software\IDEASX\icons\import_1d.bmp
+  *CLASS    = GROUP_UTL
+  *FUNCTION = import_1d_elems_in_group
+  *HELP     = Put 1D Elems in group
+*LOAD ITEM
+*
+  *ICON     = C:\MSC.Software\IDEASX\icons\nodes_in_elems.bmp
+  *CLASS    = GROUP_UTL
+  *FUNCTION = import_nodes_in_group
+  *HELP     = Put nodes in group
+*LOAD ITEM
+*
+  *ICON     = C:\MSC.Software\IDEASX\icons\del_empty_group.bmp
+  *CLASS    = GROUP_UTL
+  *FUNCTION = delete_empty_groups
+  *HELP     = Delete empty groups
+*LOAD ITEM
+
+*END TOOLBAR
+*
+*START TOOLBAR = FEM
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\move_nodes.bmp
+  *CLASS    = IDEAS_FEM
+  *FUNCTION = Move_nodes
+  *HELP     = Move/Copy Nodes
+*LOAD ITEM
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\move_elems.bmp
+  *CLASS    = IDEAS_FEM
+  *FUNCTION = Move_elements
+  *HELP     = Move/Copy Elements
+*LOAD ITEM
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\elem_connect.bmp
+  *CLASS    = IDEAS_FEM
+  *FUNCTION = Modify_elem_connectivity
+  *HELP     = Modify Element Connectivity
+*LOAD ITEM
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\beam_to_shell.bmp
+  *CLASS    = IDEAS_FEM
+  *FUNCTION = Beam_to_shell
+  *HELP     = Beam to Shell
+*LOAD ITEM
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\elem_break.bmp
+  *CLASS    = IDEAS_FEM
+  *FUNCTION = break_elems
+  *HELP     = Break Element
+*LOAD ITEM
+
+  *ICON     = C:\MSC.Software\IDEASX\icons\elem_break_P.bmp
+  *CLASS    = IDEAS_FEM
+  *FUNCTION = Element_Pattern_Split_tb
+  *HELP     = Element Pattern Split
+*LOAD ITEM
+*
+  *ICON     = C:\MSC.Software\IDEASX\icons\elem_break_L.bmp
+  *CLASS    = IDEAS_FEM
+  *FUNCTION = Element_Line_Split_tb
+  *HELP     = Element Line Split
+*LOAD ITEM
+*
+  *ICON     = C:\MSC.Software\IDEASX\icons\elem_modify.bmp
+  *CLASS    = IDEAS_FEM
+  *FUNCTION = Element_Modify_tb
+  *HELP     = Element Modify
+*LOAD ITEM
+*
+  *ICON     = C:\MSC.Software\IDEASX\icons\elem_combine.bmp
+  *CLASS    = IDEAS_FEM
+  *FUNCTION = elems_combine
+  *HELP     = Combined Elements
+*LOAD ITEM
+ *
+  *ICON     = C:\MSC.Software\IDEASX\icons\node_on_curve.bmp
+  *CLASS    = IDEAS_FEM
+  *FUNCTION = Move_nodes_on_curve
+  *HELP     = Move nodes on curve
+*LOAD ITEM
+*
+  *ICON     = C:\MSC.Software\IDEASX\icons\node_on_elem.bmp
+  *CLASS    = IDEAS_FEM
+  *FUNCTION = Move_nodes_on_element
+  *HELP     = Move nodes on element
+*LOAD ITEM
+*
+  *ICON     = C:\MSC.Software\IDEASX\icons\node_on_surf.bmp
+  *CLASS    = IDEAS_FEM
+  *FUNCTION = Move_nodes_on_surface
+  *HELP     = Move nodes on surface
+*LOAD ITEM
+*
+  *ICON     = C:\MSC.Software\IDEASX\icons\equi.bmp
+  *CLASS    = IDEAS_FEM
+  *FUNCTION = equivalence
+  *HELP     = equivalence
+*LOAD ITEM
+*
+  *ICON     = C:\MSC.Software\IDEASX\icons\tbmpc.bmp
+  *CLASS    = IDEAS_FEM
+  *FUNCTION = rbe_spider
+  *HELP     = RBE Spider
+*LOAD ITEM
+
+*END TOOLBAR
+
+*START TOOLBAR    = Model Tree
+
+  *ICON     = modeltree.bmp
+  *CLASS    =
+  *FUNCTION = toggleModelTree
+  *HELP     = Show/Hide Model Tree
+*LOAD ITEM
+
+*END TOOLBAR

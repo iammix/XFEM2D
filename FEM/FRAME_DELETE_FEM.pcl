@@ -1,0 +1,87 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME FRAME_DELETE_FEM
+#define CLASS_STR "FRAME_DELETE_FEM"
+
+class CLASSNAME
+
+$ ui_frame_elem_del
+classwide widget frame_03, sframe_03, wa_sdbox_03(1), tgl_DeleteNode
+classwide widget btn_Apply_03
+
+/*******************************************************************************
+ 	Action-Delete, Object-Element 
+ *******************************************************************************/
+ function UI_FRAME_DELETE_FEM(form_id, Y_LOC)
+ widget form_id
+ real Y_LOC
+
+	widget frame_id
+ 
+ 	REAL WXLOC1, WXLOC2, WXLOC3
+ 	
+ 	WXLOC1 = FORM_WID_SML*1/3
+ 	WXLOC2 = FORM_WID_SML*2/3 - INTER_WIDGET_SPACE * 2
+ 	WXLOC3 = FORM_WID_SML*3/3 - INTER_WIDGET_SPACE * 2
+ 
+ 	frame_id = ui_frame_create(form_id,"", @
+ 								 0, @
+ 								 Y_LOC, @
+								 FORM_WID_SML, @
+  								 0, @
+ 								 "")
+ 	REAL Y_LOCF
+     Y_LOCF = FRAME_T_MARGIN
+ 
+ 	tgl_DeleteNode = ui_toggle_create(                       @
+           /*  parent  */             frame_id,              @
+           /* callback */             "",                    @
+           /*     x    */             FORM_L_MARGIN,         @
+           /*     y    */             Y_LOCF,         @
+           /*   label  */             "Delete Related Node")
+ 
+     Y_LOCF += TOGGLE_HGT + INTER_WIDGET_SPACE
+	ui_wid_set(tgl_DeleteNode,"VALUE", TRUE)
+
+	sframe_03 = ui_select_frame_set(				@
+	/* parent widget id(input) 	*/	frame_id,		@
+	/*	select frame callback	*/	CLASS_STR // ".Apply_Click",	@	
+	/* 	select frame label		*/	"Autoexec",	@
+	/*		x				*/	FORM_L_MARGIN,	@	
+	/*		y				*/	Y_LOCF, 		@
+	/*	select databax array	*/	wa_sdbox_03,	@
+	/* 	data type	array		*/	["ELEMENT"],		@
+	/* 	select databox label array	*/ 	["Element List"],	@
+	/*	select databox collback array	*/ 	[""], @
+	/*	label avove logical	*/			TRUE)	 
+	 
+	 
+	 Y_LOCF += INTER_WIDGET_SPACE
+      
+	 ui_wid_set(frame_id, "HEIGHT", Y_LOCF)
+
+      Y_LOC += Y_LOCF + INTER_WIDGET_SPACE	
+   
+	return frame_id
+
+end function
+
+$ Action-Delete
+function Apply_Click()  
+	uil_primary_file.db_save()
+	string element_list[virtual]
+	ui_wid_get_vstring(wa_sdbox_03(1), "VALUE", element_list)
+	logical RelatedNode
+	ui_wid_get(tgl_DeleteNode, "VALUE", RelatedNode)
+	          
+	string fem_delete_element_deleted_ids[virtual]	          
+	if(RelatedNode == TRUE)then
+		fem_delete_elem_and_node( element_list, fem_delete_element_deleted_ids )
+	else if((RelatedNode == FALSE))then
+		fem_delete_element( element_list, fem_delete_element_deleted_ids )
+	end if
+     repaint_graphics()
+return 0		
+end function
+
+END CLASS

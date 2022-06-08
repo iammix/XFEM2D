@@ -1,0 +1,23 @@
+function list_in_bracket_from_xyz(bracket, r_xyz)
+	string bracket[]
+	real r_xyz()
+
+	integer i, len
+	for(i = 1 to 3)
+		len = len + str_length(str_from_real(r_xyz(i)))
+	end for
+	
+	string lista[virtual]
+	
+	sys_allocate_string(lista, len + 5)
+
+	lista = str_token(bracket," ", 1) // str_from_real(r_xyz(1)) // "," @ 
+			  // str_from_real(r_xyz(2)) // "," @
+			  // str_from_real(r_xyz(3)) // str_token(bracket," ", 2)
+	              
+	return lista
+end function
+
+
+
+ 

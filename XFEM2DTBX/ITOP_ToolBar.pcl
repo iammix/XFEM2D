@@ -1,0 +1,61 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME ITOP_ToolBar
+#define CLASS_STR "ITOP_ToolBar"
+
+CLASS CLASSNAME
+
+/* Classwide Variables */
+   CLASSWIDE WIDGET form_id, lstbox_group
+   CLASSWIDE WIDGET btnApply, dbox_prefix
+
+ FUNCTION init()
+
+      REAL y_loc
+
+      form_id=ui_form_create(                     @
+      /* callback */         "",                  @
+      /*     x    */         FORM_X_LOC_SPL,      @
+      /*     y    */         FORM_Y_LOC,          @
+      /* position */         "UL",                @
+      /*   width  */         FORM_WID_SML/3,        @
+      /*  height  */         FORM_HGT_TALL,       @
+      /*   label  */         "ITOP",  @
+      /*  unused  */         "")
+
+	y_loc = FORM_T_MARGIN
+
+$      ui_wid_set(form_id,"HEIGHT",y_loc)
+
+   End Function /* init */
+
+FUNCTION display()
+
+    ui_exec_function(CLASS_STR, "init")
+    ui_form_display(CLASS_STR)
+
+
+END FUNCTION /* display */
+
+/*
+FUNCTION cb_Apply()
+
+	ui_form_hide(CLASS_STR)
+     ui_form_delete(CLASS_STR)
+
+END FUNCTION
+*/
+/*
+FUNCTION cb_prefix(event)
+string event[], prefix[32]
+
+ if(event == "LOSE") then
+    ui_wid_get(dbox_prefix, "VALUE", prefix)
+    RESULT_TOOL.Load_Result_Group(lstbox_result_group, prefix)
+ end if
+
+END FUNCTION
+*/
+
+END CLASS
+

@@ -1,0 +1,407 @@
+FUNCTION Thick_FringePlot()
+
+integer group_id
+db_get_current_group_id(group_id)
+
+integer nElem
+db_count_elems_in_group ( group_id, nElem )
+
+integer ia_ElemID(virtual)
+sys_allocate_array(ia_ElemID, 1, nElem)
+
+db_get_elem_ids_in_group ( nElem, group_id, ia_ElemID )
+
+integer ia_ShapeID(virtual)
+sys_allocate_array(ia_ShapeID, 1, nElem)
+
+db_get_elem_shape_for_id(nElem, ia_ElemID, ia_ShapeID)
+
+integer idx, nElem2D, iv_Elem2D(virtual)
+sys_allocate_array(iv_Elem2D, 1, 1)
+
+nElem2D = 0
+for(idx=1 to nElem)
+	if(ia_ShapeID(idx) == 3 || ia_ShapeID(idx)== 4) then
+		nElem2D += 1
+		sys_reallocate_array(iv_Elem2D, 1, nElem2D)
+		iv_Elem2D(nElem2D) = ia_ElemID(idx) 
+	end if
+end for
+
+sys_free_array(ia_ElemID)
+
+integer ia_regID(virtual)
+sys_allocate_array(ia_regID, 1, nElem2D)
+
+db_get_region_for_elements(nElem2D, iv_Elem2D, ia_regID)
+
+integer nreg
+mth_sort(ia_regID, TRUE, nreg)
+
+string s_dummy[32]
+integer i_dummy
+real r_thk(virtual)
+
+sys_allocate_array(r_thk, 1, nreg + 2)
+
+for(idx=1 to nreg)
+	PropFx.ideasx_get_shell_property(ia_regID(idx), i_dummy, s_dummy, r_thk(idx))
+end for
+
+nreg += 1 
+r_thk(nreg) = 100.
+nreg += 1
+r_thk(nreg) = 0.
+
+integer nrng
+
+nrng = real_sort(nreg, r_thk, TRUE)
+
+if(nrng > 14) then 
+	nrng = 15
+end if
+
+sys_reallocate_array(r_thk, 1, nrng)
+
+real ra_from(virtual), ra_to(virtual), ra_mid(virtual)
+
+sys_allocate_array(ra_from, 1, nrng-1)
+sys_allocate_array(ra_to, 1, nrng-1)
+sys_allocate_array(ra_mid, 1, nrng-1)
+
+integer i
+for(i=1 to nrng-1)
+	ra_from(i) = r_thk(i)
+	ra_to(i) = r_thk(i+1)
+	ra_mid(i) = (ra_from(i) + ra_to(i)) / 2.0
+end for
+
+$ ga_range_delete( "thicknessPlot" )
+$ ga_spectrum_current_set( "sequential_spectrum" ) 
+
+ga_range_delete( "thicknessPlot" )
+ga_range_create( "thicknessPlot", nrng-1)
+integer rng_id
+db_get_range_id("thicknessPlot", rng_id)
+ga_db_range_set_label_style_m( 1, 7, 0, 12, 3, rng_id, "thicknessPlot" )
+ga_db_range_set_label_display_m( 1, 1, 0, 0, 0, 0, rng_id, "thickness" )
+$ga_db_range_set_label_control_m( 0, "", "", "", rng_id, "thickness" )
+$ga_db_range_set_no_subrange_m( 1, 0, "", 7, rng_id, "thickness" )
+ga_db_range_set_attributes_m( 1, 0, 0, 0, rng_id, "thicknessPlot" )
+ga_db_range_set_data_method_m( 1, 8, 2, 0, 0, [0., 0.], [0], [""], nrng-1, rng_id, "thicknessPlot" )
+ga_db_range_set_subranges_flt_m( nrng-1, ra_from, ra_to, ra_mid, rng_id, "thicknessPlot" )
+
+INTEGER table_id
+REAL min
+REAL max
+STRING group_name[32](1)
+
+db_get_group_name(group_id, group_name(1))
+
+elementprops_plot_scalar.create_v2( 36, 1, group_name, "Thickness", table_id, min, max )
+res_data_load_elem_scalar( 0, table_id )
+res_data_title( 0, "ENodal", "Scalar", 1, ["Thickness Scalar Plot"] )	
+
+group_name(1) = "GR:"//group_name(1)
+res_display_fringe_create( "", "FreeFaces", 1, group_name, 10, [ @
+   "Range:thicknessPlot", "RangeOverwrite:OFF", "FringeStyle:Discrete/Smooth",  @
+   "Shade:None", "ElemEdge:FreeEdge,Blue,Solid,1", "Shrink:0", "TitleDisplay:ON", @
+    "MinMaxDisplay:OFF", "ValueDisplay:OFF", "Filter:None", "ScaleFactor:1.0",  @
+   "LabelStyle:Fixed, 12, White, 3"], TRUE )
+
+res_display_fringe_post( "", 0, "ENodal", TRUE, TRUE )
+
+sys_free_array(r_thk)
+sys_free_array(ra_from)
+sys_free_array(ra_to)
+sys_free_array(ra_mid)
+
+return		
+END FUNCTION
+
+FUNCTION Area_FringePlot()
+
+integer group_id
+db_get_current_group_id(group_id)
+
+integer nElem
+db_count_elems_in_group ( group_id, nElem )
+
+integer ia_ElemID(virtual)
+sys_allocate_array(ia_ElemID, 1, nElem)
+
+db_get_elem_ids_in_group ( nElem, group_id, ia_ElemID )
+
+integer ia_ShapeID(virtual)
+sys_allocate_array(ia_ShapeID, 1, nElem)
+
+db_get_elem_shape_for_id(nElem, ia_ElemID, ia_ShapeID)
+
+integer idx, nElem1D, iv_Elem1D(virtual)
+sys_allocate_array(iv_Elem1D, 1, 1)
+
+nElem1D = 0
+for(idx=1 to nElem)
+	if(ia_ShapeID(idx) == 2) then
+		nElem1D += 1
+		sys_reallocate_array(iv_Elem1D, 1, nElem1D)
+		iv_Elem1D(nElem1D) = ia_ElemID(idx) 
+	end if
+end for
+
+sys_free_array(ia_ElemID)
+
+integer ia_regID(virtual)
+sys_allocate_array(ia_regID, 1, nElem1D)
+
+db_get_region_for_elements(nElem1D, iv_Elem1D, ia_regID)
+
+integer nreg
+mth_sort(ia_regID, TRUE, nreg)
+
+string s_dummy[32]
+integer i_dummy
+real r_area(virtual)
+
+sys_allocate_array(r_area, 1, nreg + 2)
+
+for(idx=1 to nreg)
+	PropFx.ideasx_get_rod_property(ia_regID(idx), i_dummy, s_dummy, r_area(idx))
+end for
+
+nreg += 1 
+r_area(nreg) = 1.e6
+nreg += 1
+r_area(nreg) = 0.
+
+integer nrng
+
+nrng = real_sort(nreg, r_area, TRUE)
+
+if(nrng > 14) then 
+	nrng = 15
+end if
+
+sys_reallocate_array(r_area, 1, nrng)
+
+real ra_from(virtual), ra_to(virtual), ra_mid(virtual)
+
+sys_allocate_array(ra_from, 1, nrng-1)
+sys_allocate_array(ra_to, 1, nrng-1)
+sys_allocate_array(ra_mid, 1, nrng-1)
+
+integer i
+for(i=1 to nrng-1)
+	ra_from(i) = r_area(i)
+	ra_to(i) = r_area(i+1)
+	ra_mid(i) = (ra_from(i) + ra_to(i)) / 2.0
+end for
+
+$ ga_range_delete( "thicknessPlot" )
+$ ga_spectrum_current_set( "sequential_spectrum" ) 
+$ ga_range_create( "thicknessPlot", nrng-1)
+
+ga_range_delete( "AreaPlot" )
+ga_range_create( "AreaPlot", nrng-1)
+integer rng_id
+db_get_range_id("AreaPlot", rng_id)
+ga_db_range_set_label_style_m( 1, 7, 2, 12, 3, rng_id, "AreaPlot" )
+ga_db_range_set_label_display_m( 1, 1, 0, 0, 0, 0, rng_id, "AreaPlot" )
+$ga_db_range_set_label_control_m( 0, "", "", "", rng_id, "thickness" )
+$ga_db_range_set_no_subrange_m( 1, 0, "", 7, rng_id, "thickness" )
+ga_db_range_set_attributes_m( 1, 0, 0, 0, rng_id, "AreaPlot" )
+ga_db_range_set_data_method_m( 1, 8, 2, 0, 0, [0., 0.], [0], [""], nrng-1, rng_id, "AreaPlot" )
+ga_db_range_set_subranges_flt_m( nrng-1, ra_from, ra_to, ra_mid, rng_id, "AreaPlot" )
+
+INTEGER table_id
+REAL min
+REAL max
+STRING group_name[32](1)
+
+db_get_group_name(group_id, group_name(1))
+
+elementprops_plot_scalar.create_v2( 1, 1, group_name, "Area", table_id, min, max )
+res_data_load_elem_scalar( 0, table_id )
+res_data_title( 0, "ENodal", "Scalar", 1, ["Area Scalar Plot"] )	
+	
+group_name(1) = "GR:"//group_name(1)
+res_display_fringe_create( "", "FreeFaces", 1, group_name, 10, [ @
+   "Range:AreaPlot", "RangeOverwrite:OFF", "FringeStyle:Discrete/Smooth",  @
+   "Shade:None", "ElemEdge:None,Blue,Solid,5", "Shrink:10", "TitleDisplay:ON", @
+    "MinMaxDisplay:OFF", "ValueDisplay:OFF", "Filter:None", "ScaleFactor:1.0",  @
+   "LabelStyle:Integer, 12, White, 3"], TRUE )
+
+res_display_fringe_post( "", 0, "ENodal", TRUE, TRUE )
+
+sys_free_array(r_area)
+sys_free_array(ra_to)
+sys_free_array(ra_from)
+sys_free_array(ra_mid)
+
+return		
+END FUNCTION
+
+FUNCTION SectionName_FringePlot()
+
+integer group_id
+db_get_current_group_id(group_id)
+
+integer nElem
+db_count_elems_in_group ( group_id, nElem )
+
+integer ia_ElemID(virtual)
+sys_allocate_array(ia_ElemID, 1, nElem)
+
+db_get_elem_ids_in_group ( nElem, group_id, ia_ElemID )
+
+integer ia_ShapeID(virtual)
+sys_allocate_array(ia_ShapeID, 1, nElem)
+
+db_get_elem_shape_for_id(nElem, ia_ElemID, ia_ShapeID)
+
+integer idx, nElem1D, iv_Elem1D(virtual)
+sys_allocate_array(iv_Elem1D, 1, 1)
+
+nElem1D = 0
+for(idx=1 to nElem)
+	if(ia_ShapeID(idx) == 2) then
+		nElem1D += 1
+		sys_reallocate_array(iv_Elem1D, 1, nElem1D)
+		iv_Elem1D(nElem1D) = ia_ElemID(idx) 
+	end if
+end for
+
+sys_free_array(ia_ElemID)
+
+integer ia_regID(virtual)
+sys_allocate_array(ia_regID, 1, nElem1D)
+
+db_get_region_for_elements(nElem1D, iv_Elem1D, ia_regID)
+
+integer nreg
+mth_sort(ia_regID, TRUE, nreg)
+
+string s_dummy[32]
+integer i_dummy
+real ra_dummy(3)
+integer sec_id(virtual)
+
+sys_allocate_array(sec_id, 1, nreg + 2)
+
+for(idx=1 to nreg)
+	PropFx.ideasx_get_beam_property(ia_regID(idx), i_dummy, s_dummy, s_dummy, @
+				sec_id(idx), s_dummy, i_dummy, ra_dummy, ra_dummy, ra_dummy)
+end for
+
+nreg += 1 
+sec_id(nreg) = 1000
+nreg += 1
+sec_id(nreg) = 0.
+
+integer nrng
+
+mth_sort(sec_id, TRUE, nrng)
+$ nrng = real_sort(nreg, sec_id, TRUE)
+
+if(nrng > 14) then 
+	nrng = 15
+end if
+
+sys_reallocate_array(sec_id, 1, nrng)
+
+real ra_from(virtual), ra_to(virtual), ra_mid(virtual)
+
+sys_allocate_array(ra_from, 1, nrng-1)
+sys_allocate_array(ra_to, 1, nrng-1)
+sys_allocate_array(ra_mid, 1, nrng-1)
+
+integer i
+for(i=1 to nrng-1)
+	ra_from(i) = sec_id(i)
+	ra_to(i) = sec_id(i+1)
+	ra_mid(i) = (ra_from(i) + ra_to(i)) / 2.0
+end for
+
+$ ga_range_delete( "thicknessPlot" )
+$ ga_spectrum_current_set( "sequential_spectrum" ) 
+$ ga_range_create( "thicknessPlot", nrng-1)
+
+ga_range_delete( "SectionFringePlot" )
+ga_range_create( "SectionFringePlot", nrng-1)
+integer rng_id
+db_get_range_id("SectionFringePlot", rng_id)
+ga_db_range_set_label_style_m( 1, 7, 2, 12, 3, rng_id, "SectionFringePlot" )
+ga_db_range_set_label_display_m( 1, 1, 0, 0, 0, 0, rng_id, "SectionFringePlot" )
+$ga_db_range_set_label_control_m( 0, "", "", "", rng_id, "thickness" )
+$ga_db_range_set_no_subrange_m( 1, 0, "", 7, rng_id, "thickness" )
+ga_db_range_set_attributes_m( 1, 0, 0, 0, rng_id, "SectionFringePlot" )
+ga_db_range_set_data_method_m( 1, 8, 2, 0, 0, [0., 0.], [0], [""], nrng-1, rng_id, "SectionFringePlot" )
+ga_db_range_set_subranges_flt_m( nrng-1, ra_from, ra_to, ra_mid, rng_id, "SectionFringePlot" )
+
+INTEGER table_id
+REAL min
+REAL max
+STRING group_name[32](1)
+
+db_get_group_name(group_id, group_name(1))
+
+elementprops_plot_scalar.create_v2( 39, 1, group_name, "Section Name", table_id, min, max )
+res_data_load_elem_scalar( 0, table_id )
+res_data_title( 0, "ENodal", "Scalar", 1, ["Section Name Scalar Plot"] )	
+	
+group_name(1) = "GR:"//group_name(1)
+res_display_fringe_create( "", "FreeFaces", 1, group_name, 10, [ @
+   "Range:SectionFringePlot", "RangeOverwrite:OFF", "FringeStyle:Discrete/Smooth",  @
+   "Shade:None", "ElemEdge:None,Blue,Solid,5", "Shrink:10", "TitleDisplay:ON", @
+    "MinMaxDisplay:OFF", "ValueDisplay:OFF", "Filter:None", "ScaleFactor:1.0",  @
+   "LabelStyle:Integer, 12, White, 3"], TRUE )
+
+res_display_fringe_post( "", 0, "ENodal", TRUE, TRUE )
+
+sys_free_array(sec_id)
+sys_free_array(ra_from)
+sys_free_array(ra_to)
+sys_free_array(ra_mid)
+return		
+END FUNCTION
+
+function real_sort(nval, r_value, dupflag)
+integer nval
+real r_value()
+logical dupflag
+
+real t
+integer i, j
+
+for(i=1  to nval)
+	for(j = i to nval)
+		if(r_value(i) < r_value(j)) then
+			t = r_value(j)
+			r_value(j) = r_value(i)
+			r_value(i) = t
+		end if 
+	end for
+end for
+
+integer cnt = 0
+
+if(dupflag == TRUE) then
+	integer idx = 1
+	while(idx < nval - cnt)
+		if(r_value(idx) == r_value(idx+1))then
+			for(j = idx+1 to nval-1)
+				r_value(j) = r_value(j+1)
+			end for
+			cnt += 1
+		else
+			idx += 1
+		end if
+	end while	
+else
+	idx = nval
+end if
+
+return idx
+
+end function
+

@@ -1,0 +1,22 @@
+FUNCTION xfem_get_elems_ass_nodes(nNode, NodeIds, nElem, ElemIds)
+	integer nNode, NodeIds(), nElem, ElemIds()
+	integer ia_nElem(virtual), ia_ElemId(virtual)
+	integer MaxElem = 16
+	integer cnt, i
+	
+	sys_allocate_array(ia_nElem, 1, nNode)
+	sys_allocate_array(ia_ElemId, 1, nNode*MaxElem)
+	db_get_elems_using_nodes(nNode, NodeIds, MaxElem, ia_nElem, ia_ElemId)
+	
+	cnt = 0
+	FOR(i=1 TO nNode*MaxElem)
+		IF(ia_ElemId(i) !=0) THEN
+			cnt += 1
+			sys_reallocate_array(ElemIds, 1, cnt)
+			ElemIds(cnt) = ia_ElemId(i)
+		END IF
+	END FOR
+	
+	mth_sort(ElemIds, TRUE, nElem)
+	sys_reallocate_array(ElemIds, 1, nElem)
+END FUNCTION

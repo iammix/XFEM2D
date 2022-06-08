@@ -1,0 +1,726 @@
+#include "appforms.p"
+#include "lpenums.p"
+
+$ Lumped Beam Property Definition Tool(LBP)
+CLASS LBP
+
+/* Classwide Variables */
+   CLASSWIDE WIDGET form_id,  dboxStiffNos, dboxPropName,tgl_rev_normal, opt_Action
+   CLASSWIDE WIDGET dboxCompNo,tbl_Stiff_Info,sfraSelBeam,sboxSelBeam,lstMaterial
+   CLASSWIDE WIDGET fraTable,dboxTValue,btnApply, btnCancel, lbl_picture
+   
+   FUNCTION init()
+      REAL yloc_main, yloc_fraTable, hgt_frame, pic_height
+      
+      form_id=ui_form_create(                 @
+      /* callback */         "",              @
+      /*     x    */         FORM_X_LOC_SML,  @
+      /*     y    */         FORM_Y_LOC,      @
+      /* position */         "UL",            @
+      /*   width  */         FORM_WID_SML,    @
+      /*  height  */         FORM_HGT_TALL,   @
+      /*   label  */         "Lumped Beam Properties",      @
+      /*  unused  */         "")
+
+	opt_Action=ui_optionmenu_create(@
+						/* parent       */  form_id, @
+						/* callback     */  "cbAction", @
+						/* x            */ AOM_MENU_X_LOC, @
+						/* y            */ ACTION_MENU_Y_LOC, @
+						/* label length */ AOM_MENU_LABEL_LEN, @
+						/* label        */ "Action:", @
+						/*              */  false)
+
+      ui_item_create(opt_action,"CREATE","Create",true)
+      ui_item_create(opt_action,"MODIFY","Modify",true)
+
+      yloc_main = ACTION_MENU_Y_LOC + OPT_MENU_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+	
+	ui_separator_create(/* patrent  */  form_id, @
+                    /* callback */  "",@
+                    /* x        */  0, @
+                    /* y        */  yloc_main, @
+                    /* width    */  FORM_WID_SML, @
+                                    true)
+	yloc_main += INTER_WIDGET_SPACE
+
+      lbl_picture = ui_labelicon_create ( form_id, "", FORM_L_MARGIN, yloc_main, "beam.bmp" )
+      ui_wid_get(lbl_picture,"HEIGHT",pic_height)
+      yloc_main += pic_height + INTER_WIDGET_SPACE
+
+	  dboxStiffNos=ui_databox_create(                @
+      /*    parent    */       form_id,       @
+      /*   callback   */       "",             @
+      /*       x      */       FORM_L_MARGIN,  @
+      /*       y      */       yloc_main,  @
+      /* label_length */       DBOX_WID_SINGLE*3/4,            @
+      /*  box_length  */       DBOX_WID_SINGLE/4,     @
+      /*     label    */       "The Number of Stiffeners",   @
+      /*     value    */       "",             @
+      /*  label_above */       FALSE,          @
+      /*   datatype   */       "INTEGER",         @
+      /*   num_vals   */       1)
+	  
+	  yloc_main += DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+
+	  dboxCompNo=ui_databox_create(                @
+      /*    parent    */       form_id,       @
+      /*   callback   */       "cbCompNo",             @
+      /*       x      */       FORM_L_MARGIN,  @
+      /*       y      */       yloc_main,  @
+      /* label_length */       DBOX_WID_SINGLE*3/4,            @
+      /*  box_length  */       DBOX_WID_SINGLE/4,     @
+      /*     label    */       "The Number of Compartment",   @
+      /*     value    */       "",             @
+      /*  label_above */       FALSE,          @
+      /*   datatype   */       "INTEGER",         @
+      /*   num_vals   */       1)
+	  
+	  yloc_main += DBOX_HGT_NO_LABOVE
+
+      fraTable=ui_frame_create(                     @
+      /* parent */          form_id,             @
+      /*  name  */          "",                  @
+      /*    x   */          FRAME_X_LOC_COL1,    @
+      /*    y   */          yloc_main,           @
+      /*  width */          FRAME_WID_SINGLE,    @
+      /* height */          2+FRAME_T_MARGIN*2+DBOX_HGT_NO_LABOVE, @
+      /*  label */          "")
+
+      yloc_fraTable = FRAME_T_MARGIN
+
+      dboxTValue=ui_databox_create(                @
+      /*    parent    */       fraTable,       @
+      /*   callback   */       "cbTValue",             @
+      /*       x      */       FORM_L_MARGIN,  @
+      /*       y      */       yloc_fraTable,  @
+      /* label_length */       DBOX_WID_SINGLE/2,            @
+      /*  box_length  */       DBOX_WID_SINGLE/2,     @
+      /*     label    */       "Input Data",   @
+      /*     value    */       "",             @
+      /*  label_above */       FALSE,          @
+      /*   datatype   */       "String",         @
+      /*   num_vals   */       1)
+	
+	yloc_fraTable += DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE 
+
+	tbl_Stiff_Info =ui_spread_create(	/*   parent       */    fraTable,	@     
+				/*  callback      */   "cbStiffInfo",		@
+				/*  x             */   FORM_L_MARGIN,	@
+				/*  y             */   yloc_fraTable,	@
+				/*  width         */   DBOX_WID_SINGLE, @
+				/*  height        */   2,		@
+				/*  label_width   */   0.2,		@
+				/*  num_vis_cols  */   2,		@
+				/*  num_cols      */   5,		@
+				/*  num_rows      */   0,		@
+				/*  num_layers    */   1,		@
+				/*  col_labels         */["Size","Type","Numbers","Eff. Bredth", "Plt. Thk"],@
+				/*  row_labels         */[""],		@
+				/*  label              */"Lumped Beam Properties",	@
+				/*  layer_label        */""	,	@
+				/*  layer_value_label  */"",	@
+				/*  selection_type     */"EXTEND")
+	
+	ui_wid_get(fraTable,"HEIGHT",hgt_frame)
+	yloc_main += hgt_frame + INTER_WIDGET_SPACE
+	
+    dboxPropName=ui_databox_create(                @
+      /*    parent    */       form_id,       @
+      /*   callback   */       "",             @
+      /*       x      */       FORM_L_MARGIN,  @
+      /*       y      */       yloc_main,  @
+      /* label_length */       DBOX_WID_SINGLE/2,            @
+      /*  box_length  */       DBOX_WID_SINGLE/2,     @
+      /*     label    */       "Property Name",   @
+      /*     value    */       "",             @
+      /*  label_above */       FALSE,          @
+      /*   datatype   */       "String",         @
+      /*   num_vals   */       1)
+	yloc_main += DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+	
+	lstMaterial=ui_listbox_create(              @
+		/*     parent     */   form_id,         @
+		/*    callback    */   "",				@
+		/*        x       */   FORM_L_MARGIN,   @
+		/*        y       */   yloc_main,       @
+		/*      width     */   LBOX_WID_SINGLE, @
+		/*    num_rows    */   3,               @
+		/*      label     */   "Material List", @
+		/* selection_type */   "SINGLE",        @
+		/*      sort      */   TRUE)
+
+	ui_wid_set(lstMaterial,"DUPLICATEITEM",FALSE)
+
+	yloc_main += LBOX_3L_HGT_LABOVE  + @
+                   INTER_WIDGET_SPACE
+    tgl_rev_normal=ui_toggle_create(								@
+		  /*  parent  */				form_id,					@
+		  /* callback */				"",							@
+		  /*     x    */                FORM_L_MARGIN,				@
+		  /*     y    */                yloc_main,					@
+		  /*   label  */                "Reverse Dir. of Normal") 
+
+	yloc_main += TOGGLE_HGT  + @
+                   INTER_WIDGET_SPACE
+
+	sfraSelBeam=ui_selectframe_create(@
+		/*		parent		*/			form_id,			@
+		/*		callback	*/			"",					@
+		/*		x			*/			SFRAME_X_LOC_COL1,	@
+		/*		y			*/			yloc_main,			@
+		/*		width		*/			SFRAME_WID_SINGLE,	@
+		/*		height		*/			SFRAME_1SDB_HGT_LABOVE,	@
+		/*		label		*/			"",						@
+		/*		recycle		*/			FALSE				)
+
+	sboxSelBeam= ui_selectdatabox_create(					@
+		/*    parent    */				 sfraSelBeam,		@
+		/*   callback   */				 "",				@
+		/*       x      */				 SFRAME_L_MARGIN,	@
+		/*       y      */				 SFRAME_T_MARGIN,	@
+		/* label_length */				 SDBOX_LABEL_LEN_SINGLE,@
+		/*  box_length  */				 SDBOX_WID_SINGLE,	@
+		/*     label    */				 "Select Stiff.",	@
+		/*     value    */				 "",				@
+		/*  label_above */				 TRUE,				@
+		/*   datatype   */				 "BEAMELEM",		@
+		/*   prompt     */				 ""					)				
+	
+	yloc_main += SFRAME_1SDB_HGT_LABOVE + INTER_WIDGET_SPACE
+	
+	btnApply=ui_button_create(                     @
+      /*   parent  */           form_id,             @
+      /*  callback */           "cbApply",                  @
+      /*     x     */           BUTTON_HALF_X_LOC1,  @
+      /*     y     */           yloc_main,           @
+      /*   width   */           BUTTON_WID_HALF,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Apply",             @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           FALSE)
+
+      btnCancel=ui_button_create(                     @
+      /*   parent  */            form_id,             @
+      /*  callback */            "cbCancel",                  @
+      /*     x     */            BUTTON_HALF_X_LOC2,  @
+      /*     y     */            yloc_main,           @
+      /*   width   */            BUTTON_WID_HALF,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Cancel",            @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+
+      yloc_main += BUTTON_DEFAULT_HGT  + @
+                   INTER_WIDGET_SPACE
+
+      ui_wid_set(form_id,"HEIGHT",yloc_main)
+
+	END FUNCTION /* init */
+
+   FUNCTION display()
+      ui_form_display("LBP")
+	  LBP.Load_Material_List()
+   END FUNCTION /* display */
+
+   FUNCTION cbCancel()
+      ui_form_hide("LBP")
+   END FUNCTION /* cbkCancel */
+
+   $==============================================================================================
+   FUNCTION cbAction(sAction)
+   string sAction[]
+	
+   IF(sAction == "MODIFY") THEN
+	lbp_select_file.display()
+   END IF
+   
+   END FUNCTION
+   $==============================================================================================
+   FUNCTION set_file( fname )
+      string fname[], LbpPropName[126], s_data[15](5), sel_elem[1000], stiff_dir[5], mat_name[64]
+	integer fid, i_data, nStiff, nComp, i, j, len
+	real r_data
+
+	text_open(fname,"OR", 0,0, fid)
+	text_read(fid,"%I%",nStiff, r_data,s_data)
+	text_read(fid,"%I%",nComp, r_data,s_data)
+	
+	text_read_string(fid,mat_name,len)
+	text_read_String(fid,stiff_dir, len)
+	
+	ui_wid_set(dboxStiffNos, "VALUE", nStiff)
+	ui_wid_set(dboxCompNo, "VALUE", nComp)
+	ui_wid_set(tgl_rev_normal,"VALUE",str_to_logical(stiff_dir))
+	ui_wid_set(lstMaterial,"VALUE",mat_name)
+
+	lbp.cbCompNo("CR")
+	FOR(i=1 TO nComp)
+		text_read(fid,"%5A%",i_data, r_data, s_data)
+		FOR(j=1 TO 5)
+			ui_spread_set_cell(tbl_Stiff_info, j, i, 1, s_data(j))		
+		END FOR
+	END FOR
+
+	file_get_bfname ( fname, LbpPropName )
+        ui_wid_set(dboxPropName, "VALUE", LbpPropName)
+	
+	text_read_string(fid, sel_elem, len)
+	ui_wid_set(sboxSelBeam,"VALUE", sel_elem)
+
+	text_close(fid,"")
+   END FUNCTION
+   $==============================================================================================
+   FUNCTION cbApply()
+   integer row_num, i, j, nStiff, cnt, nElem, status, bar_id(virtual), fid, i_data
+   string sSize[20], sType[10], sNum[3], sEffBreadth[10], sAttPltThk[10], WEB[10], FLNG[10], UNIT[5]
+   string TYPE[2], sel_elem[1000], PropName[126], tAREA[20], tNX[10], tNY[10], tIXX[20], tIYY[20]
+   string mat_name[126], BarOrientation[16], OffsetPoint[16], prop_dat[20](8), fname[126], s_data[126](5)
+   real WH, WT, FW, FT, SAREA(2), SNX(2), SNY(2), SIXX(2), SIYY(2)
+   real AW, AT, AREA, NX, NY, IXX, IYY, RAREA, RNX, RNY, RIXX, RIYY
+   real rvct(3), SumArea, Num, TMP_IXX, TMP_IYY, r_data
+   logical lRev, status1
+   integer elem_type_id = 11	/* Beam					*/
+   integer geo_opt_id = 2		/* General Section		*/
+   integer con_opt_id = 42		/* 3D Beam				*/
+   integer for_opt_id = 1		/* standard formulation	*/
+   integer lam_opt_id = 1		/* Homogenous			*/
+   integer dof_opt_id = 20     /* UX,UY,UZ, RX,RY,RZ	*/
+   
+	ui_wid_get(dboxCompNo, "VALUE", row_num)
+	
+	FOR(i=1 TO row_num)
+		ui_spread_get_cell(tbl_Stiff_Info, 1, i, 1, sSize)
+		ui_spread_get_cell(tbl_Stiff_Info, 2, i, 1, sType)
+		ui_spread_get_cell(tbl_Stiff_Info, 3, i, 1, sNum)
+		ui_spread_get_cell(tbl_Stiff_Info, 4, i, 1, sEffBreadth)
+		ui_spread_get_cell(tbl_Stiff_Info, 5, i, 1, sAttPltThk)
+
+		Num = mth_round(str_to_real(sNum),1)
+		AW = str_to_real(sEffBreadth)
+		AT = str_to_real(sAttPltThk)
+		
+		SAREA(1) = 0.
+		SNX(1) = 0.
+		SNY(1) = 0.
+		SIXX(1) = 0.
+		SIYY(1) = 0.
+
+		IF(sType == "A") THEN
+			LBP.AngleStdLib(UNIT, sSize, SAREA(1), SNX(1), SNY(1), SIXX(1), SIYY(1))
+			
+		ELSE
+			WEB = STR_TOKEN(sSize,"+",1)
+			FLNG = STR_TOKEN(sSize,"+",2)
+			WH = STR_TO_REAL(STR_TOKEN(WEB,"x",1))
+			WT = STR_TO_REAL(STR_TOKEN(WEB,"x",2))
+			FW = STR_TO_REAL(STR_TOKEN(FLNG,"x",1))
+			FT = STR_TO_REAL(STR_TOKEN(FLNG,"x",2))
+			LBP.BuiltUpSecProp(UNIT,sTYPE,WH,WT,FW,FT,SAREA(1),SNX(1),SNY(1),SIXX(1),SIYY(1))
+		END IF
+			SAREA(2) = (AW*AT)
+			SNX(2) = 0.0
+			SNY(2) = -AT/2
+			SIXX(2) = (AW*AT**3/12)
+			SIYY(2) = (AT*AW**3/12)
+			
+			LBP.Combined_SecProp(2, SAREA, SNX,SNY,SIXX,SIYY,AREA,NX,NY,IXX,IYY)
+		
+			RAREA += SAREA(1)*Num
+			RIXX += IXX*Num
+			RIYY += IYY*Num
+			
+			s_data(1) = sSize
+			s_data(2) = sType
+			s_data(3) = sNum
+			s_data(4) = sEffBreadth
+			s_data(5) = sAttPltThk
+
+			text_write(fid,"%A15%%A4%%3A10%",i_data,r_data,s_data)
+			
+	END FOR
+	$ LBP.Combined_SecProp(i, AREA, NX, NY, IXX, IYY, RAREA, RNX, RNY, RIXX, RIYY)
+	ui_wid_get(dboxStiffNos, "VALUE", nStiff)
+	
+	RAREA = RAREA/nStiff
+	RIXX = RIXX/nStiff
+	RIYY = RIYY/nStiff
+	
+	ui_wid_get(sboxSelBeam,"VALUE", sel_elem)
+	
+	nElem = fem_u_count_id_list (LP_SUBLIST_ELEMENT, sel_elem, TRUE, status )
+	sys_allocate_array(bar_id,1, nElem)
+	fem_u_get_id_list( LP_SUBLIST_ELEMENT,sel_elem, nElem, TRUE,bar_id)
+
+	FOR(i=1 TO nElem)
+		LBP.Bar_Direction(bar_id(i), rvct)
+	END FOR
+
+	ui_wid_get(dboxPropName,"VALUE",PropName)
+	ui_wid_get(lstMaterial,"VALUE",mat_name)
+
+	mat_name = "m:" // mat_name
+	
+	ui_wid_get(tgl_rev_normal, "VALUE", lRev)
+	IF(lRev == TRUE) THEN
+		BarOrientation = "<" // str_from_integer(-rvct(1)) // @
+						"," // str_from_integer(-rvct(2)) // @
+						"," // str_from_integer(-rvct(3)) // ">"
+	ELSE
+		BarOrientation = "<" // str_from_integer(rvct(1)) // @
+						"," // str_from_integer(rvct(2)) // @
+						"," // str_from_integer(rvct(3)) // ">"
+	END IF
+
+	OffsetPoint = "<0,0,0>"
+	tAREA = str_from_real(RAREA)
+	tIXX = str_from_real(RIXX)
+	tIYY = str_from_real(RIYY)
+	
+/*	elem_type_id = 11   $ Beam
+	geo_opt_id = 2	  $ General Section
+	con_opt_id = 42	  $ 3D Beam
+	for_opt_id = 1	  $ standard formulation
+	lam_opt_id = 1	  $ Homogenous
+	dof_opt_id = 20     $ UX,UY,UZ, RX,RY,RZ
+*/
+	prop_dat(1) = ""
+	prop_dat(2) = mat_name
+	prop_dat(3) = BarOrientation
+	prop_dat(4) = OffsetPoint
+	prop_dat(5) = OffsetPoint
+	prop_dat(6) = tAREA
+	prop_dat(7) = tIXX
+	prop_dat(8) = tIYY
+	
+	elementprops_create( PropName, elem_type_id, geo_opt_id, con_opt_id, for_opt_id, lam_opt_id, dof_opt_id, @ 
+						[39, 13, 6, 4042, 4043, 1, 10, 11], [12, 5,2, 2,2, 1,1,1], prop_dat, sel_elem)
+
+	file_create_directory ( "LBP", 0 )
+	fname = "./LBP/" // PropName // ".lbp"
+	status1 = file_exists_local(fname)
+	IF(status1 == TRUE) THEN
+		file_delete ( fname )
+	END IF
+	
+	text_open(fname, "NOW",0,0,fid)
+
+	text_write_string(fid, str_from_integer(nStiff))	
+	text_write_string(fid, str_from_integer(row_num))
+	text_write_string(fid, str_token(mat_name,":",2))
+	text_write_string(fid, str_from_logical(lRev))
+
+	FOR(i=1 TO row_num)
+		ui_spread_get_cell(tbl_Stiff_Info, 1, i, 1, s_data(1))
+		ui_spread_get_cell(tbl_Stiff_Info, 2, i, 1, s_data(2))
+		ui_spread_get_cell(tbl_Stiff_Info, 3, i, 1, s_data(3))
+		ui_spread_get_cell(tbl_Stiff_Info, 4, i, 1, s_data(4))
+		ui_spread_get_cell(tbl_Stiff_Info, 5, i, 1, s_data(5))
+
+		text_write(fid,"%A15%%A4%%3A10%",i_data,r_data,s_data)
+	END FOR
+	text_write_string(fid, sel_elem)
+	text_close(fid,"")
+	
+	sys_free_array(bar_id)
+
+	END FUNCTION
+   $==============================================================================================
+   FUNCTION Load_Material_List()
+    integer mat_id, mat_cat, mat_lin, mat_dir, mat_type, cnt
+	integer next_status = 0	
+	string mat_name[20](virtual)
+
+	db_get_all_material_names()
+	cnt=0
+	WHILE(next_status == 0)
+	cnt +=1
+	sys_reallocate_array(mat_name,1, cnt)
+	next_status = db_get_next_material_name(mat_name(cnt),@
+											mat_id,		  @
+											mat_cat,	@
+											mat_lin,	@
+											mat_dir,	@
+											mat_type )
+	END WHILE
+	ui_listbox_items_delete(lstMaterial)
+	ui_listbox_items_create(lstMaterial,mat_name,mat_name,cnt-1,"")
+	
+	sys_free_array(mat_name)
+   
+   END FUNCTION
+   
+	$==============================================================================================
+	FUNCTION cbCompNo(FOCUS)
+	STRING FOCUS[]
+	INTEGER row_num, i, tbl_row, add_row
+	
+	ui_wid_get(dboxCompNo,"VALUE",row_num)
+	ui_wid_get(tbl_Stiff_info, "NITEMS", tbl_row)
+	
+	add_row = row_num - tbl_row
+
+	IF(FOCUS == "CR") THEN
+		IF(add_row > 0) THEN
+			FOR(i=tbl_row+1 TO row_num )
+				ui_spread_row_create (tbl_Stiff_Info, str_from_integer(i))		
+			END FOR
+		ELSE IF(add_row < 0) THEN
+			FOR(i=tbl_row TO row_num+1 BY -1)
+				ui_spread_row_delete (tbl_Stiff_Info, i )
+			END FOR
+		END IF
+		ui_spread_set_selected (tbl_Stiff_info, 1, 1, 1, 1 )
+	END IF
+	
+	END FUNCTION
+
+	$==============================================================================================
+	FUNCTION cbTValue(FOCUS)
+	STRING FOCUS[], TVALUE[30]
+	INTEGER from_col, from_row, to_col, to_row, layer, i, j
+
+	IF(FOCUS == "CR") THEN
+		ui_spread_get_selected(tbl_Stiff_info, from_col, from_row, to_col, to_row, layer )
+		ui_wid_get(dboxTValue,"VALUE",TValue)
+		FOR(i=from_col TO to_col)
+			FOR(j=from_row TO to_row)
+				ui_spread_set_cell (tbl_Stiff_info, i, j, layer, TValue)
+			END FOR
+		END FOR
+		ui_spread_set_selected (tbl_Stiff_info, from_col+1, from_row, to_col+1, to_row )
+	END IF
+	
+	END FUNCTION
+
+	$==============================================================================================
+	FUNCTION cbStiffInfo(chkSelect, from_col, from_row, to_col, to_row, layer)
+	INTEGER from_col, from_row, to_col, to_row, layer	
+	STRING chkSelect[], TValue[20]
+
+	IF(chkSelect == "SELECTED") THEN
+		ui_spread_get_cell(tbl_Stiff_Info, from_col, from_row, layer, TValue)
+		ui_wid_set(dboxTValue,"Value",TValue)
+	END IF
+	
+	END FUNCTION
+	
+	$==============================================================================================
+	FUNCTION AngleStdLib(UNIT, ANAME, AREA, NX, NY, IXX, IYY)
+	STRING UNIT[], ANAME[]
+	REAL AREA, NX, NY, IXX, IYY  /* AREA,WEIGHT,XG,YG,IXX,IYY */
+	INTEGER i
+	STRING STDANG[20](19,6) = [["100x75x7      ", "1187.0",   "14.8", "69.4 ", "1180000  ", "570000  "] @
+				 ["100x75x10       ", "1650.0 ",  "14.4", "68.3 ", "1590000  ", "760000  "] @
+				 ["125x75x7        ", "1362.0 ",  "12.9", "84.0 ", "2190000  ", "600000  "] @
+				 ["125x75x10       ", "1900.0 ",  "12.5", "82.8 ", "2990000  ", "810000  "] @
+				 ["150x90x9        ", "2094.0 ",  "15.4", "100.5", "4840000  ", "1330000 "] @
+				 ["150x90x12       ", "2736.0 ",  "15.0", "99.3 ", "6190000  ", "1670000 "] @
+				 ["200x90x10/14    ", "3152.0 ",  "15.8", "133.9", "12970000 ", "2020000 "] @
+				 ["250x90x10/15    ", "3747.0 ",  "14.2", "163.9", "24440000 ", "2330000 "] @
+				 ["250x90x12/16    ", "4295.0 ",  "12.9", "160.1", "27930000 ", "2380000 "] @
+				 ["300x90x11/16    ", "4622.0 ",  "12.1", "190.4", "43650000 ", "2450000 "] @
+				 ["300x90x13/17    ", "5267.0 ",  "11.0", "186.6", "49380000 ", "2590000 "] @
+				 ["350x100x12/17   ", "5774.0 ",  "12.7", "220.2", "74370000 ", "3610000 "] @
+				 ["400x100x11.5/16 ", "6109.0 ",  "11.4", "247.2", "102840000", "3480000 "] @
+				 ["400x100x13/18   ", "6859.0 ",  "11.2", "246.0", "114820000", "3870000 "] @
+				 ["450x125x11.5/18 ", "7311.0 ",  "17.2", "287.9", "157460000", "7670000 "] @
+				 ["450x150x11.5/15 ", "7345.0 ",  "20.8", "289.1", "159280000", "11280000"] @
+				 ["500x150x11.5/18 ", "8336.0 ",  "22.1", "324.6", "222950000", "13410000"] @
+				 ["550x150x12/21   ", "9591.0 ",  "22.4", "357.3", "309870000", "15590000"] @
+				 ["600x150x12.5/23 ", "10755.0",  "21.8", "387.1", "413380000", "17170000"]]
+
+$	SWITCH(UNIT)
+$		CASE("MM"): CUNIT =1.0
+$		CASE("CM"): CUNIT =10.0
+$		CASE("M"): CUNIT =1000.0
+$	END SWITCH
+
+	FOR(i=1 TO 19)
+		IF(ANAME == STDANG(i,1)) THEN
+			AREA= STR_TO_REAL(STDANG(i,2))
+			NX = STR_TO_REAL(STDANG(i,3))
+			NY = STR_TO_REAL(STDANG(i,4))
+			IXX = STR_TO_REAL(STDANG(i,5))
+			IYY = STR_TO_REAL(STDANG(i,6))
+		END IF
+	END FOR
+	END FUNCTION
+	$==============================================================================================
+	FUNCTION BuiltUpSecProp(UNIT, TYPE, WH, WT, FW, FT, AREA, NX, NY, IXX, IYY)
+	string UNIT[], TYPE[]
+	real WH, WT, WA,WX, WY, WAX, WAY, WAX2, WAY2, WAXY, WIXX, WIYY
+	real FW, FT, FA,FX, FY, FAX, FAY, FAX2, FAY2, FAXY, FIXX, FIYY
+	real SUMA,SUMAX, SUMAY, SUMAX2, SUMAY2, SUMIXX,SUMIYY
+	real AREA, NX, NY, IXX,IYY
+
+	AREA = 0.
+	NX = 0.
+	NY = 0.
+	IXX = 0.
+	IYY = 0.
+		
+	$ WEB PROPERTY
+	WA = WT * WH
+	WX = 0.
+	WY = WH/2
+	WAX = WA*WX
+	WAY = WA*WY
+	WAX2 = WA*WX**2
+	WAY2 = WA*WY**2
+	WIXX = WT*WH**3/12
+	WIYY = WH*WT**3/12
+	
+	$ FLANGE PROPERTY
+	FA = FW * FT
+	
+	SWITCH(TYPE)
+		CASE("T") 
+				FX =0.0
+				FY = WH+FT/2
+		CASE("L2")
+				FX = FW/2-15-WT/2
+				FY = WH+FT/2
+		CASE("L3")
+				FX = FW/2+WT/2
+				FY = WH-15-FT/2
+	END SWITCH
+
+	FAX = FA*FX
+	FAY = FA*FY
+	FAX2 = FA*FX**2
+	FAY2 = FA*FY**2
+	FIXX = FW*FT**3/12
+	FIYY = FT*FW**3/12
+	
+	SUMA = WA + FA
+	SUMAX = WAX + FAX
+	SUMAY = WAY + FAY
+	SUMAX2 = WAX2 + FAX2
+	SUMAY2 = WAY2 + FAY2
+	SUMIXX = WIXX + FIXX
+	SUMIYY = WIYY + FIYY
+
+	AREA = SUMA
+	NX = SUMAX / SUMA
+	NY = SUMAY / SUMA
+
+	$관성모멘트 -중성축정리
+	IXX = SUMAY2 + SUMIXX - NY * SUMAY
+	IYY = SUMAX2 + SUMIYY - NX * SUMAX
+
+	END FUNCTION
+
+	$==============================================================================================
+	FUNCTION Combined_SecProp(cnt, InA, InNX, InNY, InIXX, InIYY, OutA, OutNX, OutNY, OutIXX, OutIYY)
+	real InA(), InNX(), InNY(), InIXX(), InIYY(),OutA, OutNX, OutNY, OutIXX, OutIYY
+	real AX,AY,AX2,AY2,rSUMA,rSUMAX,rSUMAY, rSUMAX2, rSUMAY2, rSUMIXX, rSUMIYY 
+	integer i, cnt
+	
+	OutA = 0.
+	OutNX = 0.
+	OutNY = 0.
+	OutIXX = 0.
+	OutIYY = 0.
+	rSUMA = 0.
+	rSUMAX = 0.
+	rSUMAY = 0.
+	rSUMAX2 = 0.
+	rSUMAY2 = 0.
+	rSUMIXX = 0.
+	rSUMIYY = 0.
+
+	FOR(i =1 TO cnt)
+		AX = InA(i) * InNX(i)
+		AY = InA(i) * InNY(i)
+		AX2 = InA(i) * InNX(i)**2
+		AY2 = InA(i) * InNY(i)**2
+		rSUMA += InA(i)
+		rSUMAX += AX
+		rSUMAY += AY
+		rSUMAX2 += AX2
+		rSUMAY2 += AY2
+		rSUMIXX += InIXX(i)
+		rSUMIYY += InIYY(i)
+	END FOR
+
+	OutA = rSUMA
+	OutNX = rSUMAX / rSUMA
+	OutNY = rSUMAY / rSUMA
+
+	$ 관성모멘트 -중성축정리
+	OutIXX = rSUMAY2 + rSUMIXX - OutNY * rSUMAY
+	OutIYY = rSUMAX2 + rSUMIYY - OutNX * rSUMAX
+
+	END FUNCTION
+	
+	$==============================================================================================
+	FUNCTION Bar_Direction(bar_id, rvct)
+	integer bar_id, cnt, elem_id(virtual), nnode, node_id(virtual)
+	integer i, j, nelem(1),elem_nnode, elem_node_id(virtual), shape_id(virtual)
+	integer maxelem=16
+	integer guide_elem(virtual), cnt1
+	real nvct(virtual), node_xyz(virtual), rvct()
+	
+	sys_allocate_array(node_id, 1, 2)
+	db_get_elem_nodes(bar_id, nnode, node_id)
+	
+	sys_allocate_array(elem_id, 1, maxelem)
+	db_get_elems_using_nodes(nnode, node_id, maxelem, nelem, elem_id)
+	
+	sys_reallocate_array(elem_id,1, nelem(1))
+
+	$ 요소 shpae code별로 다시 저장한다.
+	sys_allocate_array(shape_id,1,nelem(1))
+	db_get_elem_shape_for_id(nelem(1),elem_id,shape_id)
+
+	cnt1=0
+	FOR(i=1 TO nelem(1))
+		cnt = 0
+		IF(shape_id(i) == 3 || shape_id(i) == 4 ) THEN 
+			sys_allocate_array(elem_node_id, 1, shape_id(i))
+			db_get_elem_nodes(elem_id(i), elem_nnode, elem_node_id)
+			FOR(j=1 TO elem_nnode)
+				IF(node_id(1) == elem_node_id(j) || node_id(2) == elem_node_id(j)) THEN
+					cnt +=1
+				END IF
+			END FOR
+		END IF
+		IF(cnt==2) THEN
+			cnt1 +=1
+			sys_reallocate_array(guide_elem, 1, cnt1)
+			guide_elem(cnt1)=elem_id(i)
+		END IF
+	END FOR
+	
+	sys_allocate_array(nvct, 1, cnt1, 1, 3)
+	sys_allocate_array(node_id,1,4)
+	sys_allocate_array(node_xyz, 1, 4, 1, 3)
+	FOR(i=1 TO cnt1)
+		db_get_elem_nodes(guide_elem(i),nnode,node_id)
+
+		FOR(j=1 TO nnode)
+			db_get_node(node_id(j), node_xyz(j,1:3))
+		END FOR
+		func_property.get_norm_vector(node_xyz, nvct(i,1:3))
+	END FOR
+
+	IF(cnt1==1) THEN
+		rvct(1:3) = nvct(1,1:3)
+	ELSE
+		rvct(1) = nvct(1,1) + nvct(2,1)
+		rvct(2) = nvct(1,2) + nvct(2,2)
+		rvct(3) = nvct(1,3) + nvct(2,3)
+	END IF
+
+	sys_free_array(elem_id)
+	sys_free_array(node_id)
+	sys_free_array(elem_node_id)
+	sys_free_array(shape_id)
+	sys_free_array(guide_elem)
+	sys_free_array(nvct)
+	sys_free_array(node_xyz)
+	
+	END FUNCTION
+	
+END CLASS /* LBP */

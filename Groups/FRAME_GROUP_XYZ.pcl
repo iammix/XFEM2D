@@ -1,0 +1,261 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME FRAME_GROUP_XYZ
+#define CLASS_STR "FRAME_GROUP_XYZ"
+#define UI_INIT UI_FRAME_GROUP_XYZ
+
+CLASS CLASSNAME
+    classwide widget sframe_01, wa_sdbox_sel_point(1), dbox_GroupName, dbox_tolerance
+
+    function UI_INIT(parent_id, y_loc)
+        widget parent_id
+        real y_loc
+
+        widget frame_wid
+        
+        frame_wid=ui_frame_create(                   @
+        /* parent */             parent_id,           @
+        /*  name  */             "",                @
+        /*    x   */             FRAME_X_LOC_COL1,  @
+        /*    y   */             y_loc,         @
+        /*  width */             FRAME_L_MARGIN + FRAME_WID_SINGLE + FRAME_R_MARGIN,  @
+        /* height */             0.0,               @
+        /*  label */             "Tank Search")
+
+        REAL Y_LOCF = 0
+ 	
+		Y_LOCF = FRAME_T_MARGIN
+
+        dbox_GroupName = ui_databox_create(                         @
+            /*    parent    */                  frame_wid,               @
+            /*   callback   */                  "",                     @
+            /*       x      */                  FRAME_L_MARGIN,         @
+            /*       y      */                  Y_LOCF,                  @
+            /* label_length */                  DBOX_WID_SINGLE,     @
+            /*  box_length  */                  DBOX_WID_SINGLE,      @
+            /*     label    */                  "Group Name :",         @
+            /*     value    */                  "",                     @
+            /*  label_above */                  TRUE,                  @
+            /*   datatype   */                  "STRING",               @
+            /*   num_vals   */                  1)
+
+        Y_LOCF += DBOX_HGT_LABOVE + INTER_WIDGET_SPACE
+
+        string sa_data_type[16](1) = ["POINT"]
+        string sa_label[32](1) = ["XYZ Coordinate"]
+        string sa_call_back[32](1) = [""]
+
+        sframe_01 = ui_select_frame_set(				@
+		/* parent widget id(input) 	*/	frame_wid,		@
+		/*	select frame callback	*/	CLASS_STR // ".Apply_Click",	@	
+		/* 	select frame label		*/	"Autoexec",	@
+		/*		x				*/	FORM_L_MARGIN,	@	
+		/*		y				*/	Y_LOCF, 		@
+		/*	select databax array	*/	wa_sdbox_sel_point,	@
+		/* 	data type	array		*/	sa_data_type,		@
+		/* 	select databox label array	*/ 	sa_label,	@
+		/*	select databox collback array	*/ 	sa_call_back, @
+		/*	label avove logical	*/			TRUE)	             
+		  
+        Y_LOCF += INTER_WIDGET_SPACE
+
+        logical l_confirm
+	    integer i_wm_opt
+        real r_tol
+        pref_global_get( l_confirm, i_wm_opt, r_tol )
+    
+        dbox_tolerance = ui_databox_create(                         @
+            /*    parent    */                  frame_wid,               @
+            /*   callback   */                  "",                     @
+            /*       x      */                  FRAME_L_MARGIN,         @
+            /*       y      */                  Y_LOCF,                  @
+            /* label_length */                  DBOX_WID_SINGLE/2,     @
+            /*  box_length  */                  DBOX_WID_SINGLE/2,      @
+            /*     label    */                  "tolerance :",         @
+            /*     value    */                  r_tol,                   @
+            /*  label_above */                  FALSE,                  @
+            /*   datatype   */                  "REAL",               @
+            /*   num_vals   */                  1)
+        
+        Y_LOCF += DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE 
+        
+        ui_wid_set(frame_wid, "HEIGHT", Y_LOCF)
+        
+        y_loc += Y_LOCF + INTER_WIDGET_SPACE
+
+        return frame_wid
+    end function
+
+    function cb_select_point1(s_input)
+        string s_input[]
+
+        widget opt_Method
+        opt_Method = sys_class_get("Groups2D", "opt_Method")
+        
+        string method_item[virtual]
+        ui_wid_get_vstring(opt_Method, "VALUE", method_item)
+
+        integer i_axis
+        switch(method_item)
+            case("XS"); i_axis = 1
+            case("YE"); i_axis = 2
+            case("ZP"); i_axis = 3
+        end switch
+
+        string s_point_list[virtual]
+        ui_wid_get_vstring(wa_sdbox_sel_point(1), "VALUE", s_point_list)
+
+        integer nNode, status
+        nNode = fem_u_count_id_list(LP_SUBLIST_NODE, s_point_list, FALSE, status)
+        
+        integer iv_NodeID(virtual)
+        sys_allocate_array(iv_NodeID, 1, nNode)
+        fem_u_get_id_list(LP_SUBLIST_NODE, s_point_list, nNode, TRUE, iv_NodeID)
+
+/*        status = GrpFx.NodeXYZ(wa_sdbox_sel_point(1), ra_xyz)
+        
+        if(status != 0) then return status
+*/        
+        integer idx
+        real ra_xyz(3)
+        string s_xyz[1024]
+        for(idx=1 to nNode)
+            db_get_node(iv_NodeID(idx), ra_xyz)
+            s_xyz = s_xyz // "," // str_from_real(ra_xyz(i_axis))
+        end for
+
+        ui_wid_set(wa_sdbox_sel_point(1), "VALUE", s_xyz)
+
+    end function
+
+    function Apply_Click()
+        
+        widget opt_Action, opt_Object, opt_Method
+                opt_Action = sys_class_get("Groups2D", "opt_Action")
+                opt_Object = sys_class_get("Groups2D", "opt_Object")
+                opt_Method = sys_class_get("Groups2D", "opt_Method")
+
+        string act_item[virtual], obj_item[virtual], method_item[virtual]
+            ui_wid_get_vstring(opt_Action, "VALUE", act_item)
+            ui_wid_get_vstring(opt_Object, "VALUE", obj_item)
+            ui_wid_get_vstring(opt_Method, "VALUE", method_item)
+        
+        integer i_axis(3)
+        switch(method_item)
+            case("XS"); i_axis(1) = 1; i_axis(2) = 2; i_axis(3) = 3
+            case("YE"); i_axis(1) = 2; i_axis(2) = 1; i_axis(3) = 3
+            case("ZP"); i_axis(1) = 3; i_axis(2) = 1; i_axis(3) = 2
+            case("X+"); i_axis(1) = 1; i_axis(2) = 2; i_axis(3) = 3
+            case("Y+"); i_axis(1) = 2; i_axis(2) = 1; i_axis(3) = 3
+            case("Z+"); i_axis(1) = 3; i_axis(2) = 1; i_axis(3) = 2                        
+            case("X-"); i_axis(1) = 1; i_axis(2) = 2; i_axis(3) = 3
+            case("Y-"); i_axis(1) = 2; i_axis(2) = 1; i_axis(3) = 3
+            case("Z-"); i_axis(1) = 3; i_axis(2) = 1; i_axis(3) = 2
+            case("AXS"); i_axis(1) = 1; i_axis(2) = 2; i_axis(3) = 3
+            case("AYE"); i_axis(1) = 2; i_axis(2) = 1; i_axis(3) = 3
+            case("AZP"); i_axis(1) = 3; i_axis(2) = 1; i_axis(3) = 2
+            case("RXS"); i_axis(1) = 1; i_axis(2) = 2; i_axis(3) = 3
+            case("RYE"); i_axis(1) = 2; i_axis(2) = 1; i_axis(3) = 3
+            case("RZP"); i_axis(1) = 3; i_axis(2) = 1; i_axis(3) = 2                        
+        end switch
+
+        string s_node[virtual]
+        ui_wid_get_vstring(wa_sdbox_sel_point(1), "VALUE", s_node)
+
+        if(str_index(s_node, "Node") != 0)then
+            integer iv_NodeID(1)
+            real r_xyz(3)
+        
+            fem_u_get_id_list(LP_SUBLIST_NODE, s_node, 1, TRUE, iv_NodeID)
+            db_get_node(iv_NodeID(1), r_xyz)
+        
+        else
+            r_xyz(i_axis(1)) = str_to_real(s_node)
+            r_xyz(i_axis(2)) = 0.
+            r_xyz(i_axis(3)) = 0.            
+        end if
+
+        real r_cor1(3), r_cor2(3)
+        CLASSNAME.corner(method_item, i_axis, r_cor1, r_cor2, r_xyz)
+        
+        integer grp_id
+        db_get_current_group_id(grp_id)
+        string grp_name[32]
+	    db_get_group_name(grp_id,grp_name)
+
+        string s_elem_list[virtual], s_node_list[virtual]
+
+        s_elem_list =GrpFx.get_elem_inBox_inView(r_cor1, r_cor2)
+        s_node_list = GrpFx.get_node_inBox_inView(r_cor1, r_cor2)
+
+        if(s_elem_list == "") then return 
+
+        if(act_item == "MODIFY") then
+            if(obj_item == "Group") then
+                > ga_group_entity_remove(grp_name, s_elem_list)
+                > ga_group_entity_remove(grp_name, s_node_list)
+            end if
+        else if(act_item == "PLOT") then
+            > gm_visibility_all(FALSE)
+            > gm_visibility_widget(s_elem_list, TRUE)
+            > gm_visibility_widget(s_node_list, TRUE)
+        else if(act_item == "ERASE") then
+            > gm_visibility_widget(s_elem_list, FALSE)
+            > gm_visibility_widget(s_node_list, FALSE)
+        end if
+
+        sys_free_string(s_elem_list)
+        sys_free_string(s_node_list)
+
+    end function
+    
+    /*
+        displat : selected item of opt_action, "plot" or "erase" 
+        method : selected item of opt_method, "X+, Y+, Z+, X-, Y-, Z-"
+    */
+$ ===========================================================================================    
+
+function plot_erase_inBox_InView()
+    $string s_elem_list[virtual]
+    $s_elem_list = get_elem_inBox_inView(corner1, corner2)
+    $gm_visibility_all(FALSE)
+    
+end function
+
+function corner(mth_item, i_axis, r_cor1, r_cor2, r_loc)
+string mth_item[]
+integer i_axis()
+real r_cor1(), r_cor2(), r_loc()
+real r_tol
+
+    if( mth_item == "XS" || mth_item == "YE" || mth_item == "ZP" || @
+        mth_item == "AXS" || mth_item == "AYE" || mth_item == "AZP" || @
+        mth_item == "RXS" || mth_item == "RYE" || mth_item == "RZP") then
+        r_cor1(i_axis(1)) = r_loc(i_axis(1)) - r_tol
+        r_cor1(i_axis(2)) = -1e+15
+        r_cor1(i_axis(3)) = -1e+15
+
+        r_cor2(i_axis(1)) = r_loc(i_axis(1)) + r_tol
+        r_cor2(i_axis(2)) = 1e+15
+        r_cor2(i_axis(3)) = 1e+15
+    else if(mth_item == "X+" || mth_item == "Y+" || mth_item == "Z+") then
+        r_cor1(i_axis(1)) = r_loc(i_axis(1)) - r_tol
+        r_cor1(i_axis(2)) = -1e+15
+        r_cor1(i_axis(3)) = -1e+15
+
+        r_cor2(i_axis(1)) = r_loc(i_axis(1)) + 1e+15
+        r_cor2(i_axis(2)) = 1e+15
+        r_cor2(i_axis(3)) = 1e+15
+    else if(mth_item == "X-" || mth_item == "Y-" || mth_item == "Z-") then
+        r_cor1(i_axis(1)) = r_loc(i_axis(1)) -  1e+15
+        r_cor1(i_axis(2)) = -1e+15
+        r_cor1(i_axis(3)) = -1e+15
+
+        r_cor2(i_axis(1)) = r_loc(i_axis(1)) + r_tol
+        r_cor2(i_axis(2)) = 1e+15
+        r_cor2(i_axis(3)) = 1e+15
+    end if
+
+end function
+
+END CLASS

@@ -1,0 +1,236 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME MatchingElementVector
+#define CLASS_STR "MatchingElementVector"
+
+CLASS CLASSNAME
+
+/* Classwide Variables */
+   CLASSWIDE WIDGET form_id, selfrm_01, btn_Apply, btn_Exit
+   CLASSWIDE WIDGET sframe_id, sdbox_id, dbox_Vector, opt_Object
+
+   FUNCTION init()
+      REAL y_loc
+
+      form_id=ui_form_create(                         @
+      /* callback */         "",                      @
+      /*     x    */         FORM_X_LOC_SML,          @
+      /*     y    */         FORM_Y_LOC,              @
+      /* position */         "UL",                    @
+      /*   width  */         FORM_WID_SML,            @
+      /*  height  */         FORM_HGT_TALL,           @
+      /*   label  */         "Matching Element Vector",  @
+      /*  unused  */         "")
+
+      y_loc = FORM_T_MARGIN
+
+      opt_Object = ui_optionmenu_create(    form_id,            @
+                                            "cb_Object",        @
+                                            UNFRAMED_L_MARGIN,     @
+                                            y_loc,  @
+                                            OPT_MENU_LABEL_LEN, @
+                                            "Element Type",           @
+                                            FALSE )
+
+      ui_item_create( opt_Object, "2D_NORMAL", "2D Normal", FALSE)
+      ui_item_create( opt_Object, "1D_DIRECTION", "1D Direction", FALSE)
+
+      y_loc += OPT_MENU_HGT_NO_LABOVE +             @
+               INTER_WIDGET_SPACE
+
+      ui_separator_create (   form_id, "",           @
+                              0.0,                   @
+                              y_loc,                 @
+                              FORM_WID_SML,          @
+                              TRUE )
+
+      string sframe_callback[64] = ""
+
+      y_loc += LINE_THICKNESS + INTER_WIDGET_SPACE
+
+	widget sa_sdbox(1)
+	
+	sa_sdbox(1) = sdbox_id
+	
+	sframe_id = ui_select_frame_set(				@
+	/* parent widget id(input) 	*/	form_id,		@
+	/*	select frame callback	*/	"",			@	
+	/* 	select frame label		*/	"Autoexec",	@
+	/*		x				*/	FORM_L_MARGIN,	@	
+	/*		y				*/	y_loc, 			@
+	/*	select databax array	*/	sa_sdbox,	@
+	/* 	data type	array		*/	["ELEM2D"],		@
+	/* 	select databox label array	*/ 	["Select 2D Element"],	@
+	/*	select databox collback array	*/ 	[""],	@
+	/*	label avove logical	*/			TRUE)
+
+      sdbox_id = sa_sdbox(1)
+     
+	 y_loc += INTER_WIDGET_SPACE
+
+      dbox_Vector = ui_databox_create(               @
+      /*    parent    */          form_id,             @
+      /*   callback   */          "",                   @
+      /*       x      */          FORM_L_MARGIN,        @
+      /*       y      */          y_loc,           @
+      /* label_length */          0.0,                  @
+      /*  box_length  */          DBOX_WID_SINGLE,      @
+      /*     label    */          "Guide Vector",  @
+      /*     value    */          "<1, 0, 0>",                   @
+      /*  label_above */          TRUE,                 @
+      /*   datatype   */          "STRING",             @
+      /*   num_vals   */          1)
+
+      y_loc += DBOX_HGT_LABOVE + INTER_WIDGET_SPACE
+
+      btn_Apply=ui_button_create(                     @
+      /*   parent  */            form_id,             @
+      /*  callback */            "cb_apply",                  @
+      /*     x     */            BUTTON_HALF_X_LOC1,  @
+      /*     y     */            y_loc,           @
+      /*   width   */            BUTTON_WID_FULL,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Apply",             @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+
+      y_loc += BUTTON_DEFAULT_HGT  + @
+                   INTER_WIDGET_SPACE
+
+      btn_Exit=ui_button_create(                     @
+      /*   parent  */            form_id,             @
+      /*  callback */            "cb_exit",           @
+      /*     x     */            BUTTON_FULL_X_LOC1,  @
+      /*     y     */            y_loc,           @
+      /*   width   */            BUTTON_WID_FULL,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Exit",              @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+
+      y_loc += BUTTON_DEFAULT_HGT  + @
+                   INTER_WIDGET_SPACE
+
+      ui_wid_set(form_id,"HEIGHT",y_loc)
+
+   END FUNCTION /* init */
+
+   $ 
+   FUNCTION display()
+
+      ui_form_display(CLASS_STR)
+
+   END FUNCTION /* display */
+$ 
+FUNCTION cb_apply()
+
+    string e_type[15]
+
+    ui_wid_get(opt_Object, "VALUE", e_type)
+
+    switch(e_type)
+        case("2D_NORMAL");
+                CLASSNAME.Matching_2d_Element_Normal()
+
+        case("1D_DIRECTION");
+                CLASSNAME.Matching_1d_Element_Direction()
+
+    end switch
+
+END FUNCTION
+
+FUNCTION Matching_2d_Element_Normal()
+    string selected_element[virtual]
+    integer numElemDiv
+
+    ui_wid_get_vstring(sdbox_id, "value", selected_element)
+
+    integer nElem, i_status
+	nElem = fem_u_count_id_list(LP_SUBLIST_ELEMENT, selected_element, TRUE, i_status)
+
+    integer ia_ElemId(virtual)
+	sys_allocate_array(ia_ElemId, 1, nElem)
+
+	fem_u_get_id_list(LP_SUBLIST_ELEMENT, selected_element, nElem, TRUE, ia_ElemId)
+
+    string s_guide_vector[virtual]
+
+    ui_wid_get_vstring(dbox_vector, "VALUE", s_guide_vector)
+
+    real gvct(3)
+    logical do_msg
+    integer status
+
+    asm_u_lp_get_vector(s_guide_vector, do_msg, gvct, status)
+    $gvct =  CLASSNAME.string_to_vector(s_guide_vector)
+
+    integer idx
+    real nvct(3), ang
+    string fem_modify_elem__elems_reversed[virtual]
+
+    integer e_id(virtual)
+    sys_allocate_array(e_id, 1, 1)
+
+    integer count
+    count = 0
+    for(idx = 1 to nElem)
+
+        xfem_get_elem_normal(ia_ElemId(idx), nvct)
+        ang = xfem_vector.angle_2v(nvct, gvct)
+
+        if(ang > 91.)then
+           count += 1
+           sys_reallocate_array(e_id, 1, count)
+           e_id(count) = ia_ElemId(idx)
+        end if
+    end for
+
+    string s_ElemIds[virtual]
+    app_int_array_to_vstring("Element", count, e_id, s_ElemIds)
+
+    fem_mod_elem_reverse( s_ElemIds, fem_modify_elem__elems_reversed )
+
+END FUNCTION
+$ 
+FUNCTION Match_1d_Element_Direction()
+
+    string selected_element[virtual]
+    integer numElemDiv
+
+    ui_wid_get_vstring(sdbox_id, "value", selected_element)
+
+    integer nElem, i_status
+	nElem = fem_u_count_id_list(LP_SUBLIST_ELEMENT, selected_element, TRUE, i_status)
+
+    integer ia_ElemId(virtual)
+	sys_allocate_array(ia_ElemId, 1, nElem)
+
+	fem_u_get_id_list(LP_SUBLIST_ELEMENT, selected_element, nElem, TRUE, ia_ElemId)
+
+
+END FUNCTION
+
+$ 
+FUNCTION cb_exit()
+ui_form_hide(CLASS_STR)
+ui_form_delete(CLASS_STR)
+END FUNCTION
+$ 
+
+FUNCTION cb_Object(sel_item)
+    string sel_item[]
+
+    switch(sel_item)
+        case("2D_NORMAL");
+                ui_wid_set(sdbox_id, "DATATYPE", "ELEM2D")
+                ui_wid_set(sdbox_id, "LABEL", "Select 2d Element")
+
+        case("1D_DIRECTION");
+                ui_wid_set(sdbox_id, "DATATYPE", "BEAMELEM")
+                ui_wid_set(sdbox_id, "LABEL", "Select 1d Element")
+    end switch
+
+END FUNCTION
+
+END CLASS /* BEAM_TO_SHELL */
+

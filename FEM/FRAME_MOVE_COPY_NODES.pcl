@@ -1,0 +1,423 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME FRAME_MOVE_COPY_NODES
+#define CLASS_STR "FRAME_MOVE_COPY_NODES"
+
+class CLASSNAME
+$ ui_main_frame
+classwide widget opt_Action, opt_Method
+classwide widget sframe_07, wa_sdbox_07(2), tgl_Axis(3), dbox_Input
+
+/*******************************************************************************
+ 	Action-Move/Copy, Object-Node, Method - Reference Node, Relative Value, Absolut Value 
+ *******************************************************************************/
+ 
+ function UI_FRAME_MOVE_COPY_NODES(form_id, Y_LOC)
+ widget form_id
+ real Y_LOC
+ 
+ 	widget frame_wid
+ 
+       frame_wid=ui_frame_create(                   @
+      /* parent */             form_id,           @
+      /*  name  */             "",                @
+      /*    x   */             FRAME_X_LOC_COL1,  @
+      /*    y   */             Y_LOC,         @
+      /*  width */             FRAME_WID_SINGLE,  @
+      /* height */             1.0,               @
+      /*  label */             "")
+
+      real Y_LOCF = 0
+	 Y_LOCF = FRAME_T_MARGIN
+	  
+	 ui_label_create( frame_wid, "", FRAME_L_MARGIN, Y_LOCF, "Select Coordinate Axis" )
+         
+      Y_LOCF += LABEL_HGT + INTER_WIDGET_SPACE
+      
+      tgl_Axis(1)=ui_toggle_create(                       @
+      /*  parent  */             frame_wid,              @
+      /* callback */             "cb_tgl_AxisX",                    @
+      /*     x    */             FRAME_L_MARGIN,         @
+      /*     y    */             Y_LOCF,         @
+      /*   label  */             "X ")
+
+      tgl_Axis(2)=ui_toggle_create(                       @
+      /*  parent  */             frame_wid,              @
+      /* callback */             "cb_tgl_AxisY",                    @
+      /*     x    */             FRAME_WID_SINGLE / 3,         @
+      /*     y    */             Y_LOCF,         @
+      /*   label  */             "Y ")
+
+      tgl_Axis(3)=ui_toggle_create(                       @
+      /*  parent  */             frame_wid,              @
+      /* callback */             "cb_tgl_AxisZ",                    @
+      /*     x    */             FRAME_WID_SINGLE*2/3,         @
+      /*     y    */             Y_LOCF,         @
+      /*   label  */             "Z ")
+      
+      Y_LOCF += TOGGLE_HGT  + @
+                       INTER_WIDGET_SPACE
+
+
+      dbox_Input = ui_databox_create(                    @
+      /*    parent    */                    frame_wid,     @
+      /*   callback   */                    "",                 @
+      /*       x      */                    FRAME_L_MARGIN,      @
+      /*       y      */                    Y_LOCF,   @
+      /* label_length */                    (FRAME_WID_SINGLE-FRAME_L_MARGIN - FRAME_R_MARGIN)/2,        @
+      /*  box_length  */                    DBOX_WID_SINGLE,         @
+      /*     label    */                    "Value",  @
+      /*     value    */                    0.0,              @
+      /*  label_above */                    TRUE,              @
+      /*   datatype   */                    "REAL",           @
+      /*   num_vals   */                    1)
+      
+       Y_LOCF += DBOX_HGT_LABOVE + INTER_WIDGET_SPACE	  
+	  
+	  ui_wid_set(dbox_Input, "ENABLE", FALSE)
+
+	  
+     string sa_dtype[5](2) = ["NODE", "NODE"]
+	string sa_label[16](2) = ["Ref. Node", "Select Node"]
+	string sa_callback[16](2) = ["",""] 
+	
+	sframe_07 = ui_select_frame_set(				@
+	/* parent widget id(input) 	*/	frame_wid,		@
+	/*	select frame callback	*/	CLASS_STR // ".Apply_Click",	@	
+	/* 	select frame label		*/	"Autoexec",	@
+	/*		x				*/	FORM_L_MARGIN,	@	
+	/*		y				*/	Y_LOCF, 		@
+	/*	select databax array	*/	wa_sdbox_07,	@
+	/* 	data type	array		*/	sa_dtype,		@
+	/* 	select databox label array	*/ 	sa_label,	@
+	/*	select databox collback array	*/ 	sa_callback, @
+	/*	label avove logical	*/			TRUE)     
+	
+     Y_LOCF += LABEL_HGT + INTER_WIDGET_SPACE
+
+	ui_wid_set(frame_wid, "HEIGHT", Y_LOCF)
+     
+     Y_LOC += Y_LOCF + INTER_WIDGET_SPACE	  
+	  
+ return frame_wid
+ end function
+ 
+    FUNCTION cb_tgl_AxisX(chk_item)
+     logical chk_item
+
+  	opt_Action = sys_class_get("Finite_Element_2D", "opt_Action")
+	opt_Method = sys_class_get("Finite_Element_2D", "opt_Method")
+
+     string Method_Item[11]
+     ui_wid_get(opt_Method, "VALUE", Method_Item)
+     
+     if(Method_Item == "REFNODE") then
+          RETURN 0
+     end if     
+
+     if(chk_item == TRUE) then
+          ui_wid_set(tgl_Axis(2), "VALUE", FALSE)
+          ui_wid_set(tgl_Axis(3), "VALUE", FALSE)
+     end if
+                    
+   END FUNCTION
+   
+   FUNCTION cb_tgl_AxisY(chk_item)
+     logical chk_item
+     
+	opt_Action = sys_class_get("Finite_Element_2D", "opt_Action")
+	opt_Method = sys_class_get("Finite_Element_2D", "opt_Method")
+
+     string Method_Item[11]
+     ui_wid_get(opt_Method, "VALUE", Method_Item)
+     
+     if(Method_Item == "REFNODE") then
+          RETURN 0
+     end if     
+          
+     if(chk_item == TRUE) then
+          ui_wid_set(tgl_Axis(1), "VALUE", FALSE)
+          ui_wid_set(tgl_Axis(3), "VALUE", FALSE)
+     end if
+   
+   END FUNCTION
+   
+   FUNCTION cb_tgl_AxisZ(chk_item)
+     logical chk_item
+
+     opt_Action = sys_class_get("Finite_Element_2D", "opt_Action")
+	opt_Method = sys_class_get("Finite_Element_2D", "opt_Method")
+
+     string Method_Item[11]
+     ui_wid_get(opt_Method, "VALUE", Method_Item)
+     
+     if(Method_Item == "REFNODE") then
+          RETURN 0
+     end if     
+          
+     if(chk_item == TRUE) then
+          ui_wid_set(tgl_Axis(1), "VALUE", FALSE)
+          ui_wid_set(tgl_Axis(2), "VALUE", FALSE)
+     end if
+   
+   END FUNCTION
+   
+   FUNCTION Apply_Click()
+	uil_primary_file.db_save()
+  	opt_Action = sys_class_get("Finite_Element_2D", "opt_Action")
+	opt_Method = sys_class_get("Finite_Element_2D", "opt_Method")
+
+    string RefNode[virtual]
+    ui_wid_get_vstring(wa_sdbox_07(1), "VALUE", RefNode)
+        
+    string method_item[11]
+    ui_wid_get(opt_Method, "VALUE", method_item)
+    
+    real r_value
+    ui_wid_get(dbox_Input, "VALUE", r_value)
+
+    switch(method_item)
+          case("REFNODE");
+               CLASSNAME.Move_Node_Node(RefNode)
+          case("RELVAL");
+               CLASSNAME.Move_Node_REL_Value(RefNode, r_value)
+          case("ABSVAL");
+               CLASSNAME.Move_Node_ABS_Value(r_value)
+    end switch
+    
+   END FUNCTION
+        
+  FUNCTION Move_Node_Node(RefNode)
+  
+	string RefNode[]
+	
+	integer Ref_NodeId(1)
+	
+	fem_u_get_id_list(LP_SUBLIST_NODE, RefNode, 1, TRUE, Ref_NodeId)
+	
+	real new_xyz(3)
+	db_get_node(Ref_NodeId(1), new_xyz)
+	
+	string Nodes[virtual]
+	
+	ui_wid_get_vstring(wa_sdbox_07(2), "VALUE", Nodes)
+	
+	integer status, nNode
+
+	nNode = fem_u_count_id_list(LP_SUBLIST_NODE, Nodes, TRUE, status)
+	
+	integer NodeId(virtual)
+	real xyz(virtual)
+	
+	sys_allocate_array(NodeId, 1, nNode)
+	sys_allocate_array(xyz, 1, nNode, 1, 3)
+	
+	fem_u_get_id_list(LP_SUBLIST_NODE, Nodes, nNode, TRUE, NodeId)
+	
+	logical ChkX, ChkY, ChkZ
+	
+	ui_wid_get(tgl_Axis(1), "VALUE", ChkX)
+	ui_wid_get(tgl_Axis(2), "VALUE", ChkY)
+	ui_wid_get(tgl_Axis(3), "VALUE", ChkZ)
+	
+	integer idx
+
+	string sa_NodeId[virtual], sa_xyz[virtual]
+	
+	integer NodeStrLength, xyzStrLength
+	
+	NodeStrLength = str_length("Node")
+	
+	xyzStrLength = 1
+	sys_allocate_string(sa_NodeId, NodeStrLength)
+	sys_allocate_string(sa_NodeId, xyzStrLength)
+	sa_NodeId = "Node"
+	string s_xyz[virtual]
+
+	for(idx=1 to nNode)
+		db_get_node(NodeId(idx), xyz(idx, 1:3))
+		if(ChkX == TRUE) then xyz(idx, 1) = new_xyz(1)
+		if(ChkY == TRUE) then xyz(idx, 2) = new_xyz(2)
+		if(ChkZ == TRUE) then xyz(idx, 3) = new_xyz(3)
+		
+		NodeStrLength += str_length(str_from_integer(NodeId(idx))) + 1
+		sys_reallocate_string(sa_NodeId, NodeStrLength)
+		sa_NodeId = sa_NodeId // " " // str_from_integer(NodeId(idx))
+		
+		s_xyz = xfem_str_from_coordinate(xyz(idx, 1:3))
+		xyzStrLength += str_length(s_xyz) + 1
+		sys_reallocate_string(sa_xyz, xyzStrLength)
+		sa_xyz = sa_xyz // " " // s_xyz
+	end for
+	
+    string val_Action[8]
+    ui_wid_get(opt_Action, "VALUE", val_Action)
+   
+    string fem_modify_node__nodes_modified[VIRTUAL]
+	string fem_create_nodes__nodes_created[VIRTUAL]
+	
+	switch(val_Action)
+		case("MOVE")
+			fem_modify_nodes( sa_NodeId, "", "", "", sa_xyz, [0, 0, 0, 0, 1, 0, 0, 0, 0, 0], fem_modify_node__nodes_modified )		
+		case("COPY")
+			fem_create_nodes_1( "Coord 0", "Coord 0", 3, "#", sa_xyz, fem_create_nodes__nodes_created )
+	end switch
+
+	
+   END FUNCTION /* cb_Apply */
+
+  FUNCTION Move_Node_ABS_Value(r_value)
+  
+	real r_value
+	
+	string Nodes[virtual]
+	
+	ui_wid_get_vstring(wa_sdbox_07(2), "VALUE", Nodes)
+	
+	integer status, nNode
+
+	nNode = fem_u_count_id_list(LP_SUBLIST_NODE, Nodes, TRUE, status)
+	
+	integer NodeId(virtual)
+	real xyz(virtual)
+	
+	sys_allocate_array(NodeId, 1, nNode)
+	sys_allocate_array(xyz, 1, nNode, 1, 3)
+	
+	fem_u_get_id_list(LP_SUBLIST_NODE, Nodes, nNode, TRUE, NodeId)
+	
+	logical ChkX, ChkY, ChkZ
+	
+	ui_wid_get(tgl_Axis(1), "VALUE", ChkX)
+	ui_wid_get(tgl_Axis(2), "VALUE", ChkY)
+	ui_wid_get(tgl_Axis(3), "VALUE", ChkZ)
+	
+	integer idx
+
+	string sa_NodeId[virtual], sa_xyz[virtual]
+	
+	integer NodeStrLength, xyzStrLength
+	
+	NodeStrLength = str_length("Node")
+	
+	xyzStrLength = 1
+	sys_allocate_string(sa_NodeId, NodeStrLength)
+	sys_allocate_string(sa_NodeId, xyzStrLength)
+	
+	sa_NodeId = "Node"
+	string s_xyz[virtual]
+
+	for(idx=1 to nNode)
+		db_get_node(NodeId(idx), xyz(idx, 1:3))
+		if(ChkX == TRUE) then xyz(idx, 1) = r_value
+		if(ChkY == TRUE) then xyz(idx, 2) = r_value
+		if(ChkZ == TRUE) then xyz(idx, 3) = r_value
+		
+		NodeStrLength += str_length(str_from_integer(NodeId(idx))) + 1
+		sys_reallocate_string(sa_NodeId, NodeStrLength)
+		sa_NodeId = sa_NodeId // " " // str_from_integer(NodeId(idx))
+		
+		s_xyz = xfem_str_from_coordinate(xyz(idx, 1:3))
+		xyzStrLength += str_length(s_xyz) + 1
+		sys_reallocate_string(sa_xyz, xyzStrLength)
+		sa_xyz = sa_xyz // " " // s_xyz
+	end for
+	
+    string val_Action[8]
+    ui_wid_get(opt_Action, "VALUE", val_Action)
+   
+     string fem_modify_node__nodes_modified[VIRTUAL]
+	string fem_create_nodes__nodes_created[VIRTUAL]
+	
+	switch(val_Action)
+		case("MOVE")
+			fem_modify_nodes( sa_NodeId, "", "", "", sa_xyz, [0, 0, 0, 0, 1, 0, 0, 0, 0, 0], fem_modify_node__nodes_modified )		
+		case("COPY")
+			fem_create_nodes_1( "Coord 0", "Coord 0", 3, "#", sa_xyz, fem_create_nodes__nodes_created )
+	end switch
+
+	
+   END FUNCTION /* cb_Apply */
+   
+  FUNCTION Move_Node_REL_Value(RefNode, r_value)
+  
+	string RefNode[]
+	real r_value
+	
+	integer Ref_NodeId(1)
+	
+	fem_u_get_id_list(LP_SUBLIST_NODE, RefNode, 1, TRUE, Ref_NodeId)
+	
+	real new_xyz(3)
+	db_get_node(Ref_NodeId(1), new_xyz)
+	
+	string Nodes[virtual]
+	
+	ui_wid_get_vstring(wa_sdbox_07(2), "VALUE", Nodes)
+	
+	integer status, nNode
+
+	nNode = fem_u_count_id_list(LP_SUBLIST_NODE, Nodes, TRUE, status)
+	
+	integer NodeId(virtual)
+	real xyz(virtual)
+	
+	sys_allocate_array(NodeId, 1, nNode)
+	sys_allocate_array(xyz, 1, nNode, 1, 3)
+	
+
+	fem_u_get_id_list(LP_SUBLIST_NODE, Nodes, nNode, TRUE, NodeId)
+	
+	logical ChkX, ChkY, ChkZ
+	
+	ui_wid_get(tgl_Axis(1), "VALUE", ChkX)
+	ui_wid_get(tgl_Axis(2), "VALUE", ChkY)
+	ui_wid_get(tgl_Axis(3), "VALUE", ChkZ)
+	
+	integer idx
+
+	string sa_NodeId[virtual], sa_xyz[virtual]
+	
+	integer NodeStrLength, xyzStrLength
+	
+	NodeStrLength = str_length("Node")
+	
+	xyzStrLength = 1
+	sys_allocate_string(sa_NodeId, NodeStrLength)
+	sys_allocate_string(sa_NodeId, xyzStrLength)
+	sa_NodeId = "Node"
+	string s_xyz[virtual]
+
+	for(idx=1 to nNode)
+		db_get_node(NodeId(idx), xyz(idx, 1:3))
+		if(ChkX == TRUE) then xyz(idx, 1) = new_xyz(1) + r_value
+		if(ChkY == TRUE) then xyz(idx, 2) = new_xyz(2) + r_value
+		if(ChkZ == TRUE) then xyz(idx, 3) = new_xyz(3) + r_value
+		
+		NodeStrLength += str_length(str_from_integer(NodeId(idx))) + 1
+		sys_reallocate_string(sa_NodeId, NodeStrLength)
+		sa_NodeId = sa_NodeId // " " // str_from_integer(NodeId(idx))
+		
+		s_xyz = xfem_str_from_coordinate(xyz(idx, 1:3))
+		xyzStrLength += str_length(s_xyz) + 1
+		sys_reallocate_string(sa_xyz, xyzStrLength)
+		sa_xyz = sa_xyz // " " // s_xyz
+	end for
+	
+    string val_Action[8]
+    ui_wid_get(opt_Action, "VALUE", val_Action)
+   
+    string fem_modify_node__nodes_modified[VIRTUAL]
+	string fem_create_nodes__nodes_created[VIRTUAL]
+	
+	switch(val_Action)
+		case("MOVE")
+			fem_modify_nodes( sa_NodeId, "", "", "", sa_xyz, [0, 0, 0, 0, 1, 0, 0, 0, 0, 0], fem_modify_node__nodes_modified )		
+		case("COPY")
+			fem_create_nodes_1( "Coord 0", "Coord 0", 3, "#", sa_xyz, fem_create_nodes__nodes_created )
+	end switch
+
+	
+   END FUNCTION /* cb_Apply */ 
+   
+   END CLASS

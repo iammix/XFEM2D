@@ -1,0 +1,30 @@
+/*******************************************************************************
+ *
+ *   FUNCTION UTL_getElemArea(elmList, elmList )
+ *
+ *   Purpose :
+ *             get node's distance
+ *   Input   :
+ *             real_array    ra_nodeA, ra_nodeB ; each coordinate array
+ *   Output  :
+ *        real  r_dist
+ *
+ *   Side Effects :
+ *        <none>
+ *******************************************************************************/
+FUNCTION UTL_getElemArea(elmList, netArea)
+
+ 
+   STRING  elmList[]
+   REAL    area(virtual), netArea
+   INTEGER netCount, i
+   netArea = 0.
+   
+   fem_geom_face_area(elmList , area, netCount)
+   
+   for ( i=1 to netCount )
+      netArea = netArea + area(i)
+   end for
+   
+   
+END FUNCTION

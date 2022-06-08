@@ -1,0 +1,97 @@
+class MEMBRANE_TO_SHELL
+function Membrane_to_Shell()
+	integer num_regions
+	integer status
+	
+	status = db_count_region_ids(num_regions)
+	
+	integer region_ids(virtual)
+	string region_names[63](virtual)
+	
+	status = SYS_ALLOCATE_ARRAY(region_ids,1,num_regions)
+	status = SYS_ALLOCATE_ARRAY(region_names,1,num_regions)
+	
+	status = db_get_region_ids_and_names(num_regions,region_ids,region_names)
+	
+	integer idx, idz
+	integer num_elem
+	integer elem_ids(virtual)
+	string s_elem_ids[virtual], prop_set_name[63], s_val[63]
+	integer elem_type_id, dof_set_flag, condense_flag, geom_flag, form_flag, lam_flag
+	integer layer_count, material_id, material_lin, material_dir
+	integer nword, word_id(virtual), prop_dat_type, i_val, coord_id, node_id, field_id
+	integer property_ids(virtual), property_types(virtual), mstat
+	string property_data[63](virtual)
+	real r_val(3)
+	
+	for(idx=1 to num_regions) doloop
+		status = db_count_elements_in_region(region_ids(idx),num_elem)
+		dump status
+		if(status != 0) then CONTINUE doloop
+
+/*
+		IF (status != 0) THEN 
+			mstat = msg_to_form(status,3,0,0.0,0,"")
+			IF (mstat == 1) THEN CONTINUE doloop
+		END IF
+*/    
+		status = sys_allocate_array(elem_ids,1, num_elem)
+		
+		status = db_get_elements_in_region(num_elem,region_ids(idx),elem_ids)
+$		dump region_names(idx)
+		app_int_array_to_vstring("Element", num_elem, elem_ids, s_elem_ids)
+
+		db_get_region_definition (	region_ids(idx),		@
+									prop_set_name,		@
+									elem_type_id,		@
+									dof_set_flag,		@
+									condense_flag,		@
+									geom_flag,  		@
+									form_flag,		@
+									lam_flag,			@
+									layer_count,		@
+									material_id,		@
+									material_lin,		@
+									material_dir )
+									
+		if(elem_type_id == 57) then
+			db_count_props ( region_ids(idx), nword)
+			sys_allocate_array(word_id, 1, nword)
+			sys_allocate_array(property_ids, 1, nword)
+			sys_allocate_array(property_types, 1, nword)
+			sys_allocate_array(property_data, 1, nword)
+			
+			db_get_props_by_region( nword, region_ids(idx), word_id )
+			
+			for(idz = 1 to nword)
+				db_get_prop_value ( region_ids(idx),	@
+									word_id(idz),		@
+									material_id,		@
+									prop_dat_type,		@
+									i_val,			@
+									r_val,			@
+									s_val,			@
+									coord_id,			@
+									node_id,			@
+									field_id)
+								
+				property_ids(idz) = word_id(idz)
+				property_types(idz) = prop_dat_type
+				property_data(idz) =  PropFx.word_data(property_types(idz), material_id, i_val, r_val, s_val, coord_id, node_id, field_id)
+			end for
+			
+			elem_type_id = 51
+			condense_flag = 35
+			
+			status = elementprops_modify(prop_set_name, prop_set_name, elem_type_id, geom_flag, condense_flag,form_flag, lam_flag, dof_set_flag, property_ids, property_types, property_data, s_elem_ids)
+			
+			if(status == 0) then
+				dump region_names(idx)// " was converted to shell property"
+			else
+				dump status
+			end if
+			
+		end if
+	end for
+end function
+end class

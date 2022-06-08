@@ -1,0 +1,31 @@
+function ui_region_list(wListBox)
+    widget wListBox
+
+    integer status
+	integer i_count	
+	
+    status = db_count_region_ids(i_count)
+   if (status != 0) then
+      msg_to_form(status, 4, appcode(status), 0, 0., ""); return (status)
+   end if
+
+     STRING sa_region_name[125](virtual), sa_reg_ids[15](virtual)
+	INTEGER iv_reg_ids(virtual)
+
+	sys_allocate_array(sa_region_name, 1, i_count)
+	sys_allocate_array(iv_reg_ids, 1, i_count)
+    sys_allocate_array(sa_reg_ids, 1, i_count)
+
+	db_get_region_ids_and_names(i_count, iv_reg_ids, sa_region_name)
+	
+    integer idx
+    for(idx = 1 to i_count)
+        sa_reg_ids(idx) = str_from_integer(iv_reg_ids(idx))
+    end for
+    
+    ui_listbox_items_delete(wListBox)
+	ui_listbox_items_create(wListBox,sa_reg_ids,sa_region_name,i_count,"")
+    
+    return 0
+        
+end function

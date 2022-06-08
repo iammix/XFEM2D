@@ -1,0 +1,278 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME FRAME_GUIDE_ELEMENTS
+#define CLASS_STR "FRAME_GUIDE_ELEMENTS"
+#define UI_INIT UI_FRAME_GUIDE_ELEMENTS
+
+CLASS CLASSNAME
+    classwide widget sframe_01, seldbox_guide_elems(1), dbox_GroupName
+    classwide widget dbox_TolAngle
+
+    function UI_INIT(parent_id, y_loc)
+        widget parent_id
+        real y_loc
+
+        widget frame_wid
+        
+        frame_wid=ui_frame_create(                   @
+        /* parent */             parent_id,           @
+        /*  name  */             "",                @
+        /*    x   */             -0.05,  @
+        /*    y   */             y_loc,         @
+        /*  width */             FRAME_L_MARGIN + FRAME_WID_SINGLE + FRAME_R_MARGIN,  @
+        /* height */             0.0,               @
+        /*  label */             "Guide Element")
+
+        REAL Y_LOCF = 0
+ 	
+		Y_LOCF = FRAME_T_MARGIN
+
+        dbox_GroupName = ui_databox_create(                         @
+            /*    parent    */                  frame_wid,               @
+            /*   callback   */                  "",                     @
+            /*       x      */                  FRAME_L_MARGIN,         @
+            /*       y      */                  Y_LOCF,                  @
+            /* label_length */                  DBOX_WID_SINGLE,     @
+            /*  box_length  */                  DBOX_WID_SINGLE,      @
+            /*     label    */                  "Group Name :",         @
+            /*     value    */                  "",                     @
+            /*  label_above */                  TRUE,                  @
+            /*   datatype   */                  "STRING",               @
+            /*   num_vals   */                  1)
+
+        ui_wid_set(dbox_GroupName,"ENABLE",FALSE)
+
+        Y_LOCF += DBOX_HGT_LABOVE + INTER_WIDGET_SPACE
+
+        dbox_TolAngle = ui_databox_create(                          @
+            /*    parent    */                        frame_wid,                @
+            /*   callback   */                        "",                     @
+            /*       x      */                        FRAME_L_MARGIN,         @
+            /*       y      */                        Y_LOCF,                  @
+            /* label_length */                        DBOX_WID_SINGLE/2,      @
+            /*  box_length  */                        DBOX_WID_SINGLE/2,      @
+            /*     label    */                        "Tolerance Angle:",    @
+            /*     value    */                        10.,                    @
+            /*  label_above */                        FALSE,                  @
+            /*   datatype   */                        "REAL",                 @
+            /*   num_vals   */                        1)
+
+        Y_LOCF += DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+
+		sframe_01 = ui_select_frame_set(				@
+		/* parent widget id(input) 	*/	frame_wid,		@
+		/*	select frame callback	*/	CLASS_STR // ".Apply_Click",	@	
+		/* 	select frame label		*/	"Autoexec",	@
+		/*		x				*/	FORM_L_MARGIN,	@	
+		/*		y				*/	Y_LOCF, 		@
+		/*	select databax array	*/	seldbox_guide_elems,	@
+		/* 	data type	array		*/	["ELEM2D"],		@
+		/* 	select databox label array	*/ 	["Select 2D Elements"],	@
+		/*	select databox collback array	*/ 	[""], @
+		/*	label avove logical	*/			TRUE)	             
+		  
+        Y_LOCF += INTER_WIDGET_SPACE
+
+        ui_wid_set(frame_wid, "HEIGHT", Y_LOCF)
+
+        y_loc += Y_LOCF + INTER_WIDGET_SPACE
+
+        return frame_wid
+    end function
+
+    function Apply_Click()
+        string s_GuideElem[virtual]
+        integer ia_GuideElem(virtual), nNode, ia_NodeId(virtual)
+        real AngTol
+
+        ui_wid_get_vstring(seldbox_guide_elems(1),"VALUE", s_GuideElem)
+        ui_wid_get(dbox_TolAngle,"VALUE", AngTol)
+
+        integer i_nElem, status
+        i_nElem = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_GuideElem,TRUE, status)   
+
+        sys_allocate_array(ia_GuideElem, 1, i_nElem)
+
+        fem_u_get_id_list(LP_SUBLIST_ELEMENT, s_GuideElem, i_nElem, TRUE, ia_GuideElem)
+
+        integer nElem, ia_ElemId(virtual)
+        integer ia_ShapeId(virtual)
+        real r_gVct(virtual)
+        integer i, j, k
+        real r_nVct(3), Ang
+
+        sys_allocate_array(r_gVct, 1, i_nElem, 1, 3)
+
+        for(k=1 to i_nElem)
+            xfem_get_elem_normal(ia_GuideElem(k), r_gVct(k,1:3))
+
+            r_gVct(k,1) = mth_abs(r_gVct(k,1))
+            r_gVct(k,2) = mth_abs(r_gVct(k,2))
+            r_gVct(k,3) = mth_abs(r_gVct(k,3))
+            
+        end for
+
+        integer MaxElemID, chk(virtual)
+        $ db_count_elems (dbElems)
+        db_get_max_elem_id(MaxElemID)
+
+        widget opt_Action, opt_Object, opt_Method
+        opt_Action = sys_class_get("GROUPS2D", "opt_Action")
+        opt_Object = sys_class_get("GROUPS2D", "opt_Object")
+        opt_Method = sys_class_get("GROUPS2D", "opt_Method")
+
+        string act_item[virtual], obj_item[virtual], method_item[virtual]
+        ui_wid_get_vstring(opt_Action, "VALUE", act_item)
+        ui_wid_get_vstring(opt_Object, "VALUE", obj_item)
+        ui_wid_get_vstring(opt_Method, "VALUE", method_item)
+
+        dump act_item
+        dump obj_item
+        dump method_item
+
+        if(act_item == "PLOT") then
+            if(method_item == "GUIDELEM") then
+                gm_visibility_all(FALSE)
+            end if
+        end if
+
+        integer ia_gElem(virtual)
+        string ElemList[virtual], ElemList_1d[virtual], s_NodeList[virtual]
+        integer i_nnode_ass_elem, ia_nodeid_ass_elem(virtual)
+        
+        string s_group_name[31]
+        integer group_id
+        integer ia_GrpElem(virtual)
+        integer cnt, n
+
+        for(k=1 to i_nElem)
+
+            n = 1
+            cnt = 1
+            
+            sys_allocate_array(chk, 1, MaxElemID)
+            sys_allocate_array(ia_gElem, 1, 1)
+            sys_allocate_array(ia_GrpElem, 1, cnt)	
+            
+            ia_GrpElem(1) = ia_GuideElem(k)
+            ia_gElem(1) = ia_GuideElem(k)
+            chk(ia_gElem(1)) = 1
+                
+            repeat 
+                    db_get_node_ass_elem (n, ia_gElem, nNode, ia_NodeId)
+                    xfem_get_elems_ass_nodes(nNode, ia_NodeId, nElem, ia_ElemId)
+                    
+                    sys_allocate_array(ia_ShapeId, 1, nElem)
+                    db_get_elem_shape_for_id(nElem, ia_ElemId, ia_ShapeId)
+                    n = 0
+                    for(j=1 TO nElem)
+                        if(chk(ia_ElemId(j)) != 1) then
+                            if(ia_ShapeId(j) == 3 || ia_ShapeId(j) == 4) then
+                                xfem_get_elem_normal(ia_ElemId(j), r_nVct)
+                                r_nVct(1) = mth_abs(r_nVct(1))
+                                r_nVct(2) = mth_abs(r_nVct(2))
+                                r_nVct(3) = mth_abs(r_nVct(3))
+                            
+                                Ang = xfem_vector.angle_2v(r_gVct(k,1:3), r_nVct)
+                                
+                                if( -AngTol/2 < Ang && Ang < AngTol/2) then
+                                    cnt += 1
+                                    n += 1
+                                    sys_reallocate_array(ia_GrpElem, 1, cnt)
+                                    sys_reallocate_array(ia_gElem, 1, n)
+                                    ia_GrpElem(cnt) = ia_ElemId(j)
+                                    ia_gElem(n) = ia_ElemId(j)
+                                    chk(ia_ElemId(j)) = 1
+                                end if
+                            end if
+                        end if
+            $					chk += 1
+                    end for
+            
+            until(n == 0)
+
+            app_int_array_to_vstring("Element", cnt, ia_GrpElem, ElemList)
+            db_get_node_ass_elem(cnt, ia_GrpElem, i_nnode_ass_elem, ia_nodeid_ass_elem) 
+            app_int_array_to_vstring("Node", i_nnode_ass_elem, ia_nodeid_ass_elem, s_NodeList)
+            
+            GrpFx.get_1DElems_Ass_2DElems(cnt, ia_GrpElem, ElemList_1d)
+
+            if(act_item == "PLOT") then
+
+                gm_visibility_widget(ElemList, TRUE )
+                gm_visibility_widget(ElemList_1d, true )
+                gm_visibility_widget(s_NodeList, true )
+
+            else if(act_item == "ERASE")then
+
+                gm_visibility_widget(ElemList, false )
+                gm_visibility_widget(ElemList_1d, false )
+                gm_visibility_widget(s_NodeList, false )
+
+            end if
+
+            if(act_item == "CREATE") then
+                if(obj_item == "GROUP")then
+                    uil_primary_file.db_save()
+                    if(method_item == "GUIDELEM")then
+                        ui_wid_get(dbox_GroupName, "VALUE", s_group_name)
+                        ga_group_create(s_group_name)
+                        ga_group_entity_add(s_group_name, ElemList)
+                        ga_group_entity_add(s_group_name, ElemList_1d)
+                        ga_group_entity_add(s_group_name, s_NodeList)
+                        ga_group_current_set( s_group_name )
+                        return 0
+                    end if
+                end if
+            end if
+
+            if(act_item == "MODIFY") then
+                if(obj_item == "GROUP") then
+                    if(method_item == "GUIDELEM")then
+                        db_get_current_group_id(group_id)
+                        db_get_group_name(group_id, s_group_name)
+
+                        integer i_Nodes, ia_node_ids(virtual)
+                        string s_NodeIds[virtual]
+
+                        db_count_nodes_in_group ( group_id, i_Nodes )
+                        sys_allocate_array(ia_node_ids, 1, i_Nodes)
+                        db_get_all_node_ids_in_group( i_Nodes, group_id, ia_node_ids )
+                        app_int_array_to_vstring("Node", i_Nodes, ia_node_ids, s_NodeIds)
+
+                        integer i_Elems, ia_elem_ids(virtual)
+                        string s_ElemIds[virtual]
+
+                        db_count_elems_in_group ( group_id, i_Elems )
+                        sys_allocate_array(ia_elem_ids, 1, i_Elems)
+                        db_get_elem_ids_in_group( i_Elems, group_id, ia_elem_ids )
+                        app_int_array_to_vstring("Element", i_Elems, ia_elem_ids, s_ElemIds)
+
+                        ga_group_entity_remove(s_group_name, s_NodeIds)
+                        ga_group_entity_remove(s_group_name, s_ElemIds)
+
+                        ga_group_entity_add(s_group_name, ElemList)
+                        ga_group_entity_add(s_group_name, ElemList_1d)
+                        ga_group_entity_add(s_group_name, s_NodeList)
+                        ga_group_current_set( s_group_name )
+                    else if(method_item == "GELEMADD")then
+                        db_get_current_group_id(group_id)
+                        db_get_group_name(group_id, s_group_name)
+                        ga_group_entity_add(s_group_name, ElemList)
+                        ga_group_entity_add(s_group_name, ElemList_1d)
+                        ga_group_entity_add(s_group_name, s_NodeList)
+
+                    else if(method_item == "GELEMREMOVE")then
+                        db_get_current_group_id(group_id)
+                        db_get_group_name(group_id, s_group_name)
+                        ga_group_entity_remove(s_group_name, ElemList)
+                        ga_group_entity_remove(s_group_name, ElemList_1d)
+                        ga_group_entity_remove(s_group_name, s_NodeList)
+                    end if
+                end if
+            end if
+
+        sys_free_array(ia_GrpElem)
+        end for
+    end function
+END CLASS

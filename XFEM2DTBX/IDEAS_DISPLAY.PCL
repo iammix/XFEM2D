@@ -1,0 +1,255 @@
+/************************************************************************************
+                iDEASoft ( Patran Modeling & Analysis Tools R2009 )
+                DEVELOPED BY JEONG WOO-YEOL
+*************************************************************************************/
+CLASS IDEAS_DISPLAY
+
+FUNCTION set_any_portion
+
+	gm_set_pick_method(3)
+
+END FUNCTION
+
+FUNCTION  set_centroid
+
+	gm_set_pick_method(4)
+
+END FUNCTION
+
+FUNCTION set_entire
+
+	gm_set_pick_method(5)
+
+END FUNCTION
+
+FUNCTION plot_beam_shape
+     STATIC INTEGER offset
+     STATIC INTEGER full_span
+
+     If (full_span == 0 ) Then
+     	full_span = 2
+     Else If(full_span == 2) Then
+     	full_span = 0
+     End If
+
+     IF (offset == 0 ) THEN
+     	offset = 1
+     ELSE IF(offset == 1) THEN
+     	offset = 0
+     END IF
+
+	ga_display_offsets_Set( "general", offset )
+	ga_display_beam_set( "general", full_span )
+END FUNCTION
+
+function plot_elem_normal
+
+     static integer chk
+
+     logical fem_verify_no_elems_color_coded
+     logical fem_verify_norm_vectors_plotted
+
+     switch(chk)
+          case(0);
+               verify_element_normals( FALSE, FALSE, "", fem_verify_no_elems_color_coded, fem_verify_norm_vectors_plotted )
+               chk = 1
+          case(1);
+     		verify_normals_display_mgr.erase( FALSE, TRUE )
+     		display_cleanup()
+               chk = 0
+     end switch
+
+end function
+
+FUNCTION tFringe()
+
+REAL    ra_from(VIRTUAL), ra_to(VIRTUAL), ra_mid(VIRTUAL)
+REAL    tList(VIRTUAL), tListSort(VIRTUAL), min, max, tol
+INTEGER num_thick, i, elm_count, elm_ids(VIRTUAL), rids(VIRTUAL), chk2D, chkT
+INTEGER topo_codes(VIRTUAL), shape(VIRTUAL), nnod(VIRTUAL), table_id
+STRING  grpName[32](1), strBuff[VIRTUAL]
+
+
+
+ga_group_current_get(grpName(1))
+uil_entity_group_members_get( grpName(1), 124, strBuff )
+xfem_get_ids_from_entity_list ( strBuff, "elem", elm_count, elm_ids)
+
+     SYS_ALLOCATE_ARRAY( topo_codes, 1, elm_count )
+     SYS_ALLOCATE_ARRAY( shape,      1, elm_count )
+     SYS_ALLOCATE_ARRAY( nnod,       1, elm_count )
+     SYS_ALLOCATE_ARRAY( rids,      1, elm_count )
+
+     db_get_region_for_elements( elm_count, elm_ids,rids)
+     db_get_elem_etop( elm_count, elm_ids, topo_codes )
+     db_get_elem_topology_data( elm_count, topo_codes,shape, nnod)
+
+   chk2D =1
+   FOR (i=1 TO elm_count)
+     IF( shape(i) >2 ) THEN
+     	 SYS_REALLOCATE_ARRAY( tList,1,chk2D, 1,1)
+     	 tList(chk2D,1)= get_thickness(rids(i))
+     	 chk2D = chk2D + 1
+     END IF
+   END FOR
+   mth_sort_column( tList, 1, false )
+
+   min  = tList(1,1)
+   chkT = 2
+   SYS_ALLOCATE_ARRAY( tListSort,1,1)
+   tListSort(1) =min
+   FOR( i=1 TO chk2D-1 )
+    IF ( tList(i,1) < min ) THEN
+    	 SYS_REALLOCATE_ARRAY( tListSort,1,chkT)
+    	 min = tList(i,1)
+    	 tListSort(chkT) =min
+    	 chkT = chkT + 1
+    END IF
+   END FOR
+
+
+   dump tListSort
+   num_thick= sys_array_hbound(tListSort,1)
+   dump num_thick
+
+   if ( num_thick > 15 ) then
+      ui_writec(" The count of thickness property exceeds MAX 15 ! ")
+      return 0
+   end if
+
+   SYS_ALLOCATE_ARRAY( ra_from, 1, num_thick)
+   SYS_ALLOCATE_ARRAY( ra_to, 1, num_thick)
+   SYS_ALLOCATE_ARRAY( ra_mid, 1, num_thick)
+
+   tol = 0.005
+   ra_from(1) = tListSort(1)+tol
+
+   IF( num_thick > 1) THEN
+      FOR (i = 2 TO num_thick)
+        ra_from(i) = tListSort(i-1)
+      END FOR
+   END IF
+
+   FOR (i = 1 TO num_thick)
+   ra_to(i) = tListSort(i)
+   ra_mid(i) = ( ra_from(i) + ra_to(i) ) / 2.0
+   END FOR
+
+   ga_viewport_range_set( "", "Fri_default_Fringe" )
+   ga_range_delete( "thicknessPlot" )
+
+   ga_spectrum_current_set( "sequential_spectrum" )
+   $ga_spectrum_current_set( "standard_spectrum" )
+   ga_range_create( "thicknessPlot", num_thick )
+   ga_range_values_set( "thicknessPlot", ra_from, ra_to, ra_mid )
+   ga_viewport_range_set( "", "thicknessPlot" )
+
+
+   elementprops_plot_scalar.create_v2( 36, 1, grpName, "Thickness", table_id,  @
+   min, max )
+   res_data_load_elem_scalar( 0, table_id )
+   res_data_title( 0, "ENodal", "Scalar", 1, ["Thickness Scalar Plot"] )
+
+   grpName(1) = "GR:"//grpName(1)
+   res_display_fringe_create( "", "FreeFaces", 1, grpName, 12, [ @
+   "Range:thicknessPlot", "RangeOverwrite:OFF", "FringeStyle:Discrete/Smooth",  @
+   "Shade:None", "ElemEdge:ElemEdge,Black,Solid,1", "Shrink:0", "TitleDisplay:ON", @
+    "MinMaxDisplay:OFF", "ValueDisplay:OFF", "Filter:None", "ScaleFactor:1.0",  @
+   "LabelStyle:Fixed, 12, White, 4"], TRUE )
+   res_display_fringe_post( "", 0, "ENodal", TRUE, TRUE )
+
+END FUNCTION
+
+
+FUNCTION get_thickness( rid )
+
+ REAL     t
+
+ REAL     thick_sum = 0.
+ INTEGER  i, rid
+ INTEGER  gener_elem_type, dof_set_flag, condense_flag
+ INTEGER  geom_flag, form_flag, lam_flag, layer_count
+ INTEGER  mat_id, material_lin, material_dir
+ STRING   pName[32]
+ REAL     real_array(3)
+ INTEGER  data_type, material_id
+ INTEGER  int_value,coord_value, node_value, field_value
+ STRING   string_value[31]
+
+
+      db_get_region_definition(                          @
+       /* region ID        */  rid,                  @
+       /* set name         */  pName,                    @
+       /* element type ID  */  gener_elem_type,          @
+       /* dof set flag     */  dof_set_flag,             @
+       /* condense flag    */  condense_flag,            @
+       /* geom flag        */  geom_flag,                @
+       /* form flag        */  form_flag,                @
+       /* lam_flag         */  lam_flag,                 @
+       /* layer count      */  layer_count,              @
+       /* material id      */  mat_id,                   @
+       /* material linear  */  material_lin,             @
+       /* material direct  */  material_dir)
+
+      db_get_prop_value(                                 @
+       /* region ID        */  rid,                  @
+       /* word of interest */  36,                       @
+       /* material ID      */  material_id,              @
+       /* data type        */  data_type,                @
+       /* INTEGER value    */  int_value,                @
+       /* REAL array       */  real_array,               @
+       /* char STRING      */  string_value,             @
+       /* coord ID         */  coord_value,              @
+       /* node ID          */  node_value,               @
+       /* field ID         */  field_value)
+
+      $thickness(i) = real_array(1)
+      t = real_array(1)
+
+
+ RETURN t
+
+END FUNCTION
+
+
+
+
+/*
+INTEGER table_id
+REAL min
+REAL max
+
+ga_spectrum_current_set( "sequential_spectrum" )
+ga_range_create( "ee", 4 )
+ga_range_values_set( "ee", [22., 21., 19., 16., 18.5, 18.200001, 17.599995,  @
+17.033327, 16.46666, 15.899993, 15.333326, 14.76666, 14.199993, 13.633327,  @
+13.06666], [21., 19., 16., 12.5, 18.200001, 17.599995, 17.033327, 16.46666,  @
+15.899993, 15.333326, 14.76666, 14.199993, 13.633327, 13.06666, 12.783327], [ @
+21.5, 20., 17.5, 14.25, 18.35, 17.899998, 17.316662, 16.749992, 16.183327,  @
+15.616659, 15.049994, 14.483326, 13.91666, 13.349993, 12.924994] )
+
+elementprops_plot_scalar.create_v2( 36, 1, ["TEST"], "Thickness", table_id,  @
+min, max )
+res_data_load_elem_scalar( 0, table_id )
+res_data_title( 0, "ENodal", "Scalar", 1, ["Thickness Scalar Plot"] )
+res_display_fringe_create( "", "FreeFaces", 1, ["GR:TEST"], 12, [ @
+"Range:standard_range", "RangeOverwrite:OFF", "FringeStyle:Discrete/Smooth",  @
+"Shade:None", "ElemEdge:ElemEdge,Blue,Solid,1", "Shrink:0", "TitleDisplay:ON", @
+ "MinMaxDisplay:OFF", "ValueDisplay:OFF", "Filter:None", "ScaleFactor:1.0",  @
+"LabelStyle:Fixed, 12, White, 3"], TRUE )
+res_display_fringe_post( "", 0, "ENodal", TRUE, TRUE )
+
+elementprops_plot_scalar.create_v2( 36, 1, ["TEST"], "Thickness", table_id,  @
+min, max )
+res_data_load_elem_scalar( 0, table_id )
+res_data_title( 0, "ENodal", "Scalar", 1, ["Thickness Scalar Plot"] )
+res_display_fringe_create( "", "FreeFaces", 1, ["GR:TEST"], 12, ["Range:ee",  @
+"RangeOverwrite:OFF", "FringeStyle:Discrete/Smooth", "Shade:None",  @
+"ElemEdge:ElemEdge,Blue,Solid,1", "Shrink:0", "TitleDisplay:ON",  @
+"MinMaxDisplay:OFF", "ValueDisplay:OFF", "Filter:None", "ScaleFactor:1.0",  @
+"LabelStyle:Fixed, 12, White, 3"], TRUE )
+res_display_fringe_post( "", 0, "ENodal", TRUE, TRUE )
+*/
+
+
+END CLASS

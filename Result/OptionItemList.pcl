@@ -1,0 +1,63 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME OptionItemList
+#define CLASS_STR "OptionItemList"
+
+class CLASSNAME
+
+classwide widget mform_id, listbox_option_list, wdbox_option
+
+function init()
+
+   mform_id = ui_modalform_create(CLASS_STR,       @
+          /* x location */  FORM_X_LOC ,     @
+          /* y location */  FORM_Y_LOC,"UL", @
+          /* width      */  FORM_WID_SML,    @
+          /* height     */  LBOX_5L_HGT_LABOVE + FORM_T_MARGIN + FORM_B_MARGIN,   @
+          /* label      */  "",       @
+                            0)
+
+          listbox_option_list = ui_listbox_create(                        @
+          /*     parent     */                mform_id,                    @
+          /*    callback    */                "cb_listbox_option_list",   @
+          /*        x       */                FORM_L_MARGIN,              @
+          /*        y       */                FORM_T_MARGIN,                      @
+          /*      width     */                FORM_WID_SML - LINE_THICKNESS*2 - FORM_L_MARGIN - FORM_R_MARGIN,  @
+          /*    num_rows    */                5,                         @
+          /*      label     */                "ITEM LIST",               @
+          /* selection_type */                "SINGLE",                   @
+          /*      sort      */                TRUE)
+        
+        
+end function
+
+function display()
+$widget w_ItemList
+$string s_Label[]
+$string s_ItemList[]()
+    ui_form_display(CLASS_STR)
+    
+end function
+
+function option_items(Items, ListItems, count)
+string Items[]
+string ListItems[]()
+integer count
+
+    ui_wid_set(listbox_option_list, "LABEL", Items)
+    ui_listbox_items_create(listbox_option_list, ListItems, ListItems, count, "" )
+end function
+
+function cb_listbox_option_list(nsel, sel_item)
+integer nsel
+string sel_item[]()
+integer idx
+
+    ui_form_hide(CLASS_STR)
+    ui_wid_set(wdbox_option, "VALUE", sel_item(1))
+
+    ui_form_delete(CLASS_STR)
+      
+end function
+
+end class

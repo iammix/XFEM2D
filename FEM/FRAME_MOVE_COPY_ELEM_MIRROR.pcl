@@ -1,0 +1,121 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME FRAME_MOVE_COPY_ELEM_MIRROR
+#define CLASS_STR "FRAME_MOVE_COPY_ELEM_MIRROR"
+#define INIT_FORM	UI_FRAME_MOVE_COPY_ELEM_MIRROR
+
+class CLASSNAME
+		$ ui_main_frame
+
+		classwide widget sframe_coord, wa_sdbox_coord(1), dbox_Offset
+		classwide widget sframe_elem, wa_sdbox_elems(1)
+		/*******************************************************************************
+			Action-Move/Copy, Object-Node, Method - Reference Node, Relative Value, Absolut Value 
+		*******************************************************************************/
+		
+		function INIT_FORM(form_id, Y_LOC)
+			widget form_id
+			real Y_LOC
+		
+			widget frame_wid
+		
+			frame_wid=ui_frame_create(                   @
+				/* parent */             form_id,           @
+				/*  name  */             "",                @
+				/*    x   */             0.0,  @
+				/*    y   */             Y_LOC,         @
+				/*  width */             FRAME_WID_SINGLE,  @
+				/* height */             1.0,               @
+				/*  label */             "")
+
+			real Y_LOCF = 0
+			Y_LOCF = FRAME_T_MARGIN
+				
+			sframe_coord = ui_select_frame_set(				@
+				/* parent widget id(input) 	*/	frame_wid,		@
+				/*	select frame callback	*/	CLASS_STR // ".cb_data_type",	@	
+				/* 	select frame label		*/	"Autoexec",	@
+				/*		x				*/	FORM_L_MARGIN,	@	
+				/*		y				*/	Y_LOCF, 		@
+				/*	select databax array	*/	wa_sdbox_coord,	@
+				/* 	data type	array		*/	["AXIS"],		@
+				/* 	select databox label array	*/ 	["Define Mirror Plane Normal"],	@
+				/*	select databox collback array	*/ 	[""], @
+				/*	label avove logical	*/			TRUE)
+
+			Y_LOCF += INTER_WIDGET_SPACE
+
+			dbox_Offset = ui_databox_create(                    @
+					/*    parent    */                  frame_wid,     @
+					/*   callback   */                  "",                 @
+					/*       x      */                  FRAME_L_MARGIN,      @
+					/*       y      */                  Y_LOCF,   @
+					/* label_length */                  (FRAME_WID_SINGLE-FRAME_L_MARGIN - FRAME_R_MARGIN)/2,        @
+					/*  box_length  */                  DBOX_WID_SINGLE,         @
+					/*     label    */                  "Offset",  @
+					/*     value    */                  0.0,              @
+					/*  label_above */                  TRUE,              @
+					/*   datatype   */                  "REAL",           @
+					/*   num_vals   */                   1)
+					
+			Y_LOCF += DBOX_HGT_LABOVE + INTER_WIDGET_SPACE	  
+
+			sframe_elem = ui_select_frame_set(				@
+				/* 	parent widget id(input) 	*/	frame_wid,		@
+				/*	select frame callback	*/	CLASS_STR // ".Apply_Click",	@	
+				/* 	select frame label		*/	"Autoexec",	@
+				/*		x				*/	FORM_L_MARGIN,	@	
+				/*		y				*/	Y_LOCF, 		@
+				/*	select databax array	*/	wa_sdbox_elems,	@
+				/* 	data type	array		*/	["ELEMENT"],		@
+				/* 	select databox label array	*/ 	["Element List"],	@
+				/*	select databox collback array	*/ 	[""], @
+				/*	label avove logical	*/			TRUE)     
+			
+				Y_LOCF += INTER_WIDGET_SPACE
+
+				ui_wid_set(frame_wid, "HEIGHT", Y_LOCF)
+				
+				Y_LOC += Y_LOCF + INTER_WIDGET_SPACE	  
+				
+		return frame_wid
+		end function
+		
+		function Apply_Click()
+			
+			string coord_frame_axis[virtual]
+			ui_wid_get_vstring(wa_sdbox_coord(1), "VALUE", coord_frame_axis)
+			dump coord_frame_axis
+
+			real offset_value
+			ui_wid_get(dbox_Offset, "value", offset_value)
+
+			string elem_list[virtual]
+			ui_wid_get_vstring(wa_sdbox_elems(1), "value", elem_list)
+
+			ga_group_create("ideasx_temp")
+			ga_group_clear("ideasx_temp")
+			ga_group_entity_add("ideasx_temp", elem_list)
+			
+			widget opt_Action
+			opt_Action = sys_class_get("Finite_Element_2D", "opt_Action")
+
+			string action_item[virtual]
+			ui_wid_get_vstring(opt_Action, "VALUE", action_item)
+			dump action_item
+			if(action_item == "MOVE")then
+				> ga_group_move_mirror( 1, ["ideasx_temp"], coord_frame_axis, offset_value, 29 )
+			else if(action_item == "COPY")then
+				> ga_group_transform_mirror_1( 1, ["ideasx_temp"], coord_frame_axis, offset_value, 28, 4, "" )
+			end if
+
+			ga_group_delete("ideasx_temp")
+			
+		end function
+
+		function cb_data_type()
+			string s_data_type[virtual]
+			ui_wid_get_vstring(wa_sdbox_coord(1), "DATATYPE", s_data_type)
+			dump s_data_type
+		end function
+END CLASS

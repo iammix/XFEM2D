@@ -1,0 +1,35 @@
+function print_region_list()
+
+     integer status
+	string fname[64]
+     status = DB_NAME_GET(fname)
+	file_get_bfname(fname, fname)
+
+	fname = fname // "_Property_List.csv"
+	
+	integer fid
+     text_open(fname,"nowv",0,0,fid)
+	
+	integer i_count	
+	db_count_region_ids(i_count)
+
+     STRING sa_region_name[125](virtual)
+	INTEGER ia_region_id(virtual)
+
+	sys_allocate_array(sa_region_name, 1, i_count)
+	sys_allocate_array(ia_region_id, 1, i_count)
+
+	db_get_region_ids_and_names(i_count, ia_region_id, sa_region_name)
+	
+	integer idx
+	real r_temp
+	
+	for(idx = 1 to i_count)
+     
+		text_write(fid,"%I%,%A%", ia_region_id(idx), r_temp, sa_region_name(idx))
+
+     end for
+     
+     text_close(fid, "")
+
+end function

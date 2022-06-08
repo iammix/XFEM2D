@@ -1,0 +1,28 @@
+function ui_lbc_list(wListBox)
+    widget wListBox
+
+    db_get_all_lbc_names()
+
+    $ integer iv_lbc_id(virtual)
+    string sv_lbc_name[64](virtual)
+    $ integer iv_lbc_type(virtual)
+    $ sys_allocate_array(iv_lbc_id, 1, 1)
+    sys_allocate_array(sv_lbc_name, 1, 1)
+    $ sys_allocate_array(iv_lbc_type, 1, 1)
+    
+    integer i_dummy
+    integer status
+    integer cnt
+    while(status == 0)
+        cnt += 1
+        $ sys_reallocate_array(iv_lbc_id, 1, cnt)
+        sys_reallocate_array(sv_lbc_name, 1, cnt)
+        $ sys_reallocate_array(iv_lbc_type, 1, cnt)
+        status = db_get_next_lbc_name(i_dummy, sv_lbc_name(cnt), i_dummy)
+    end while
+
+    ui_listbox_items_delete(wListBox)
+	ui_listbox_items_create(wListBox,sv_lbc_name,sv_lbc_name,cnt-1,"")
+    
+    return cnt-1
+end function

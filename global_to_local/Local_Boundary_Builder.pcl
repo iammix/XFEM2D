@@ -1,0 +1,348 @@
+#include "appforms.p"
+
+Class LOCAL_BOUNDARY_BUILDER
+
+/* Classwide Variables */
+   CLASSWIDE WIDGET form_id, lstLoadCaseList, fraFEMField
+   CLASSWIDE WIDGET dboxSX, dboxEX, dboxSY, dboxEY, dboxSZ, dboxEZ
+   CLASSWIDE WIDGET btnFieldPrefix, dboxFieldPrefix, lstFieldList
+   CLASSWIDE WIDGET btnCreateField, frame_boudary, sfraBoundNode
+   CLASSWIDE WIDGET dboxLoadCasePrefix, sdboxSelNode 
+   CLASSWIDE WIDGET dboxGroupName, btn_Add, btn_Remove
+   CLASSWIDE WIDGET btnApply, btnCancel, App_txtBox
+
+ Function init()
+      REAL box_length=0.0
+      REAL yloc_main, xloc_dboxFieldPrefix
+      REAL yloc_fraFEMField=0., yloc_frame_boudary=0.
+
+      form_id=ui_form_create(                     @
+      /* callback */         "",                  @
+      /*     x    */         FORM_X_LOC_SML,      @
+      /*     y    */         FORM_Y_LOC,          @
+      /* position */         "UL",                @
+      /*   width  */         FORM_WID_SML,        @
+      /*  height  */         FORM_HGT_TALL,       @
+      /*   label  */         "Local Boundary Builder",  @
+      /*  unused  */         "")
+
+      yloc_main = FORM_T_MARGIN
+
+      lstLoadCaseList=ui_listbox_create(                  @
+      /*     parent     */              form_id,          @
+      /*    callback    */              "", @
+      /*        x       */              FORM_L_MARGIN,    @
+      /*        y       */              yloc_main,        @
+      /*      width     */              LBOX_WID_SINGLE,  @
+      /*    num_rows    */              5,                @
+      /*      label     */              "Result Cases",  @
+      /* selection_type */              "Extend",         @
+      /*      sort      */              TRUE)
+
+      yloc_main += LBOX_5L_HGT_LABOVE  + @
+                   INTER_WIDGET_SPACE
+
+      frame_boudary=ui_frame_create(                     @
+      /* parent */                form_id,             @
+      /*  name  */                "",                  @
+      /*    x   */                FRAME_X_LOC_COL1,    @
+      /*    y   */                yloc_main,           @
+      /*  width */                FRAME_WID_SINGLE,    @
+      /* height */                1.0,                 @
+      /*  label */                "LoadCase Builder")
+
+      yloc_frame_boudary = FRAME_T_MARGIN
+	  
+      sfraBoundNode=ui_selectframe_create(frame_boudary,"", @
+				         				  SFRAME_X_LOC_COL1, @
+										  yloc_frame_boudary, @
+										  SFRAME_WID_SINGLE, @
+										  SFRAME_1SDB_HGT_LABOVE, @
+										  "", @
+										  false)
+
+      sdboxSelNode= ui_selectdatabox_create(sfraBoundNode,		@
+											"",					@
+	      									SFRAME_L_MARGIN,	@
+											0,					@
+											SDBOX_LABEL_LEN_SINGLE, @
+											SDBOX_WID_SINGLE, @
+											"Select Boundary Node",@
+											"",true, @
+											"NODE", "" )
+
+	real hgt
+	ui_wid_get(sfraBoundNode,"HEIGHT", hgt)
+     yloc_frame_boudary += hgt + INTER_WIDGET_SPACE
+
+	btn_Add = ui_button_create(frame_boudary,    @
+                                "cb_add",     @
+     									   BUTTON_HALF_X_LOC1, @
+     									   yloc_frame_boudary,               @
+     									   BUTTON_WID_HALF,    @
+     									   BUTTON_DEFAULT_HGT, @
+     									   "ADD",            @
+     									   true, false)
+
+    btn_Remove = ui_button_create(frame_boudary, @
+                                    "cb_remove",       @
+     									  BUTTON_HALF_X_LOC2,  @
+     									  yloc_frame_boudary,                @
+     									  BUTTON_WID_HALF,     @
+     									  BUTTON_DEFAULT_HGT,  @
+     									  "REMOVE",              @
+     									  true, false)
+	
+	yloc_frame_boudary += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+
+	 real wid                                   
+     wid = DBOX_WID_SINGLE - DBOX_LABEL_LEN_DOUBLE
+
+     App_txtBox= ui_text_create(frame_boudary,   @
+                    "",      @
+                    FRAME_L_MARGIN,      @
+                    yloc_frame_boudary,      @
+                    TBOX_WID_SINGLE,  @
+                    3, @
+                    "Application Region",      @
+                    "",       @
+                    TRUE,   @
+                    FALSE   )
+
+	  
+	  yloc_frame_boudary += TOGGLE_HGT + SFRAME_1SDB_HGT_LABOVE + INTER_WIDGET_SPACE
+
+	     
+      ui_wid_set(frame_boudary,"HEIGHT",yloc_frame_boudary)
+
+      yloc_main += FRAME_2EDGE         + @
+                   FRAME_LABEL_HGT     + @
+                   INTER_WIDGET_SPACE  + @
+                   yloc_frame_boudary
+
+      btnApply=ui_button_create(                     @
+      /*   parent  */           form_id,             @
+      /*  callback */           "cbkApply",                  @
+      /*     x     */           BUTTON_HALF_X_LOC1,  @
+      /*     y     */           yloc_main,           @
+      /*   width   */           BUTTON_WID_HALF,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Apply",             @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           FALSE)
+
+      btnCancel=ui_button_create(                     @
+      /*   parent  */            form_id,             @
+      /*  callback */            "cbkCancel",         @
+      /*     x     */            BUTTON_HALF_X_LOC2,  @
+      /*     y     */            yloc_main,           @
+      /*   width   */            BUTTON_WID_HALF,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Cancel",            @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+
+      yloc_main += BUTTON_DEFAULT_HGT  + @
+                   INTER_WIDGET_SPACE
+
+      ui_wid_set(form_id,"HEIGHT",yloc_main)
+	
+   End Function /* init */
+
+$ ============================================================================
+
+   Function display()
+   INTEGER grp_id
+   STRING grp_name[64]
+
+	 ui_form_display("LOCAL_BOUNDARY_BUILDER")
+ 	 xfem_load_result_cases(lstLoadCaseList)
+	 
+   End Function /* display */
+
+$ ============================================================================
+
+Function cbkApply()
+
+string field_name[64](virtual)
+integer nfield
+
+gu_fit_view()
+
+nfield = LOCAL_BOUNDARY_BUILDER.Create_Boundary_Field(field_name)
+
+LOCAL_BOUNDARY_BUILDER.Boundary_Builder(nfield, field_name)
+
+End Function
+
+$ ============================================================================
+	Function cbkCancel()
+		ui_form_hide("LOCAL_BOUNDARY_BUILDER")
+		ui_form_delete("LOCAL_BOUNDARY_BUILDER")
+	End Function
+
+$ ============================================================================
+   Function Create_Boundary_Field(field_name)
+   
+   STRING field_name[]()
+   
+   	STRING LoadCase_Name[64](VIRTUAL)
+	STRING SubCase_Name[64](VIRTUAL)
+	STRING group_name[64]
+	
+	STRING lc_list[63](VIRTUAL)
+	STRING FieldPrefix[64]
+	
+	INTEGER nrc, i,group_id
+	
+	ui_wid_get(lstLoadCaseList,"nselected",nrc)
+	sys_allocate_array(lc_list,1,nrc)
+	
+	ui_wid_get(lstLoadCaseList,"value",lc_list)
+
+	sys_allocate_array(LoadCase_Name,1,nrc)
+	sys_allocate_array(SubCase_Name,1,nrc)
+	sys_allocate_array(field_name,1,nrc)
+		
+	FOR(i=1 TO nrc)
+		LoadCase_Name(i) = str_token(lc_list(i),",",1)
+		SubCase_Name(i) = str_token(lc_list(i),",",2)
+		IF(str_find_match(LoadCase_Name(i),":") != 0 ) THEN
+			field_name(i) = "lbc_" // str_token(LoadCase_Name(i),":",2)
+		ELSE
+			field_name(i) = "lbc_" // LoadCase_Name(i)
+		End IF
+	End FOR
+
+	db_get_current_group_id(group_id)
+	db_get_group_name(group_id,group_name)
+
+	FOR(i=1 TO nrc)
+		res_data_load_dbresult(		/* register */				0, @ 
+								/* location */			"Nodal", @
+								/* result_type */		"Vector", @ 
+								/* load_case */		LoadCase_Name(i),  @
+								/* subcase */			SubCase_Name(i), @
+								/* primary_result */	"Displacements", @
+								/* secondary_result */	"Translational", @
+								/* layer */			"(NON-LAYERED)", @
+								/* derivation */		"",  @
+								/* coordinate */		"Coord 0", @
+								/* averaging_method */	"", @
+								/* averaging_domain */	"", @
+								/* extrapolation */		"", @
+								/* complex_form */		"", @
+								/* complex_angle */		0.)
+
+		$ register, location, register_type, count, titles
+		res_data_title( 0, "Nodal", "Vector", 1, [""])
+
+		$ plot_name, entity_type, ntargets, targets, nattribs, attributes, deformed_flag
+		res_display_vector_create( "", "Nodes", 0, [""], 16, @
+					[ "Range:Vec_default_Vector", @
+					"RangeOverwrite:ON", @
+					"VectorDisplay:Component",  @
+					"VectorComps:ON,ON,ON", @
+					"VectorColors:Spectrum",  @
+					"VectorScale:ScreenScaled=0.1", @
+					"VectorAttachment:Head", @
+					"HeadStyle:Single",  @
+					"VectorStyle:Solid", @
+					"TailDisplay:ON", @
+					"TitleDisplay:OFF", @ 
+					"MinMaxDisplay:OFF", @
+					"LabelStyle:Exponential, 12, White, 3", @
+					"ValueDisplay:ON", @
+					"Filter:None",  @
+					"ScaleFactor:1."], @
+					TRUE )
+
+		$ plot_name, register_id, register_location, range_flag, spectrum_flag
+		res_display_vector_post( "", 0, "Nodal", TRUE, FALSE )
+
+		fields_create_fem( field_name(i), group_name, "Vector", 2, "Coord 0", 0 )
+	End FOR		
+   
+   return nrc
+   
+   End Function
+
+$ ============================================================================
+
+   Function Boundary_Builder(nfield, field_name)
+	string field_name[]()
+	integer nfield
+	
+	$ nfield = sys_array_hbound(field_name, 1)
+	
+	string node_ids[virtual](1)
+	string node_list[virtual]
+	
+	ui_wid_get_vstring(App_txtBox,"value",node_list)
+	
+	integer len
+	len = str_length(node_list)
+	
+	sys_allocate_string(node_ids, len)
+	
+	node_ids(1) = node_list
+	
+	dump node_ids
+	
+	integer idx
+	
+	string fld_name[32](2)
+
+	for(idx = 1 to nfield)
+
+		fld_name(1) = "f:"// field_name(idx)
+		fld_name(2) =""
+
+		loadsbcs_create2(	/* s_lbc_name		*/	field_name(idx),	@
+						/* i_lbc_type			*/	"Displacement",		@
+						/* i_lbc_category		*/	"Nodal",			@
+						/* i_target_element		*/	"",					@
+						/* load_case_type		*/	"Static",			@
+						/* ap_list			*/	node_ids,				@
+						/* i_geo_filter			*/	"FEM",				@
+						/* alt_coord_frame		*/	"Coord 0",			@
+						/* str_lbc_scale_factor	*/	"1.",				@
+						/* static_data			*/	fld_name,			@
+						/* dynamic_field_name	*/	["", ""] )
+
+	end for
+
+   End Function
+	
+function cb_Add()
+String listc[VIRTUAL],lista[VIRTUAL],listb[VIRTUAL]
+
+ui_wid_get_vstring(sdboxSelNode, "value", lista)
+ui_wid_get_vstring(App_txtBox, "value", listb)
+
+integer status
+
+status = list_create_boolean_list(lista,listb,"or",listc)
+
+ui_wid_set(App_txtBox, "value", listc)
+
+$ ui_wid_set(seldbox_Element, "value", "")
+return status
+end function
+
+function cb_Remove()
+String listc[VIRTUAL],lista[VIRTUAL],listb[VIRTUAL]
+
+ui_wid_get_vstring(sdboxSelNode, "value", lista)
+ui_wid_get_vstring(App_txtBox, "value", listb)
+
+integer status
+
+status = list_create_boolean_list(lista,listb,"b-a",listc)
+
+ui_wid_set(App_txtBox, "value", listc)
+$ ui_wid_set(seldbox_Element, "value", "")
+return status
+end function
+
+End Class /* local_boundary_builder */

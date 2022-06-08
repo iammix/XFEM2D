@@ -1,0 +1,162 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME IDEAS_VIEW
+#define CLASS_STR "IDEAS_VIEW"
+
+CLASS CLASSNAME
+
+/* Classwide Variables */
+   CLASSWIDE WIDGET form_id, selfrm_Mod_Element, seldbox_Element
+   CLASSWIDE WIDGET seldbox_Node(3)
+   CLASSWIDE WIDGET btnApply, btnCancel
+	classwide real yloc_init
+	classwide integer num_node_wid
+
+   FUNCTION init()
+      REAL box_length=0.0
+      REAL yloc_main
+      REAL yloc_selfrm=0.
+
+      form_id=ui_form_create(                        @
+      /* callback */         "",                     @
+      /*     x    */         FORM_X_LOC_SML,         @
+      /*     y    */         FORM_Y_LOC,             @
+      /* position */         "UL",                   @
+      /*   width  */         FORM_WID_SML,           @
+      /*  height  */         FORM_HGT_TALL,          @
+      /*   label  */         "Modify Element Type",  @
+      /*  unused  */         "")
+
+      yloc_main = FORM_T_MARGIN
+
+      selfrm_Mod_Element=ui_selectframe_create(                @
+      /*  parent  */                       form_id,            @
+      /* callback */                       "cbApply",          @
+      /*     x    */                       FORM_L_MARGIN,      @
+      /*     y    */                       yloc_main,          @
+      /*   width  */                       SFRAME_WID_SINGLE,  @
+      /*  height  */                       1.0,                @
+      /*   label  */                       "Autoexec",         @
+      /*  recycle */                       TRUE)
+
+      yloc_selfrm = SFRAME_T_MARGIN
+
+	integer idx
+	box_length = DBOX_WID_SINGLE
+	for(idx = 1 to 3)
+	      seldbox_Node(idx)=ui_selectdatabox_create(                   @
+	      /*    parent    */                     selfrm_Mod_Element,@
+	      /*   callback   */                     "",                @
+	      /*       x      */                     FORM_L_MARGIN,     @
+	      /*       y      */                     yloc_selfrm,  @
+	      /* label_length */                     1.0,               @
+	      /*  box_length  */                     DBOX_WID_SINGLE/2,        @
+	      /*     label    */                     "Node " // str_from_integer(idx) // " =",          @
+	      /*     value    */                     "",                @
+	      /*  label_above */                     FALSE,             @
+	      /*   datatype   */                     "NODE",            @
+	      /*    prompt    */                     "Select Node")
+	
+		yloc_selfrm += SDBOX_HGT_NO_LABOVE    + @
+                             INTER_WIDGET_SPACE
+	end for
+	  
+	  yloc_selfrm += INTER_WIDGET_SPACE
+	  
+	  ui_wid_set(selfrm_Mod_Element, "HEIGHT", yloc_selfrm)
+	  
+	  yloc_main += yloc_selfrm + @
+                    SFRAME_LABEL_HGT    + @
+                    INTER_WIDGET_SPACE
+
+      btnApply=ui_button_create(                     @
+      /*   parent  */           form_id,             @
+      /*  callback */           "cbApply",           @
+      /*     x     */           BUTTON_HALF_X_LOC1,  @
+      /*     y     */           yloc_main,           @
+      /*   width   */           BUTTON_WID_FULL,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Apply",             @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           TRUE)
+
+   END FUNCTION /* init */
+
+ $ 
+   FUNCTION display()
+          ui_exec_function(CLASS_STR, "init")
+          ui_form_display(CLASS_STR)
+          ui_set_focus(seldbox_Node(1))
+   END FUNCTION /* display */
+
+$ 
+
+function cbApply()
+
+/*
+ * This is a callback for the button named btnApply
+ */
+
+	string s_node_id[63](3)
+	
+	ui_wid_get_vstring(seldbox_Node(1), "value", s_node_id(1))
+	ui_wid_get_vstring(seldbox_Node(2), "value", s_node_id(2))
+	ui_wid_get_vstring(seldbox_Node(3), "value", s_node_id(3))
+
+     integer status, count
+     count = fem_u_count_id_list(LP_SUBLIST_NODE, s_node_id(1), FALSE, status)
+     count = fem_u_count_id_list(LP_SUBLIST_NODE, s_node_id(2), FALSE, status)
+     count = fem_u_count_id_list(LP_SUBLIST_NODE, s_node_id(3), FALSE, status)
+
+     integer i_node_id1(1),i_node_id2(1),i_node_id3(1)
+
+     fem_u_get_id_list(LP_SUBLIST_NODE, s_node_id(1), count, TRUE, i_node_id1)
+     fem_u_get_id_list(LP_SUBLIST_NODE, s_node_id(2), count, TRUE, i_node_id2)
+     fem_u_get_id_list(LP_SUBLIST_NODE, s_node_id(3), count, TRUE, i_node_id3)
+
+     integer i_node_id(3)
+     i_node_id(1) = i_node_id1(1)
+     i_node_id(2) = i_node_id2(1)
+     i_node_id(3) = i_node_id3(1)
+
+     real n_vec(3)
+     n_vec = FemFx.get_3nds_normal(i_node_id)
+
+     real o_pnt(3)
+     o_pnt = [0., 0., 0.]
+
+     ga_view_from_to_set( o_pnt, n_vec )
+
+/*
+     real uvec(2,3)
+     uvec(1,1:3) = FemFx.vector_from_nodes(i_node_id(1), i_node_id(2), 1)
+     uvec(2,1:3) = FemFx.vector_from_nodes(i_node_id(2), i_node_id(3), 1)
+
+
+
+     real gvec(3,3)
+     gvec(1,1:3) = [1.,0.,0.]
+     gvec(2,1:3) = [0.,1.,0.]
+     gvec(3,1:3) = [0.,0.,1.]
+
+     real ang(3)
+
+     ang(1) = FemFx.angle_btw_vecs(uvec(1,1:3),  gvec(1,1:3))
+     ang(2) = FemFx.angle_btw_vecs(uvec(2,1:3),  gvec(2,1:3))
+     ang(3) = FemFx.angle_btw_vecs(nvec,  gvec(3,1:3))
+
+     dump ang
+
+    ga_view_aa_set( ang(1), ang(2), ang(3) )
+
+$     real gvec(3) = [0.,0.,0.]
+
+$     ga_view_from_to_set( gvec, nvec )
+*/
+     ui_form_hide(CLASS_STR)
+     ui_form_delete(CLASS_STR)
+end function /* cbApply */
+
+$ 
+
+END CLASS /* IDEAS VIEW */

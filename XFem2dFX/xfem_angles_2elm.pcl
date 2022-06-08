@@ -1,0 +1,28 @@
+FUNCTION xfem_angles_2elm(i_Elem1, i_Elem2)
+real i_Elem1, i_Elem2
+real Vector1(3), Vector2(3)
+real retAngles
+real Num, Dividor
+	 
+$	 Num=0.0
+$	 Dividor=0.0
+$    retAngles=0.0
+    
+xfem_get_elem_noraml(i_Elem1, Vector1)
+xfem_get_elem_noraml(i_Elem2, Vector2)
+
+Dividor = mth_sqrt( Vector1(1) ** 2 + Vector1(2) ** 2 + Vector1(3) ** 2 ) @
+	* mth_sqrt( Vector2(1) ** 2 + Vector2(2) ** 2 + Vector2(3) ** 2 )
+ 
+Num = Vector1(1)*Vector2(1) + Vector1(2)*Vector2(2) + Vector1(3)*Vector2(3)
+ 
+     retAngles = Num / Dividor
+ 
+     if(retAngles > 1.0) then 
+		retAngles = 0.9999
+     else if (retAngles < -1.0) then
+		retAngles = -0.9999
+     end if 
+ 
+     return  mth_acosd(retAngles)
+END FUNCTION

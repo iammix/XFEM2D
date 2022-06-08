@@ -1,0 +1,18 @@
+function xfem_str_from_coordinate(r_array)
+real r_array()
+string 	conv[virtual]
+integer slen, i, hbnd
+
+hbnd = sys_array_hbound(r_array, 1)
+
+for(i=1 to 3)
+	slen = slen + str_length(str_from_real(r_array(i)))
+	sys_reallocate_string(conv, slen)
+	conv = conv // " " // str_from_real(r_array(i))
+end for 
+
+sys_reallocate_string(conv, slen + 4)
+conv = "[" // conv // "]"
+
+return conv
+END FUNCTION

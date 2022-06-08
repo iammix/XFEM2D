@@ -1,0 +1,23 @@
+/*******************************************************************************
+ *
+ *   FUNCTION UTL_getNodeDist( )
+ *
+ *   Purpose :
+ *             get node's distance
+ *   Input   :
+ *             real_array    ra_nodeA, ra_nodeB ; each coordinate array
+ *   Output  :
+ *        real  r_dist
+ *
+ *   Side Effects :
+ *        <none>
+ *******************************************************************************/
+ function UTL_getNodeDist(ra_nodeA, ra_nodeB,r_dist)
+ 
+    real ra_nodeA(), ra_nodeB(), r_dist
+    
+    r_dist = mth_sqrt( (ra_nodeA(1)-ra_nodeB(1))**2 +@
+                       (ra_nodeA(2)-ra_nodeB(2))**2 +@
+                       (ra_nodeA(3)-ra_nodeB(3))**2 )
+ 
+ end function

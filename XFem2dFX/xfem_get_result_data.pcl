@@ -1,0 +1,19 @@
+function xfem_get_result_data(result_id, coord_id, res_dir, elm_lst, result)
+
+integer result_id(),dtype,resloc,nelm,eids(VIRTUAL),nresults(VIRTUAL),minloc(2,6),maxloc(2,6), @
+        ErrCode      
+
+real result()
+
+string res_dir[],elm_lst[],coord_id[]
+
+ErrCode=res_utl_extract_elem_results(result_id,elm_lst,res_dir,"C",coord_id, @ 
+                              /* 1=scalar 2=vector 3=tensor */       dtype, @
+                              /* 1=centroid 2=nodal 3=multiple */    resloc, @
+                              /* The number of elements selected */  nelm, @
+                              /* The list of element ids */          eids, @
+                              /* The number of results per elm */    nresults, @
+                              /* result value */ result, @
+                                                 minloc,maxloc)
+
+end function

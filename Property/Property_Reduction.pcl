@@ -1,0 +1,344 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME PROPERTY_REDUCTION
+#define CLASS_STR "PROPERTY_REDUCTION"
+
+CLASS CLASSNAME
+
+/* Classwide Variables */
+   CLASSWIDE WIDGET form_id, sel_frame_id, seldbox_Element, btn_Apply, btn_Exit, dbox_ReductionThickness
+   classwide widget opt_Object, opt_ValueType
+
+   FUNCTION init()
+      REAL YLOC = 0
+
+      form_id=ui_form_create(                         @
+      /* callback */         "",                      @
+      /*     x    */         FORM_X_LOC_SML,          @
+      /*     y    */         FORM_Y_LOC,              @
+      /* position */         "UL",                    @
+      /*   width  */         FORM_L_MARGIN + FORM_WID_SML + FORM_R_MARGIN,            @
+      /*  height  */         FORM_HGT_TALL,           @
+      /*   label  */         "Property Reduction",  @
+      /*  unused  */         "")
+
+      YLOC = FORM_T_MARGIN
+      
+      opt_Object = ui_optionmenu_create(                	@
+      /*    parent    */              form_id,        		@
+      /*   callback   */              "",             		@
+      /*       x      */              AOM_MENU_X_LOC,  	@
+      /*       y      */              YLOC,      			@
+      /* label_length */              AOM_MENU_LABEL_LEN,   @
+      /*     label    */              "Object :",     		@
+      /*  label_above */              FALSE)
+
+      ui_item_create(opt_Object,"SELELEM","Slect Element",true)
+      ui_item_create(opt_Object,"CURGROUP","Current Group",true)
+      ui_item_create(opt_Object,"CLEANUP","Clean Up",true)
+	      
+      YLOC += OPT_MENU_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+
+      widget frame_id
+      
+      frame_id=ui_frame_create(                   @
+      /* parent */             form_id,           @
+      /*  name  */             "",                @
+      /*    x   */             FRAME_X_LOC_COL1,  @
+      /*    y   */             YLOC,         @
+      /*  width */             FRAME_L_MARGIN + FRAME_WID_SINGLE + FRAME_R_MARGIN,  @
+      /* height */             0.0,               @
+      /*  label */             "")
+
+            REAL Y_FRAME = 0.
+            Y_FRAME += FRAME_T_MARGIN
+            sel_frame_id=ui_selectframe_create(                    	@
+            /*  parent  */                  frame_id,           		@
+            /* callback */                  "",                 		@		
+            /*     x    */                  FRAME_L_MARGIN,      	@
+            /*     y    */                  Y_FRAME,      			@
+            /*   width  */                  SFRAME_WID_SINGLE,  		@
+            /*  height  */                  SFRAME_1SDB_HGT_LABOVE,	@
+            /*   label  */                  "",         			@
+            /*  recycle */                  TRUE)
+      
+            seldbox_Element = ui_selectdatabox_create(                         @
+            /*    parent    */                 sel_frame_id,               @
+            /*   callback   */                 "",                      @
+            /*       x      */                 SFRAME_L_MARGIN,           @
+            /*       y      */                 SDBOX_Y_LOC1_LABOVE,          @
+            /* label_length */                 0.0,                     @
+            /*  box_length  */                 SDBOX_WID_SINGLE,        @
+            /*     label    */                 "Select Elements",  @
+            /*     value    */                 "",                      @
+            /*  label_above */                 TRUE,                    @
+            /*   datatype   */                 "ELEMENT",              @
+            /*    prompt    */                 "")
+      
+            Y_FRAME += SFRAME_1SDB_HGT_LABOVE + INTER_WIDGET_SPACE
+
+            dbox_ReductionThickness=ui_databox_create(                   @
+            /*    parent    */          frame_id,          @
+            /*   callback   */          "",                @
+            /*       x      */          FORM_L_MARGIN,     @
+            /*       y      */          Y_FRAME,     @
+            /* label_length */          DBOX_WID_SINGLE*2/3, @
+            /*  box_length  */          DBOX_WID_SINGLE/3,   @
+            /*     label    */          "Redcution Thickness",  @
+            /*     value    */          1.,                @
+            /*  label_above */          FALSE,              @
+            /*   datatype   */          "REAL",         @
+            /*   num_vals   */          1)
+        
+            Y_FRAME += DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+           
+            opt_ValueType = ui_optionmenu_create(frame_id,         @
+                                        "",            	@
+                                        AOM_MENU_X_LOC,     @
+                                        Y_FRAME,      		@
+                                        FORM_WID_SML*1/3,     		@
+                                        "Value Type",       @
+                                        FALSE )
+                                   
+		ui_item_create(opt_ValueType, "Properties", "Properties", TRUE)
+    		ui_item_create(opt_ValueType, "Dimensions", "Dimensions", TRUE)
+			  
+		  Y_FRAME += OPT_MENU_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+		  
+		  ui_wid_set(frame_id, "HEIGHT", Y_FRAME)
+        
+            YLOC += Y_FRAME + INTER_WIDGET_SPACE
+      
+            btn_Apply=ui_button_create(                     @
+            /*   parent  */            form_id,             @
+            /*  callback */            "cb_apply",                  @
+            /*     x     */            BUTTON_HALF_X_LOC1,  @
+            /*     y     */            YLOC,           @
+            /*   width   */            BUTTON_WID_FULL,     @
+            /*   height  */            BUTTON_DEFAULT_HGT,  @
+            /*   label   */            "Apply",             @
+            /*    TRUE   */            TRUE,                @
+            /* highlight */            FALSE)
+      
+            YLOC += BUTTON_DEFAULT_HGT  + @
+                         INTER_WIDGET_SPACE
+      
+            btn_Exit=ui_button_create(                     @
+            /*   parent  */            form_id,             @
+            /*  callback */            "cb_exit",           @
+            /*     x     */            BUTTON_FULL_X_LOC1,  @
+            /*     y     */            YLOC,           @
+            /*   width   */            BUTTON_WID_FULL,     @
+            /*   height  */            BUTTON_DEFAULT_HGT,  @
+            /*   label   */            "Exit",              @
+            /*    TRUE   */            TRUE,                @
+            /* highlight */            FALSE)
+      
+            YLOC += BUTTON_DEFAULT_HGT  + @
+                         INTER_WIDGET_SPACE
+      
+            ui_wid_set(form_id,"HEIGHT",YLOC)
+                
+   END FUNCTION /* init */
+
+$ 
+   FUNCTION display()
+
+      ui_form_display(CLASS_STR)
+
+   END FUNCTION /* display */
+$ 
+FUNCTION cb_apply()
+
+uil_primary_file.db_save()
+
+string object[9]
+ui_wid_get(opt_Object, "VALUE", object)
+
+string selected_element[virtual]
+integer nElem, ia_ElemId(virtual), group_id
+
+SWITCH(object)
+	CASE("SELELEM")
+		ui_wid_get_vstring(seldbox_Element, "value", selected_element)
+		CLASSNAME.Property_Reduction(selected_element)
+
+	CASE("CURGROUP")
+		db_get_current_group_id(group_id)
+		db_count_elems_in_group ( group_id, nElem )
+		sys_allocate_array(ia_ElemId, 1, nElem)
+		db_get_elem_ids_in_group ( nElem, group_id, ia_ElemId )
+		app_int_array_to_vstring("Element", nElem, ia_ElemId, selected_element)
+		CLASSNAME.Property_Reduction(selected_element)
+
+END SWITCH
+
+END FUNCTION
+$ 
+FUNCTION cb_exit()
+ui_form_hide(CLASS_STR)
+ui_form_delete(CLASS_STR)
+END FUNCTION
+$==============================================================================================
+FUNCTION Property_Reduction(select_element_list)
+string select_element_list[]
+
+integer n_region
+db_count_region_ids( n_region)
+
+if(n_region == 0)then
+	return
+end if
+
+integer ia_region_id(virtual)
+sys_allocate_array(ia_region_id, 1, n_region)
+db_get_all_region_ids(n_region, ia_region_id)
+
+integer idx, status, i_region_id(1), count, geom_flag
+integer i_dumy, i_elem_type
+string region_name[64]
+string element_list[virtual]
+string s_boolean_element[virtual]
+
+for(idx = 1 to n_region)
+	i_region_id(1) = ia_region_id(idx)
+	ep_get_app_reg_str(1, i_region_id, element_list)
+	status= list_create_boolean_list(select_element_list, element_list,"and",s_boolean_element)
+	count = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_boolean_element, FALSE, status)
+	
+	if(count != 0)then
+		db_get_region_definition(i_region_id(1) , region_name, @
+               /* gener_elem_type */ i_elem_type, @
+               /* def_set_flag */ i_dumy,@
+               /* condense_flag */ i_dumy,@
+               /* geom_flag */ geom_flag, @
+               /* form_flag */ i_dumy,@
+               /* lam_flag */ i_dumy,@
+               /* layer_flag */ i_dumy, @
+               /* material_id */i_dumy, @
+               /* material_lin */ i_dumy, @
+               /* material_dir */ i_dumy  )
+          switch(i_elem_type)
+
+             case(51) /***** shell ***********/
+
+                 CLASSNAME.shell_property_reduction(i_region_id(1), s_boolean_element)
+
+             case(11)  /*** for beam element ***/
+
+                CLASSNAME.bar_beam_property_reduction(i_region_id(1), geom_flag, s_boolean_element)
+
+         end switch
+	end if          
+end for
+
+END FUNCTION
+
+/* ================= End of Thickness_Reduction Function ================ */
+
+FUNCTION shell_property_reduction(reg_id, element_list)
+integer reg_id
+string element_list[]
+
+real tc
+ui_wid_get(dbox_ReductionThickness, "VALUE", tc)
+
+integer mat_id
+string mat_name[32]
+real thick
+
+PropFx.ideasx_get_shell_property(reg_id, mat_id, mat_name, thick)
+
+thick = thick - tc
+
+string reg_name[64]	
+reg_name = str_from_real(thick) // "_" // mat_name
+PropFx.create_shell_property(reg_name, mat_name, thick, element_list)
+
+END FUNCTION
+$ ========================================================================================================
+function bar_beam_property_reduction(reg_id, geom_flag, element_list)
+integer reg_id
+integer geom_flag
+string element_list[]
+
+real tc
+ui_wid_get(dbox_ReductionThickness, "VALUE", tc)
+
+integer mat_id, sec_id, field_id
+string mat_name[32], sec_shape[8], sec_name[32]
+real ori_vct(3), off_vct1(3), off_vct2(3)
+
+PropFx.ideasx_get_beam_property(reg_id, mat_id, mat_name, sec_shape, sec_id, @ 
+						sec_name, field_id, ori_vct, off_vct1, off_vct2)
+
+integer ndim
+ndim = blgetnumdimension(sec_shape)
+
+integer i_data_types(virtual), i_field_ids(virtual)
+real r_dimen(virtual)
+
+IF(ndim !=0) THEN	
+	sys_allocate_array(i_data_types, 1, ndim)
+	sys_allocate_array(i_field_ids, 1 , ndim)
+	sys_allocate_array(r_dimen, 1, ndim)
+end if
+
+bl_get_std_beam_section_data (sec_id, ndim, i_data_types, r_dimen, i_field_ids)
+	
+$	beam_section_create( "500X10+300X20+800X15", "I", ["500", "800", "300", "10", "15", "20"] )
+$    beam_section_create( "624X12", "TUBE", ["312", "300"] )
+string section_name[32]
+switch(sec_shape)
+     case("BAR"); 
+		r_dimen(1) = r_dimen(1) - tc 
+		section_name = str_from_real(r_dimen(2)) // "X" // str_from_real(r_dimen(1)) // "_FB"    		
+	case("L");
+		r_dimen(3) = r_dimen(3) - tc
+		r_dimen(4) = r_dimen(4) - tc 
+		section_name = str_from_real(r_dimen(2)) // "X" // str_from_real(r_dimen(1)) // "X" // str_from_real(r_dimen(4)) // "/" // str_from_real(r_dimen(3)) // "_A" 
+	case("T");
+		r_dimen(3) = r_dimen(3) - tc
+		r_dimen(4) = r_dimen(4) - tc 
+		section_name = str_from_real(r_dimen(2)) // "X" // str_from_real(r_dimen(4)) // "+" // str_from_real(r_dimen(1)) // "X" // str_from_real(r_dimen(3)) // "_T"
+	case("I");
+		r_dimen(4) = r_dimen(4) - tc
+		r_dimen(5) = r_dimen(5) - tc
+		r_dimen(6) = r_dimen(6) - tc
+		section_name = str_from_real(r_dimen(1)) // "X" // str_from_real(r_dimen(4)) // "+" // str_from_real(r_dimen(3)) // "X" // str_from_real(r_dimen(6)) // "+" // str_from_real(r_dimen(2)) // "X" // str_from_real(r_dimen(5)) // "_I"
+	case("TUBE");
+		r_dimen(1) = r_dimen(1) - 0.5*tc
+		r_dimen(2) = r_dimen(2)
+		section_name = str_from_real(r_dimen(1)*2) // "X" // str_from_real(r_dimen(1)-r_dimen(2)) // "O"			 
+end switch	
+	 
+integer s_id
+s_id = PropFx.check_exist_beam_section(section_name, sec_shape, ndim, r_dimen, TRUE)
+      
+string s_ori[5](3)
+s_ori(1) = str_from_real(ori_vct(1))
+s_ori(2) = str_from_real(ori_vct(2))
+s_ori(3) = str_from_real(ori_vct(3))
+
+string reg_name[64]
+reg_name = sec_shape // str_from_integer(s_id) //"_"// mat_name // "_" //s_ori(1) //"_"//s_ori(2)//"_"// s_ori(3) 
+	 
+string value_type[16]
+ui_wid_get_vstring(opt_ValueType, "VALUE", value_type)
+PropFx.create_bar_beam_property(reg_name, mat_name, section_name, geom_flag, value_type, ori_vct, off_vct1, element_list)
+
+END FUNCTION
+
+END CLASS
+
+
+
+
+
+
+
+
+
+
+
+

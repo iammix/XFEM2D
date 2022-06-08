@@ -1,0 +1,10 @@
+FUNCTION xfem_get_lc_sc_from_rc(result_case, loadcase_name, subcase_name)
+    string result_case[]
+    string loadcase_name[]
+    string subcase_name[]
+
+    loadcase_name=str_token(result_case,",",1)
+	subcase_name=str_token(result_case,",",2)
+
+RETURN 0
+END FUNCTION

@@ -1,0 +1,867 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME PROPERTY_VIB
+#define CLASS_STR "PROPERTY_VIB"
+#define NAME_LENGTH 32
+#define MY_APPLICATION  "Property For Vibration"
+
+class CLASSNAME
+
+	CLASSWIDE WIDGET form_id, opt_Action, opt_Object, btn_Apply, btn_Exit
+	CLASSWIDE WIDGET frame_01, opt_ValueType
+	CLASSWIDE WIDGET seldbox_Element, selfrm_Element, dbox_vector, opt_Vector
+	CLASSWIDE WIDGET opt_Material, dbox_Property, btn_profile_create
+   	CLASSWIDE WIDGET lbox_ProfileList
+
+FUNCTION init()
+
+	REAL X_LOC1, X_LOC2, X_LOC3
+		
+	X_LOC1 = FORM_WID_SML - FORM_WID_SML*3/3 + INTER_WIDGET_SPACE
+	X_LOC2 = FORM_WID_SML - FORM_WID_SML*2/3 + INTER_WIDGET_SPACE
+	X_LOC3 = FORM_WID_SML - FORM_WID_SML*1/3 + INTER_WIDGET_SPACE
+	
+	REAL WXLOC1, WXLOC2, WXLOC3
+	
+	WXLOC1 = FORM_WID_SML*1/3
+	WXLOC2 = FORM_WID_SML*2/3 - INTER_WIDGET_SPACE * 2
+	WXLOC3 = FORM_WID_SML*3/3 - INTER_WIDGET_SPACE * 2
+		
+    REAL Y_LOC = 0
+	
+    form_id = ui_form_create(	CLASS_STR,       @
+          	/* x location */  	FORM_X_LOC ,     @
+          	/* y location */  	FORM_Y_LOC,"ul", @
+          	/* width      */  	FORM_WID_SML,    @
+          	/* height     */  	FORM_HGT_TALL,   @
+          	/* label      */  	MY_APPLICATION,  @
+                            		"")
+	
+	opt_Action = ui_optionmenu_create( 	form_id,                	@
+                                        	"cb_Action",            	@
+									AOM_MENU_X_LOC,         	@
+                                        	ACTION_MENU_Y_LOC,      	@
+                                        	WXLOC1,     	@
+                                        	"Action",            		@
+                                        	FALSE )
+
+    		ui_item_create(opt_Action, "CREATE", "Create", TRUE)
+									 
+    	opt_Object = ui_optionmenu_create( 	form_id,                	@
+                                        	"cb_Object",            	@
+                                        	AOM_MENU_X_LOC,         	@
+                                        	OBJECT_MENU_Y_LOC,      	@
+                                        	WXLOC1,     	@
+                                        	"Type",            		@
+                                        	FALSE )
+
+    	ui_item_create(opt_Object, "SHELL", "SHELL", TRUE)
+$    	ui_item_create(opt_Object, "BAR", "BAR", TRUE)
+    	ui_item_create(opt_Object, "BEAM", "BEAM", TRUE)
+$    	ui_item_create(opt_Object, "ROD", "ROD", TRUE)
+
+
+$     tgl_thkFringePlot = ui_toggle_create(                       @
+$           /*  parent  */             form_id,              @
+$           /* callback */             "",                    @
+$           /*     x    */             AOM_MENU_X_LOC,         @
+$           /*     y    */             METHOD_MENU_Y_LOC,         @
+$           /*   label  */             " Thickness Fringe Plot")
+	    	
+	Y_LOC += OBJECT_MENU_Y_LOC + OPT_MENU_HGT_NO_LABOVE + INTER_GROUP_SPACE
+
+	REAL Y_LOCF
+	
+	frame_01 = ui_frame_create(form_id,"", @
+								 0, @
+								 Y_LOC, @
+								 FORM_WID_SML, @
+								 0, @
+								 "")
+
+      Y_LOCF = FRAME_T_MARGIN
+
+      opt_Material = ui_optionmenu_create(frame_01,                @
+                                        "",            @
+                                        AOM_MENU_X_LOC,         @
+                                        Y_LOCF,      @
+                                        WXLOC1,     @
+                                        "Material",               @
+                                        FALSE )
+
+     ui_material_list(opt_Material)
+
+     Y_LOCF += OPT_MENU_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+
+     dbox_Property = ui_databox_create(          			@
+      /*    parent    */          frame_01,      			@
+      /*   callback   */          "cb_dbox_property",       @
+      /*       x      */          AOM_MENU_X_LOC,       	@
+      /*       y      */          Y_LOCF,	          	@
+      /* label_length */          WXLOC1,  	@
+      /*  box_length  */          WXLOC2,		@
+      /*     label    */          "Property",  			@
+      /*     value    */          "",                   	@
+      /*  label_above */          FALSE,                 	@
+      /*   datatype   */          "STRING",             	@
+      /*   num_vals   */          1)
+
+	Y_LOCF += DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+     
+     opt_ValueType = ui_optionmenu_create(frame_01,         @
+                                        "",            	@
+                                        AOM_MENU_X_LOC,     @
+                                        Y_LOCF,      		@
+                                        WXLOC1,     		@
+                                        "Value Type",       @
+                                        FALSE )
+          
+$	ui_item_create(opt_ValueType, "Properties", "Properties", TRUE)
+    	ui_item_create(opt_ValueType, "Dimensions", "Dimensions", TRUE)
+     
+	Y_LOCF +=  OPT_MENU_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+ 
+      selfrm_Element = ui_selectframe_create(                        	@
+      /*  parent  */                       frame_01,                 	@
+      /* callback */                       "cb_sdbox_elem",         	@
+      /*     x    */                       FORM_L_MARGIN,          	@
+      /*     y    */                       Y_LOCF,                   	@
+      /*   width  */                       SFRAME_WID_SINGLE,      	@
+      /*  height  */                       SFRAME_1SDB_HGT_LABOVE, 	@
+      /*   label  */                       "Autoexec",            	@
+      /*  recycle */                       TRUE)
+
+      seldbox_Element = ui_selectdatabox_create(                   @
+      /*    parent    */                    selfrm_Element,        @
+      /*   callback   */                    "",        		  @
+      /*       x      */                    SFRAME_L_MARGIN,       @
+      /*       y      */                    SDBOX_Y_LOC1_LABOVE ,  @
+      /* label_length */                    0.0,                   @
+      /*  box_length  */                    SDBOX_WID_SINGLE,      @
+      /*     label    */                    "Select Elements",     @
+      /*     value    */                    "",                    @
+      /*  label_above */                    TRUE,                  @
+      /*   datatype   */                    "ELEM2D",              @
+      /*    prompt    */                    "Select Elements")
+
+
+      $ real sframe_hgt
+      $ ui_wid_get(selfrm_Element,"HEIGHT", sframe_hgt)
+     
+      Y_LOCF += SFRAME_1SDB_HGT_LABOVE + LABEL_HGT + LABEL_HGT
+       
+      opt_Vector = ui_optionmenu_create(frame_01,               @
+                                        "cb_opt_vector",        @
+                                        AOM_MENU_X_LOC,         @
+                                        Y_LOCF,      		    @
+                                        WXLOC1,     @
+                                        "Vector",               @
+                                        FALSE )
+
+          ui_item_create(opt_Vector, "CN","Normal(Center)", TRUE)                                   
+          ui_item_create(opt_Vector, "+N", "+Normal", TRUE)
+          ui_item_create(opt_Vector, "-N", "-Normal", TRUE)
+          ui_item_create(opt_Vector, "CX", "CX", TRUE)
+          ui_item_create(opt_Vector, "+X", "+X", TRUE)
+          ui_item_create(opt_Vector, "-X", "-X", TRUE)
+          ui_item_create(opt_Vector, "CY", "CY", TRUE)          
+          ui_item_create(opt_Vector, "+Y", "+Y", TRUE)
+          ui_item_create(opt_Vector, "-Y", "-Y", TRUE)
+          ui_item_create(opt_Vector, "CZ", "CZ", TRUE)          
+          ui_item_create(opt_Vector, "+Z", "+Z", TRUE)
+          ui_item_create(opt_Vector, "-Z", "-Z", TRUE)
+
+     Y_LOCF += OPT_MENU_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+     
+     dbox_vector = ui_databox_create(               	@
+      /*    parent    */          frame_01,            @
+      /*   callback   */          "",                  @
+      /*       x      */          AOM_MENU_X_LOC,      @
+      /*       y      */          Y_LOCF,           	@
+      /* label_length */          WXLOC1,  @
+      /*  box_length  */          WXLOC2,     @
+      /*     label    */          "Orient. Vector",  	@
+      /*     value    */          "",                  @
+      /*  label_above */          FALSE,               @
+      /*   datatype   */          "STRING",            @
+      /*   num_vals   */          1)
+
+      Y_LOCF += DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+
+	 Y_LOCF += INTER_WIDGET_SPACE
+      
+      ui_wid_set(frame_01, "HEIGHT", Y_LOCF)
+
+      Y_LOC += Y_LOCF + INTER_WIDGET_SPACE
+
+      btn_Apply = ui_button_create(                  @
+      /*   parent  */           form_id,             @
+      /*  callback */           "cb_Apply",          @
+      /*     x     */           BUTTON_HALF_X_LOC1,  @
+      /*     y     */           Y_LOC,               @
+      /*   width   */           BUTTON_WID_HALF,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Apply",             @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           TRUE)
+
+      btn_Exit = ui_button_create(                    @
+      /*   parent  */            form_id,             @
+      /*  callback */            "cb_Exit",           @
+      /*     x     */            BUTTON_HALF_X_LOC2,  @
+      /*     y     */            Y_LOC,               @
+      /*   width   */            BUTTON_WID_HALF,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Exit",              @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+
+      ui_wid_set(opt_Object, "VALUE", "SHELL")
+
+      Y_LOC += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+
+      ui_separator_create (   form_id, "",           @
+                            0.0,                   @
+                            Y_LOC,   @
+                            FORM_WID_SML,          @
+                            TRUE )
+     Y_LOC += LINE_THICKNESS + INTER_WIDGET_SPACE
+     
+    	btn_profile_create = ui_button_create(form_id,  "cb_profile_create",     @
+     									   BUTTON_FULL_X_LOC1,      @
+     									   Y_LOC,                   @
+     									   BUTTON_WID_FULL,         @
+     									   BUTTON_DEFAULT_HGT,      @
+     									   "Profile Create",        @
+     									   true, false)        
+       
+     Y_LOC += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE     
+	
+	lbox_ProfileList = ui_listbox_create(form_id,           @
+                                         "cb_ProfileList",      @
+                                        BUTTON_FULL_X_LOC1,     @
+                                        Y_LOC,              @
+                                        LBOX_WID_SINGLE,    @
+                                        20,                 @
+                                        "Profile List",     @
+                                        "SINGLE", @
+                                        TRUE)
+
+     ui_wid_set(opt_Object, "VISIBLE", FALSE)
+     ui_wid_set(opt_Material, "VISIBLE", FALSE)
+     ui_wid_set(dbox_Property, "VISIBLE", FALSE)
+	ui_wid_set(opt_ValueType, "VISIBLE", FALSE)
+	ui_wid_set(selfrm_Element, "VISIBLE", FALSE)
+	ui_wid_set(opt_Vector, "VISIBLE", FALSE)
+	ui_wid_set(dbox_vector, "VISIBLE", FALSE)
+	ui_wid_set(btn_profile_create,"VISIBLE",FALSE)
+	ui_wid_set(lbox_ProfileList, "VISIBLE", FALSE)
+
+END FUNCTION
+
+FUNCTION display()
+
+    	ui_exec_function(CLASS_STR, "init")
+    	ui_form_display(CLASS_STR)
+	ui_profile_list(lbox_ProfileList)
+
+    string s_item[15]
+    ui_wid_get(opt_Object, "VALUE", s_item)
+
+    CLASSNAME.cb_Object(s_item)
+END FUNCTION
+
+FUNCTION cb_Action(action_item)
+STRING action_item[]
+STRING object_item[virtual]
+
+SWITCH(action_item)
+	
+	CASE("CREATE");
+	     ui_wid_set(opt_Object, "VISIBLE", TRUE)
+	     ui_wid_set(opt_Material, "VISIBLE", TRUE)
+	     ui_wid_set(dbox_Property, "VISIBLE", TRUE)
+		ui_wid_set(opt_ValueType, "VISIBLE", FALSE)
+		ui_wid_set(selfrm_Element, "VISIBLE", TRUE)
+		ui_wid_set(opt_Vector, "VISIBLE", FALSE)
+		ui_wid_set(dbox_vector, "VISIBLE", FALSE)
+		ui_wid_set(lbox_ProfileList, "VISIBLE", FALSE)
+		ui_wid_set(btn_profile_create, "VISIBLE", FALSE)
+		ui_wid_get_vstring(opt_Object, "VALUE", object_item)
+		CLASSNAME.cb_Object(object_item)
+		
+	
+	CASE("CLEAN_UP");
+	     ui_wid_set(opt_Object, "VISIBLE", TRUE)
+	     ui_wid_set(opt_Material, "VISIBLE", FALSE)
+	     ui_wid_set(dbox_Property, "VISIBLE", FALSE)
+		ui_wid_set(opt_ValueType, "VISIBLE", FALSE)
+		ui_wid_set(selfrm_Element, "VISIBLE", FALSE)
+		ui_wid_set(opt_Vector, "VISIBLE", FALSE)
+		ui_wid_set(dbox_vector, "VISIBLE", FALSE)
+		ui_wid_set(lbox_ProfileList, "VISIBLE", FALSE)
+		ui_wid_set(btn_profile_create, "VISIBLE", FALSE)
+$		ui_wid_set(dbox_Property,"LABEL", "Prefix")
+$		ui_wid_set(dbox_Property,"DATATYPE", "STRING")
+
+END SWITCH
+ 
+
+END FUNCTION
+
+FUNCTION cb_Object(s_item)
+STRING s_item[]
+STRING action_item[virtual]
+
+ui_wid_get_vstring(opt_Action, "VALUE", action_item)
+
+IF(action_item != "CREATE") THEN return
+ 
+IF(s_item == "SHELL")THEN
+     ui_wid_set(opt_object, "VISIBLE", TRUE)
+	ui_wid_set(opt_Material, "VISIBLE", TRUE)
+     ui_wid_set(dbox_Property, "VISIBLE", TRUE)
+	ui_wid_set(opt_ValueType, "VISIBLE", FALSE)
+	ui_wid_set(selfrm_Element, "VISIBLE", TRUE)
+	ui_wid_set(opt_Vector, "VISIBLE", FALSE)
+	ui_wid_set(dbox_vector, "VISIBLE", FALSE)
+	ui_wid_set(lbox_ProfileList, "VISIBLE", FALSE)
+     ui_wid_set(btn_profile_create, "VISIBLE", FALSE)
+	ui_wid_set(dbox_Property,"LABEL", "Thickness")
+     ui_wid_set(dbox_Property,"DATATYPE", "REAL")
+     ui_wid_set(seldbox_Element,"DATATYPE", "ELEM2D")
+	
+ELSE
+     ui_wid_set(opt_Material, "VISIBLE", TRUE)
+     ui_wid_set(dbox_Property, "VISIBLE", TRUE)
+	ui_wid_set(opt_ValueType, "VISIBLE", TRUE)
+	ui_wid_set(selfrm_Element, "VISIBLE", TRUE)
+	ui_wid_set(opt_Vector, "VISIBLE", TRUE)
+	ui_wid_set(dbox_vector, "VISIBLE", TRUE)
+	ui_wid_set(lbox_ProfileList, "VISIBLE", FALSE)
+     ui_wid_set(btn_profile_create, "VISIBLE", TRUE)
+	ui_wid_set(dbox_Property,"LABEL", "Section Name")
+	ui_wid_set(dbox_Property,"DATATYPE", "STRING")
+	ui_wid_set(seldbox_Element,"DATATYPE", "BEAMELEM")
+
+END IF
+	
+IF(s_item == "ROD") THEN
+     ui_wid_set(opt_Material, "VISIBLE", TRUE)
+     ui_wid_set(dbox_Property, "VISIBLE", TRUE)
+	ui_wid_set(opt_ValueType, "VISIBLE", FALSE)
+	ui_wid_set(selfrm_Element, "VISIBLE", TRUE)
+	ui_wid_set(opt_Vector, "VISIBLE", FALSE)
+	ui_wid_set(dbox_vector, "VISIBLE", FALSE)
+	ui_wid_set(lbox_ProfileList, "VISIBLE", FALSE)
+     ui_wid_set(btn_profile_create, "VISIBLE", TRUE)
+
+END IF
+
+END FUNCTION
+/*  =========== Emd of cb_Object function =================== */
+
+FUNCTION cb_opt_vector(s_item)
+     string s_item[]
+     string element_list[virtual], s_vct[5](3), dvct[256]
+     real nvct(3)
+	
+$	string on_item[5]
+$     ui_wid_get(opt_Vector, "VALUE", on_item)
+
+     real r_sign
+     SWITCH(s_item)
+     	CASE("+N"); r_sign = +1
+     	CASE("-N"); r_sign = -1
+     	CASE("CN"); r_sign = +1
+     END SWITCH
+	     
+     SWITCH(s_item)
+          CASE("+X");
+             ui_wid_set(dbox_vector, "VALUE", "<1,0,0>")
+          CASE("-X");
+             ui_wid_set(dbox_vector, "VALUE", "<-1,0,0>")
+          CASE("CX");
+             ui_wid_set(dbox_vector, "VALUE", "<1,0,0>")          
+          CASE("+Y");
+             ui_wid_set(dbox_vector, "VALUE", "<0,1,0>")
+          CASE("-Y");
+             ui_wid_set(dbox_vector, "VALUE", "<0,-1,0>")
+          CASE("CY");
+             ui_wid_set(dbox_vector, "VALUE", "<0,1,0>")          
+          CASE("+Z");
+             ui_wid_set(dbox_vector, "VALUE", "<0,0,1>")
+          CASE("-Z");
+             ui_wid_set(dbox_vector, "VALUE", "<0,0,-1>")
+          CASE("CZ");
+             ui_wid_set(dbox_vector, "VALUE", "<0,0,1>")
+		DEFAULT;
+			ui_wid_get_vstring(seldbox_Element, "value", element_list)
+			if(element_list == "")then return
+     		nvct = PropFx.get_Normal_Direction_Vector(element_list)
+     		s_vct(1) = str_from_real(mth_round(r_sign*nvct(1),2))
+			s_vct(2) = str_from_real(mth_round(r_sign*nvct(2),2))
+			s_vct(3) = str_from_real(mth_round(r_sign*nvct(3),2))
+			
+			dvct =  "< " // s_vct(1) // "," // s_vct(2) // "," // s_vct(3) // " >"
+
+			ui_wid_set(dbox_vector, "VALUE", dvct)	     	          
+     END SWITCH
+
+END FUNCTION
+/*  =========== End of cb_opt_vector function =================== */
+
+FUNCTION cb_Exit()
+
+    ui_form_hide(CLASS_STR)
+    ui_form_delete(CLASS_STR)
+
+END FUNCTION
+
+FUNCTION cb_Apply()
+
+    uil_primary_file.db_save()
+
+	string action_item[virtual]
+	ui_wid_get_vstring(opt_Action, "VALUE", action_item)
+
+	IF(action_item == "CMATERIAL")THEN
+		CLASSNAME.Change_Material()
+		RETURN
+	ELSE IF(action_item == "CLEAN_UP")THEN
+		CLASSNAME.Region_Clean_Up()
+		RETURN
+	END IF
+
+     string obj_item[virtual]
+     ui_wid_get_vstring(opt_Object, "VALUE", obj_item)
+
+     string mat_name[32]
+     ui_wid_get_vstring(opt_Material, "VALUE", mat_name)
+
+     string element_list[virtual]
+     ui_wid_get_vstring(seldbox_Element, "VALUE", element_list)
+
+	string region_name[64], reg_name[32], sec_name[virtual], d_vector[virtual], s_item[virtual]
+	string web_dir[63]
+    integer sec_id
+    
+     
+	IF(obj_item == "SHELL") THEN
+		real thk
+          ui_wid_get(dbox_Property, "VALUE", thk)
+          region_name = mat_name //"_" // str_from_real(thk)
+          
+          PropFx.create_shell_property(region_name, mat_name, thk, element_list)
+          thick_FringePlot()
+     
+	ELSE IF(obj_item == "BAR" || obj_item == "BEAM") THEN
+
+		ui_wid_get_vstring(dbox_Property, "VALUE", sec_name)
+     	ui_wid_get_vstring(opt_vector, "VALUE", s_item)
+        
+        SWITCH(s_item)
+          CASE("+X");
+                web_dir = "X1"
+          CASE("-X");
+                web_dir = "X2"
+          CASE("CX");
+                web_dir = "X0"          
+          CASE("+Y");
+                web_dir = "Y1"
+          CASE("-Y");
+                web_dir = "Y2"
+          CASE("CY");
+                web_dir = "Y0"          
+          CASE("+Z");
+                web_dir = "Z1"
+          CASE("-Z");
+                web_dir = "Z2"
+          CASE("CZ");
+                web_dir = "Z0"
+          CASE("+N");
+                web_dir = "N1"
+          CASE("-N");
+                web_dir = "N2"
+          CASE("CN");
+                web_dir = "N0"                                     
+		DEFAULT;
+    END SWITCH
+        ui_wid_get_vstring(dbox_vector, "VALUE", d_vector)
+     
+        integer geom_flag, ent_type
+
+		IF(obj_item == "BAR")THEN
+          	geom_flag = 2
+          	ent_type = 1
+        ELSE IF(obj_item == "BEAM") THEN
+			geom_flag = 36
+			ent_type = 2
+		END IF
+
+		db_get_beam_section_id(sec_name, sec_id)
+		
+		integer nrec, bytes_per_rec
+     	string sec_shape[7]
+     	db_get_beam_section(sec_id, sec_shape, sec_name, nrec, bytes_per_rec)
+		
+		integer r_sign
+		
+		IF(sec_shape == "L") THEN
+			r_sign = -1
+		ELSE
+			r_sign = 1
+		END IF
+		
+		integer status
+		real r_orv(3)
+		asm_u_lp_get_vector(d_vector, TRUE, r_orv, status)
+
+		r_orv(1) = r_sign*r_orv(1)
+		r_orv(2) = r_sign*r_orv(2)
+		r_orv(3) = r_sign*r_orv(3)
+
+		string s_orv[5](3)
+		s_orv(1) = str_from_real(mth_round(r_orv(1),2))
+		s_orv(2) = str_from_real(mth_round(r_orv(2),2))
+		s_orv(3) = str_from_real(mth_round(r_orv(3),2))
+
+		string vct_option[virtual]
+		ui_wid_get_vstring(opt_vector, "VALUE", vct_option)
+
+		real r_ofv(3)
+		IF(vct_option == "CX" || vct_option == "CY" || vct_option == "CZ" || @
+			vct_option == "NC") THEN
+     		r_ofv = [0., 0., 0.]
+		ELSE
+			r_ofv = PropFx.get_offset_vector(ent_type, sec_shape, sec_name, r_orv)
+		END IF
+		
+		
+        integer i_mag
+		i_mag = mth_sqrt(r_ofv(1)*r_ofv(1) + r_ofv(2)*r_ofv(2) + r_ofv(3)*r_ofv(3))
+
+        if(s_item == "+N" || s_item == "-N" || s_item == "CN") then
+            web_dir = s_orv(1)//s_orv(2)//s_orv(3) // "_"
+            region_name = mat_name //"_"// sec_shape // str_from_integer(sec_id) // "_" // web_dir //str_from_integer(i_mag)
+        else
+$            region_name = mat_name //"_"// sec_shape // str_from_integer(sec_id) // "_" // reg_name
+            region_name = mat_name //"_"// sec_shape // sec_name // "_" // web_dir
+        end if
+		
+        string ValueType[virtual]
+		ui_wid_get_vstring(opt_ValueType, "VALUE", ValueType)
+
+		PropFx.create_bar_beam_property(region_name, mat_name, sec_name, geom_flag, ValueType, r_orv, r_ofv, element_list)
+        SectionName_FringePlot()
+	     
+     ELSE IF(obj_item == "ROD") THEN
+          ui_wid_get_vstring(dbox_Property, "VALUE", sec_name)
+          db_get_beam_section_id(sec_name, sec_id)
+		
+		real SecArea
+     	SecArea = PropFx.get_section_prop(1, sec_name, 1)
+          region_name = mat_name // "_" // obj_item //str_from_real(SecArea)//"_"// str_from_integer(sec_id) 
+          PropFx.create_rod_property(region_name, mat_name, SecArea, element_list)
+     	  Area_FringePlot()
+     
+     END IF
+
+END FUNCTION
+
+FUNCTION cb_ProfileList(count, sel_items)
+	INTEGER count
+	STRING sel_items[]()
+	STRING object_item[virtual]
+	
+	ui_wid_get_vstring(opt_Object, "VALUE", object_item)
+	
+	IF(object_item != "SHELL") THEN
+		ui_wid_set(dbox_Property, "VALUE", sel_items(1))
+	END IF
+
+END FUNCTION
+
+FUNCTION cb_profile_create()
+      
+		if(ui_form_exists("PROFILE_DEFINITION") == false) then
+			ui_exec_function("PROFILE_DEFINITION", "init")
+		end if
+		
+		ui_exec_function("PROFILE_DEFINITION", "display")
+                  
+END FUNCTION
+    
+FUNCTION cb_dbox_property(s_event)
+string s_event[]
+
+string object_item[virtual]
+ui_wid_get_vstring(opt_Object, "VALUE", object_item)
+
+IF(object_item == "SHELL") THEN
+	RETURN -1
+END IF
+
+IF(s_event == "GAIN") THEN
+	ui_wid_set(lbox_ProfileList, "VISIBLE", TRUE)
+$	ui_wid_set(btn_profile_create, "VISIBLE", TRUE)
+	ui_profile_list(lbox_ProfileList)
+ELSE IF(s_event == "LOSE") THEN
+	ui_wid_set(lbox_ProfileList, "VISIBLE", FALSE)
+$	ui_wid_set(btn_profile_create, "VISIBLE", FALSE)
+END IF		
+	
+END FUNCTION
+/*  =========== End of cb_dbox_property function =================== */
+
+FUNCTION cb_sdbox_elem
+	string s_item[15]
+	ui_wid_get(opt_vector, "VALUE", s_item)
+	CLASSNAME.cb_opt_vector(s_item)
+END FUNCTION
+
+FUNCTION Region_Clean_Up()
+
+	string object_item[virtual]
+
+	ui_wid_get_vstring(opt_Object, "VALUE", object_item)
+
+	integer elem_type
+
+	switch(object_item)
+		case("SHELL");
+			elem_type = 51
+		case("BAR");
+			elem_type = 11
+		case("BEAM");
+			elem_type = 11
+		case("ROD");
+			elem_type = 18
+	end switch
+
+	integer nreg, reg_id(virtual)
+	string reg_name[63](virtual)
+
+	nreg = util_list.property_list(reg_id, reg_name)
+
+	STRING   region_name[63]
+	INTEGER  gener_elem_type, dof_set_flag, condense_flag
+	INTEGER  geom_flag, form_flag, lam_flag, layer_count
+	integer  material_id, material_lin, material_dir
+
+	integer idx, cnt = 0
+	ui_writec("The number of region : %d", nreg)
+	for(idx = 1 to nreg)
+		db_get_region_definition(                          @
+		/* region ID        */  reg_id(idx),              @
+		/* set name         */  region_name,            @
+		/* element type ID  */  gener_elem_type,          @
+		/* dof set flag     */  dof_set_flag,             @
+		/* condense flag    */  condense_flag,            @
+		/* geom flag        */  geom_flag,                @
+		/* form flag        */  form_flag,                @
+		/* lam_flag         */  lam_flag,                 @
+		/* layer count      */  layer_count,              @
+		/* material id      */  material_id,              @
+		/* material linear  */  material_lin,             @
+		/* material direct  */  material_dir)
+
+		if(elem_type == gener_elem_type) then
+			switch(elem_type)
+				case(51);
+					CLASSNAME.create_region_shell_property(region_name)
+					cnt += 1
+				case(11);
+					CLASSNAME.create_region_bar_beam_property(region_name, geom_flag)
+					cnt += 1
+				case(18);
+					CLASSNAME.create_region_rod_property(region_name)
+					cnt += 1
+			end switch
+		end if
+		ui_writec("%d - %d : %s", idx, reg_id(idx), region_name)
+	end for
+	ui_writec("The number of elem type %d : %d", elem_type, cnt)
+END FUNCTION
+
+FUNCTION Change_Material()
+	string mat_name[virtual]
+	
+	ui_wid_get_vstring(opt_Material, "VALUE", mat_name)
+
+	string selected_element_list[virtual]
+	ui_wid_get_vstring(seldbox_Element, "value", selected_element_list)
+
+     integer nreg
+	db_count_region_ids(nreg)
+	
+	integer ia_region_id(virtual)
+	string sa_region_name[64](virtual)
+
+     sys_allocate_array(ia_region_id, 1, nreg)
+	sys_allocate_array(sa_region_name, 1, nreg)
+	db_get_region_ids_and_names(nreg,ia_region_id, sa_region_name)
+
+	integer idx, i_reg_id(1), status, nElem
+     string element_list[virtual]
+	string s_boolean_element[virtual]
+
+	integer word_id(virtual), data_type(virtual), nword, i, option_id(6), r_id(1)
+	string word_data[64](virtual)
+
+for(idx = 1 to nreg)
+	i_reg_id(1) = ia_region_id(idx)
+	ep_get_app_reg_str(1, i_reg_id, element_list)
+	status= list_create_boolean_list(selected_element_list, element_list,"and",s_boolean_element)
+	nElem = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_boolean_element, FALSE, status)
+	
+	if(nElem != 0)then
+		nword = PropFx.ideasx_get_element_property(i_reg_id(1), option_id, word_id, data_type, word_data)
+		for(i = 1 to nword)
+          	if(word_id(i) == 13)then
+				word_data(i) = "m:"//mat_name
+			end if  
+		end for
+			/*
+				option_id(1) = elem_type
+				option_id(2) = dof_set_flag
+				option_id(3) = condense_flag
+				option_id(4) = geom_flag
+				option_id(5) = form_flag
+				option_id(6) = lam_flag
+	 		option_id(1) = 51 for shell, 57 for membrane, 11 for beam or bar, 18 for rod
+	 		 */
+		string reg_name[64]
+		reg_name = mat_name // "_" // ia_region_name(idx)   
+		
+		r_id(1) = PropFx.ideasx_check_exist_property(reg_name)
+		if(r_id(1) = 0)then
+			status = elementprops_create(	reg_name,	@
+							option_id(1),	@
+							option_id(4),	@
+							option_id(3),	@
+							option_id(5),		@
+							option_id(6),		@
+							option_id(2),		@
+							word_id,		@
+							data_type,	@
+							word_data,		@
+							s_boolean_element )
+		else
+			
+			string s_exist_element[virtual]
+			string s_element_list[virtual] 
+      		ep_get_app_reg_str(1, r_id,s_exist_element)
+
+      		list_create_boolean_list(s_boolean_element, s_exist_element,"or",s_element_list)
+     
+			status = elementprops_modify(	reg_name, reg_name,	@
+							option_id(1),	@
+							option_id(4),	@
+							option_id(3),	@
+							option_id(5),		@
+							option_id(6),		@
+							option_id(2),		@
+							word_id,		@
+							data_type,	@
+							word_data,		@
+							s_element_list )	
+		end if
+	end if          
+end for
+	
+END FUNCTION
+
+function create_region_bar_beam_property(reg_name, geom_flag)
+string reg_name[]
+integer geom_flag
+
+real r_orv(3), r_ofv1(3), r_ofv2(3)
+string sec_shape[15], section_name[31]
+integer section_id, material_id
+string material_name[63]
+
+	integer reg_id, field_id
+	db_get_region_id_from_name(reg_name, reg_id)
+	PropFx.ideasx_get_beam_property(reg_id, material_id, material_name, sec_shape, @
+							section_id, section_name, field_id, r_orv, r_ofv1, r_ofv2)
+
+	string value_type[virtual]
+	ui_wid_get_vstring(opt_ValueType, "VALUE", value_type )
+	integer ia_ElemId(virtual), nElem
+	db_count_elements_in_region (reg_id, nElem)
+	sys_allocate_array(ia_ElemId, 1, nElem)
+	db_get_elements_in_region(nElem, reg_id, ia_ElemId)
+		
+	string s_elem_list[virtual]
+				
+	app_int_array_to_vstring("Element", nElem, ia_ElemId, s_elem_list)
+
+	string s_orv[5](3)
+	
+	s_orv(1) = str_from_real(mth_round(r_orv(1),2))
+	s_orv(2) = str_from_real(mth_round(r_orv(2),2))
+	s_orv(3) = str_from_real(mth_round(r_orv(3),2))
+
+	integer i_mag
+	i_mag = mth_sqrt(r_ofv1(1)*r_ofv1(1) + r_ofv1(2)*r_ofv1(2) + r_ofv1(3)*r_ofv1(3))
+
+	string region_name[63]
+	region_name = material_name //"_"//sec_shape // str_from_integer(section_id) // s_orv(1)//s_orv(2)//s_orv(3)//str_from_integer(i_mag)
+
+    PropFx.create_bar_beam_property(region_name, material_name, section_name, geom_flag, value_type, r_orv, r_ofv1, s_elem_list)
+	$ ui_writec("Property name is converted from %s to %s. ",reg_name,region_name)
+end function
+
+	function create_region_shell_property(reg_name)
+		string reg_name[]
+
+		integer reg_id, material_id
+		string material_name[31]
+		real thick
+		
+		db_get_region_id_from_name(reg_name, reg_id)
+		PropFx.ideasx_get_shell_property(reg_id, material_id, material_name, thick)
+
+		integer ia_ElemId(virtual), nElem
+		db_count_elements_in_region (reg_id, nElem)
+		sys_allocate_array(ia_ElemId, 1, nElem)
+		db_get_elements_in_region(nElem, reg_id, ia_ElemId)
+			
+		string s_elem_list[virtual]
+					
+		app_int_array_to_vstring("Element", nElem, ia_ElemId, s_elem_list)
+
+		string region_name[63]
+		region_name = material_name // "_"//str_from_real(thick)
+
+		PropFx.create_shell_property(region_name, material_name, thick, s_elem_list)	 		
+$		ui_writec("Property name is converted from %s to %s. ",reg_name,region_name)
+	end function
+
+	function create_region_rod_property(reg_name)
+		string reg_name[]
+
+		integer reg_id, material_id
+		string material_name[32]
+		real sec_area
+
+		db_get_region_id_from_name(reg_name, reg_id)
+		PropFx.ideasx_get_rod_property(reg_id, material_id, material_name, sec_area)
+
+		integer ia_ElemId(virtual), nElem
+		db_count_elements_in_region (reg_id, nElem)
+		sys_allocate_array(ia_ElemId, 1, nElem)
+		db_get_elements_in_region(nElem, reg_id, ia_ElemId)
+			
+		string s_elem_list[virtual]
+					
+		app_int_array_to_vstring("Element", nElem, ia_ElemId, s_elem_list)
+
+		string region_name[63]
+		region_name = material_name // "_" // "ROD" // str_from_real(sec_area) 
+
+		PropFx.create_rod_property(region_name, material_name, sec_area, s_elem_list)
+$		ui_writec("Property name is converted from %s to %s. ",reg_name,region_name)
+	end function
+END CLASS

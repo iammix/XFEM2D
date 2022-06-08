@@ -1,0 +1,108 @@
+#----------------------------------------------
+#  Pclcomp.pm
+#
+#  Replaces Pclcomp Unix Shell script to automate building PCL
+#  Objects & Libraries thru "make" and the p3pclcomp utiliy
+#
+#  Ken Walker - MSC.Software
+
+#  Creation date: 03/22/2000
+#
+#  Enhanced from original UNIX script with:
+#   - "help" option (-h, -H, -help, -HELP, -Help)
+#   - checks for & reports invalid options
+#   - displays help prompt if no arguments are given
+#
+# Set some string constants
+
+$SMSTAND="p3pclcomp" ;
+
+$LIBSIZE=0  ;
+$LIBNAME="" ;
+$OPERATION="compile" ;
+$INTO="into" ;
+
+# Define/open the filehandle (a pipe to p3pclcomp):
+   open ( FHANDLE ,"| p3pclcomp " ) ||
+      die "Could not open pipe to process: p3pclcomp \n" ;
+
+   if( @ARGV == 0 )
+   {
+      print STDOUT "$0 : ***No options entered*** \n";
+      help_prompt() ;
+      exit (2) ;
+   }
+
+   while ( @ARGV != 0 )
+   {
+     if ( @ARGV[0] eq "-g" )
+      {
+        print FHANDLE "!! DEBUG ON ";
+        $junk = shift (@ARGV) ;
+      }
+     elsif ( @ARGV[0] =~ /^-h/i )  # look for  -h, -H, -help, -HELP
+      {
+        help_prompt() ;
+        exit (0) ;
+      }
+     elsif ( @ARGV[0] =~ /^-c\d/ )  # look for anything that looks like -c#...
+      {
+        $val = shift (@ARGV) ;
+        $val =~ s/-c// ;
+        print FHANDLE "!! SIZE CODE $val  \n";
+      }
+     elsif ( @ARGV[0] =~ /^-l\d/ )  # look for anything that looks like -l#...
+      {
+        $LIBSIZE = shift (@ARGV) ;
+        $LIBSIZE =~ s/-l// ;
+        print STDOUT "NEW LIBSIZE = $LIBSIZE  \n";
+      }
+      elsif ( @ARGV[0] eq "-m" )
+      {
+        $OPERATION="LIBRARY MERGE" ;
+        $INTO="" ;
+        $junk = shift (@ARGV) ;
+      }
+      elsif ( @ARGV[0] eq "-pob" )
+      {
+        $OPERATION="compile" ;
+        $INTO="into" ;
+        $LIBNAME="object" ;
+        $junk = shift (@ARGV) ;
+      }
+      elsif ( @ARGV[0] =~ /^-/ )  # anything else that looks like -...
+
+      {
+        $val = shift (@ARGV) ;
+        print STDOUT "$0 : unrecognized option = $val \n";
+        help_prompt() ;
+        exit (3) ;
+      }
+      else
+      {
+        if ( $LIBNAME eq "" )
+         { $LIBNAME = shift (@ARGV) ;
+           print FHANDLE "!! LIBRARY CREATE $LIBNAME 0 \n" if ( ! -e
+$LIBNAME )
+         }
+        else
+         { $File = shift (@ARGV)  ;
+           print FHANDLE "!! $OPERATION $File $INTO $LIBNAME  \n";
+         }
+      }
+   }
+
+# Close the filehandle
+   close ( FHANDLE ) ||
+     die "Could not close process: p3pclcomp \n" ;
+   exit (0) ;
+
+#-------------------
+sub help_prompt()
+   {
+      print STDOUT "Usage: $0 -pob (.pcl/.cpp->.pob) \n -OR-  $0 -m  
+(.pob->.plb)
+  [optional]   -c### (for new code size) \n  [optional]   -g### (for new
+library size)\n";
+   }
+#-------------------

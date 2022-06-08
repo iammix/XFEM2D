@@ -1,0 +1,225 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME xfem_p3list
+#define CLASS_STR "xfem_p3list"
+
+class CLASSNAME
+
+/* Proeprty List */
+function property_list(iv_property_id, sv_property_name)
+integer iv_property_id()
+string sv_property_name[]()
+
+integer nreg
+
+db_count_region_ids(nreg)
+
+sys_allocate_array(iv_property_id, 1, nreg)
+sys_allocate_array(sv_property_name, 1, nreg)
+
+db_get_all_region_ids(nreg, iv_property_id)
+
+db_get_region_ids_and_names(nreg, iv_property_id, sv_property_name)
+
+return nreg
+end function
+
+/* Group List */
+function group_list(iv_group_ids, sv_group_name)
+    integer iv_group_ids()
+    string sv_group_name[]()
+
+    integer ngrp
+    ga_group_ngroups_get(ngrp)
+
+    If (ngrp == 0) Then return (0)
+
+	sys_allocate_array(iv_group_ids,   1, ngrp)
+	sys_allocate_array(sv_group_name, 1, ngrp)
+
+    ga_group_groups_get(sv_group_name)
+
+    integer idx
+    for (idx = 1 to ngrp)
+		  db_get_group_id(sv_group_name(idx), iv_group_ids(idx))
+	end for
+
+	return (ngrp)
+
+end function
+
+/* Section List */
+function section_list(sv_section_shape, iv_section_id, sv_section_name)
+    string sv_section_shape[]()
+    integer iv_section_id()
+    string sv_section_name[]()
+
+    integer status
+    status = db_get_all_beam_section_ids()
+
+    integer nrec, bytes_per_rec
+    integer idx
+
+    idx = 0
+    sys_allocate_array(sv_section_name, 1, 1)
+
+    WHILE (status = db_get_next_beam_section_id(iv_section_id(idx)) == 0 )
+        idx += 1
+     	sys_reallocate_array(sv_section_name, 1, idx)
+
+        status = db_get_beam_section( iv_section_id(idx), sv_section_shape(idx), sv_section_name(idx), nrec, bytes_per_rec)
+    END WHILE
+
+    integer nsec
+
+    nsec = idx
+    return(nsec)
+
+end function
+
+/* Material List */
+function material_list(iv_material_id, sv_material_name)
+    integer iv_material_id()
+    string sv_material_name[]()
+
+    db_get_all_material_names()
+
+    integer mat_cat, mat_lin, mat_dir, mat_type, cnt
+	integer next_status = 0
+    integer nmat
+
+    nmat=0
+    sys_allocate_array(iv_material_id, 1, 1)
+    sys_allocate_array(sv_material_name, 1, 1)
+
+    while(next_status == 0)
+	   nmat += 1
+       sys_reallocate_array(iv_material_id, 1, 1)
+       sys_reallocate_array(sv_material_name,1, cnt)
+	   next_status = db_get_next_material_name(sv_material_name(nmat),@
+						iv_material_id(nmat),		  @
+						mat_cat,	@
+						mat_lin,	@
+						mat_dir,	@
+						mat_type )
+	end while
+
+    return nmat
+
+end function
+
+/* load cases list */
+function loadcases_list(iv_loadcases_id, sv_loadcases_title)
+    integer iv_loadcases_id()
+    string sv_loadcases_title[]()
+
+
+  Widget wListBox
+   string sv_Loadcases_Name[80](virtual)
+
+    db_get_all_load_case_names()
+
+    integer status
+    integer cnt = 0
+
+    sys_allocate_array(sv_Loadcases_Name, 1, 1)
+
+    while( status == 0 )
+
+        cnt += 1
+        sys_reallocate_array(sv_Loadcases_Name, 1, cnt)
+        status = db_get_next_load_case_name(sv_Loadcases_Name(cnt))
+
+        if(status != 0) then
+            cnt -= 1
+        end if
+    end while
+
+    if(cnt == 0) then
+       return -1
+    end if
+
+	ui_listbox_items_delete(wListBox)
+	ui_listbox_items_create(wListBox,sv_Loadcases_Name,sv_Loadcases_Name,cnt,"")
+
+	return 0
+
+
+
+
+
+    integer nlc
+
+    return nlc
+end function
+
+/* sub cases list */
+function subcases_list(iv_subcases_id, sv_subcases_title)
+    integer iv_subcases_id()
+    string sv_subcases_title[]()
+
+
+    integer nsub
+
+    return nsub
+end function
+
+/* sub cases list */
+function resultcases_list(iv_resultcases_id, sv_resultcases_title)
+    integer iv_resultcases_id()
+    string sv_resultcases_title[]()
+
+
+   string sa_LcTitle[40](virtual),sa_ScTitle[40],sa_RcTitle[80](100),sa_RcName[5](100)
+   integer i_nLc,iv_LcId(VIRTUAL),scnum(VIRTUAL),scids(VIRTUAL),lc_cnt,sc_cnt,rcnt
+		Widget wListBox
+
+    res_utl_get_loadcases( i_nLc,iv_LcId,scnum)
+
+	if(i_nLc != 0) then
+
+       sys_allocate_array(sa_LcTitle,1,i_nLc)
+
+             rcnt=0
+             For(lc_cnt=1 TO i_nLc)
+
+                 res_utl_get_subcases(  iv_LcId(lc_cnt), @
+                                        scnum(lc_cnt), @
+                                        scids)
+
+                 db_get_load_case_title( iv_LcId(lc_cnt), @
+                                         sa_LcTitle(lc_cnt))
+
+
+                  For(sc_cnt=1 TO scnum(lc_cnt))
+                  rcnt += 1
+                      db_get_sub_case_title( iv_LcId(lc_cnt), @
+                                             scids(sc_cnt), @
+                                             sa_ScTitle)
+
+                 sa_RcTitle(rcnt)=sa_LcTitle(lc_cnt)//", "//sa_ScTitle
+
+                 sa_RcName(rcnt)=str_from_integer(iv_LcId(lc_cnt))//"." //str_from_integer(ScIds(sc_cnt))
+
+
+                 End For
+
+           End For
+
+		ui_listbox_items_delete(wListBox)
+		ui_listbox_items_create(wListBox,sa_RcName,sa_RcTitle,rcnt,"")
+
+	end if
+	return 0
+
+
+
+
+
+
+    integer nres
+
+    return nres
+end function
+
+end class

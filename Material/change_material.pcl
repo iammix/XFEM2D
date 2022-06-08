@@ -1,0 +1,474 @@
+/* This program is create property of Longl. automatically in MSC/PATRAN 
+*
+*  programed by Chun Min Sung, 2000,08,18 
+*  program is modified by M.S. Chun 2000.12.4
+*/
+
+#include "appforms.p"
+#include "lpenums.i"
+
+CLASS CHANGE_MATERIAL
+
+    CLASSWIDE WIDGET form_id, apply_button,cancel_button, select_elm_frame,@
+                     select_elm_box, material_list
+
+    
+FUNCTION init()
+
+   real y_loc
+
+   y_loc = 0.
+
+    form_id=ui_form_create(          @
+         /* callback  */ "",         @
+         /* x */ FORM_X_LOC,     @
+         /* y */ FORM_Y_LOC,      @
+         /* position */ "UL",      @
+         /* width */ FORM_WID_SML,   @
+         /* height */ FORM_HGT_FULL,   @
+         /* label */ "Change material",    @
+         /* iconname */ ""                 )
+
+
+    material_list = ui_listbox_create(@
+               /* parent_frame */  form_id, @
+               /*   callback   */ "",@
+               /*      x       */  SFRAME_L_MARGIN,@
+               /*      y       */  INTER_WIDGET_SPACE,@
+               /*    width     */  LBOX_WID_SINGLE,@
+               /*  num_rows   */  10,@
+               /*  label       */ "Select Material",@
+               /*  selection type*/ "SINGLE" ,@
+               /*  sort  */ FALSE)
+
+     y_loc += LBOX_5L_HGT_LABOVE + LBOX_5L_HGT_NO_LABOVE
+
+
+     select_elm_frame=ui_selectframe_create(        @
+         /* parent    */          FORM_ID,      @
+         /* callback  */          "",   @
+         /* left_margin   */      FORM_L_MARGIN,   @
+         /*     y         */      y_loc,            @
+         /*   col_width   */      SFRAME_WID_SINGLE, @
+         /*   height      */      SFRAME_1SDB_HGT_LABOVE+INTER_WIDGET_SPACE, @
+         /*   always_one  */      "",        @
+         /*   recycle     */      FALSE)
+
+
+     select_elm_box=ui_selectdatabox_create(             @
+         /*   parent_frame    */        select_elm_frame,    @
+         /*   callback        */        "",              @
+         /*   left_margine    */       SFRAME_L_MARGIN, @
+         /*       y           */       SFRAME_T_MARGIN ,  @
+         /*   label_length    */       0.0,               @
+         /*   box_length      */       SDBOX_WID_SINGLE,@
+         /*    label          */       "Select Element",    @
+         /*    dafault value  */       "",               @
+         /*    label_above    */       TRUE,    @
+         /*    data_type      */       "ELEMENT",   @
+         /*    prompt         */       "select element filter")
+
+     y_loc += DBOX_HGT_NO_LABOVE *2  + INTER_WIDGET_SPACE * 3
+
+ 
+     apply_button=ui_button_create(    @
+        /*  parant */ form_id,    @
+        /* callback */ "apply_cb",   @
+        /*  x */ BUTTON_HALF_X_LOC1,  @
+        /*  y */  y_loc,  @
+        /* width */ BUTTON_WID_HALF,  @
+        /* height */ 0.0,   @
+        /* label */ "apply",   @
+        /* label_inside */  TRUE,   @
+        /* highlight */  TRUE    )
+
+     cancel_button=ui_button_create(    @
+        /*  parant */ form_id,    @
+        /* callback */ "cancel_cb",   @
+        /*  x */ BUTTON_HALF_X_LOC2,  @
+        /*  y */  y_loc,  @
+        /* width */ BUTTON_WID_HALF,  @
+        /* height */ 0.0,   @
+        /* label */ "cancel",   @
+        /* label_inside */  TRUE,   @
+        /* highlight */  TRUE    )
+
+     y_loc += DBOX_HGT_NO_LABOVE  + INTER_WIDGET_SPACE *3
+
+     ui_wid_set(form_id,"HEIGHT",y_loc)
+
+END FUNCTION /* init */
+
+
+
+FUNCTION apply_cb()
+uil_primary_file.db_save()
+  string s_mat_name[virtual], s_element[virtual]
+  string sa_mat_name[128](1)
+
+    uil_db_commit("committed")
+
+    ui_wid_get_vstring(material_list,"VALUE", sa_mat_name)
+    
+    s_mat_name = sa_mat_name(1)
+
+    ui_wid_get_vstring(select_elm_box,"VALUE", s_element)
+
+    CHANGE_MATERIAL.CMATERIAL(s_mat_name,s_element)
+    return
+
+END FUNCTION /*apply_cb */
+
+FUNCTION display()
+
+   ui_form_display("CHANGE_MATERIAL")
+
+   ui_wid_refresh()
+
+END FUNCTION
+
+FUNCTION refresh()
+
+  string s_mat_name[virtual],sa_mat_name[50](virtual)
+  integer i_mat_num,i_dumy,i
+
+
+  ui_item_deleteall(material_list)
+
+  db_count_materials(i_mat_num)
+
+  sys_allocate_array(sa_mat_name,1,i_mat_num)
+
+  db_get_all_material_names() 
+
+  for(i = 1 to i_mat_num)
+     db_get_next_material_name(s_mat_name,i_dumy,i_dumy,i_dumy,i_dumy,i_dumy)
+
+     ui_item_create(material_list,s_mat_name,s_mat_name,FALSE)
+  end for
+ 
+  sys_free_array(sa_mat_name)
+
+END FUNCTION /*refresh */
+
+FUNCTION cancel_cb()
+
+    ui_form_hide("CHANGE_MATERIAL")
+
+END FUNCTION
+
+FUNCTION CMATERIAL(s_mat_name, s_element)
+
+  string s_mat_name[], s_prop_name[128], s_dumy[128],s_prop_element[virtual]
+  string s_boolean_element[virtual],s_element[]
+
+  integer i_region_num, ia_region_id(virtual), i_prop_type,i_mat_id,i_dumy
+  integer i_region_id,i,ia_region(1),status
+
+  db_count_region_ids( i_region_num)
+
+  if(i_region_num == 0)then
+
+    return
+
+  end if
+
+  sys_allocate_array(ia_region_id,1,i_region_num)
+
+  db_get_all_region_ids(i_region_num, ia_region_id)
+
+  for(i =1 to i_region_num)
+
+     i_region_id = ia_region_id(i)
+
+     ia_region(1) = i_region_id
+
+     ep_get_app_reg_str(1,ia_region,s_prop_element)
+
+     status= list_create_boolean_list(s_element, s_prop_element,"and",s_boolean_element)
+
+     if(str_length(s_boolean_element) > 4)then
+
+          dump s_prop_name
+
+          db_get_region_definition(i_region_id,s_prop_name, @
+               /* gener_elem_type */ i_prop_type, @
+               /* def_set_flag */ i_dumy,@
+               /* condense_flag */ i_dumy,@
+               /* geom_flag */ i_dumy, @
+               /* form_flag */ i_dumy,@
+               /* lam_flag */ i_dumy,@
+               /* layer_flag */ i_dumy, @
+               /* material_id */i_mat_id, @
+               /* material_lin */ i_dumy, @
+               /* material_dir */ i_dumy  )
+
+          switch(i_prop_type)
+
+             case(51) /***** shell ***********/
+
+                 CHANGE_MATERIAL.change_shell_material(s_mat_name, i_region_id, s_boolean_element)
+
+             case(57) /***** membrane ***********/
+
+                 CHANGE_MATERIAL.change_membrane_material(s_mat_name, i_region_id, s_boolean_element)
+
+             case(11)  /*** for beam element ***/
+/*
+*                 CHANGE_MATERIAL.change_beam_material(s_mat_name, i_region_id, s_boolean_element)
+*/
+            case(18) /***** rod **************/
+
+                 CHANGE_MATERIAL.change_rod_material(s_mat_name, i_region_id, s_boolean_element)
+
+         end switch
+
+      end if
+
+   end for
+
+   sys_free_array(ia_region_id)
+
+   return
+
+END FUNCTION /* CHANGE_MATERIAL */
+
+FUNCTION change_shell_material(s_mat_name, i_region_id, s_boolean_element)
+
+   string s_mat_name[],s_thick[virtual],s_boolean_element[],s_dumy[128]
+   string s_element[virtual], sa_prop_info[128](virtual),sa_prop_name[128](1)
+   string s_old_element[virtual],s_new_prop_name[128]
+
+   real r_thick,ra_thick(virtual),i_ret
+   integer i_region_id, i_dumy,ia_region(1)
+
+   sys_allocate_array(ra_thick,1,3)
+
+   db_get_prop_value(i_region_id, 36, i_dumy, i_dumy, i_dumy, @
+                   ra_thick ,s_dumy, i_dumy, i_dumy,i_dumy)
+
+   r_thick = ra_thick(1)
+
+   sys_free_array(ra_thick)
+
+   s_thick = str_from_real(r_thick)
+
+   s_thick =str_strip_lead(s_thick)
+   s_thick =str_strip_trail(s_thick)
+
+   sys_allocate_array(sa_prop_info,1,7)
+
+   sa_prop_info(1) = "m:"//s_mat_name
+   sa_prop_info(2) = ""
+   sa_prop_info(3) = s_thick
+   sa_prop_info(4) = ""
+   sa_prop_info(5) = ""
+   sa_prop_info(6) = ""
+   sa_prop_info(7) = ""
+
+   s_new_prop_name = "PSHELL_"//s_mat_name//"_"//s_thick
+
+   i_ret = CHANGE_MATERIAL.check_exist_property(s_new_prop_name)
+
+   if(i_ret == 0)then
+
+       elementprops_create( s_new_prop_name, 51, 25, 35, 1, 1, 20, @
+           [13, 20, 36, 4037, 4111, 4118, 4119], [5, 9, 1, 1, 1, 1, 1],@
+           sa_prop_info, s_boolean_element )
+
+   else
+
+      ia_region(1) = i_ret
+
+      ep_get_app_reg_str(1,ia_region,s_old_element)
+
+      list_create_boolean_list(s_boolean_element, s_old_element,"or",s_element)
+
+       elementprops_modify( s_new_prop_name, s_new_prop_name, 51, 25, 35, 1, 1, 20, @
+           [13, 20, 36, 4037, 4111, 4118, 4119], [5, 9, 1, 1, 1, 1, 1],@
+           sa_prop_info, s_element )
+
+   end if
+
+    sys_free_array(sa_prop_info)
+
+   return
+
+END FUNCTION /* change_shell_material */
+
+
+FUNCTION change_rod_material(s_mat_name, i_region_id, s_boolean_element)
+
+   string s_mat_name[],s_dumy[128],s_area[virtual],s_boolean_element[]
+   string s_element[virtual], sa_prop_info[128](virtual),sa_prop_name[128](1),@
+          s_new_prop_name[128],s_old_element[virtual]
+
+   real r_scale, r_area,ra_area(virtual)
+   integer i_region_id, i_dumy,ia_region(1),i_ret
+
+
+   sys_allocate_array(ra_area,1,3)
+
+   db_get_prop_value(i_region_id, 1, i_dumy, i_dumy, i_dumy, @
+                   ra_area ,s_dumy, i_dumy, i_dumy,i_dumy)
+
+   r_area = ra_area(1)
+
+   sys_free_array(ra_area)
+
+   s_area = str_from_real(r_area)
+
+   s_area =str_strip_lead(s_area)
+   s_area =str_strip_trail(s_area)
+
+   sys_allocate_array(sa_prop_info,1,5)
+
+   sa_prop_info(1) = "m:"//s_mat_name
+   sa_prop_info(2) = s_area
+   sa_prop_info(3) = ""
+   sa_prop_info(4) = ""
+   sa_prop_info(5) = ""
+
+   s_new_prop_name = "PROD_"//s_mat_name//"_"//s_area
+
+   i_ret = CHANGE_MATERIAL.check_exist_property(s_new_prop_name)
+
+   if(i_ret == 0)then
+
+          elementprops_create( s_new_prop_name, 18, 2, 26, 1, 1, 20, @
+           [13, 1, 1026, 4036, 4037], [5, 1, 1, 1, 1], @
+           sa_prop_info, s_boolean_element )
+
+   else
+
+       ia_region(1) = i_ret
+
+       ep_get_app_reg_str(1,ia_region,s_old_element)
+
+       list_create_boolean_list(s_boolean_element, s_old_element,"or",s_element)
+
+       elementprops_modify( s_new_prop_name, s_new_prop_name, 18, 2, 26, 1, 1, 20, @
+           [13, 1, 1026, 4036, 4037], [5, 1, 1, 1, 1], @
+           sa_prop_info, s_element )
+    end if
+
+        sys_free_array(sa_prop_info)
+
+
+   return
+
+
+END FUNCTION /*** change_rod_material**/
+
+
+FUNCTION change_membrane_material(s_mat_name, i_region_id, s_boolean_element)
+
+   string s_mat_name[],s_dumy[128],s_thick[virtual],s_boolean_element[]
+   string s_element[virtual], sa_prop_info[128](virtual),@
+          sa_prop_name[128](1),s_old_element[virtual],s_new_prop_name[128]
+
+   real r_scale, r_thick,ra_thick(3)
+   integer i_region_id, i_dumy,ia_region(1),i_ret
+
+   db_get_prop_value(i_region_id, 36, i_dumy, i_dumy, i_dumy, @
+                   ra_thick ,s_dumy, i_dumy, i_dumy,i_dumy)
+
+   r_thick = ra_thick(1)
+
+   s_thick = str_from_real(r_thick)
+
+   s_thick =str_strip_lead(s_thick)
+   s_thick =str_strip_trail(s_thick)
+
+   sys_allocate_array(sa_prop_info,1,4)
+
+   sa_prop_info(1) = "m:"//s_mat_name
+   sa_prop_info(2) = ""
+   sa_prop_info(3) = s_thick
+   sa_prop_info(4) = ""
+
+   s_new_prop_name = "Memb_"//s_mat_name//"_"//s_thick
+
+   i_ret = CHANGE_MATERIAL.check_exist_property(s_new_prop_name)
+
+   if(i_ret == 0)then
+
+       elementprops_create( s_new_prop_name, 57, 25, 19, 1, 1, 20,@
+           [13, 20, 36, 4037], [5, 9, 1, 1], sa_prop_info, s_element )
+
+   else
+
+      ia_region(1) = i_ret
+
+      ep_get_app_reg_str(1,ia_region,s_old_element)
+
+      list_create_boolean_list(s_boolean_element, s_old_element,"or",s_element)
+
+      elementprops_modify( s_new_prop_name, s_new_prop_name, 57, 25, 19, 1, 1, 20,@
+           [13, 20, 36, 4037], [5, 9, 1, 1], sa_prop_info, s_element )
+
+  end if
+
+  sys_free_array(sa_prop_info)
+
+  return
+
+
+END FUNCTION /* change_membrane_material */
+
+FUNCTION check_exist_property(s_prop_name)
+/*
+*  check exist property using property_name
+*  input : property name
+*  output: exist -> return region id, not exist -> return 0
+*/
+
+  string s_prop_name[], sa_prop_name[32](virtual),s_temp_prop_name[virtual]
+  integer i_count,ia_region_id(virtual),i_return,i
+
+   i_return = 0
+
+   db_count_region_ids(i_count)
+
+   if(i_count !=0) then
+      sys_allocate_array(sa_prop_name,1,i_count)
+      sys_allocate_array(ia_region_id,1,i_count)
+
+      db_get_region_ids_and_names(i_count,ia_region_id,sa_prop_name)
+
+      for(i =1 to i_count)
+
+         s_temp_prop_name = sa_prop_name(i)
+
+         s_temp_prop_name = str_strip_lead(s_temp_prop_name)
+         s_temp_prop_name = str_strip_trail(s_temp_prop_name)
+
+         if(s_temp_prop_name == s_prop_name) then
+
+             i_return = ia_region_id(i)
+
+             break
+          end if
+
+      end for
+      sys_free_array(sa_prop_name)
+      sys_free_array(ia_region_id)
+
+  else
+      sys_allocate_array(sa_prop_name,1,1)
+      sys_allocate_array(ia_region_id,1,1)
+
+      i_return = 0
+
+      sys_free_array(sa_prop_name)
+      sys_free_array(ia_region_id)
+
+  end if
+
+
+  return i_return
+
+
+END FUNCTION /* check_exist_property */
+
+END CLASS

@@ -1,0 +1,153 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME PROPERTY_2D
+#define CLASS_STR "PROPERTY_2D"
+#define NAME_LENGTH 32
+#define MY_APPLICATION  "Property 2D"
+
+class CLASSNAME
+
+	CLASSWIDE WIDGET form_id, opt_Action, opt_Object, opt_Method, btn_Apply, btn_Exit
+	CLASSWIDE WIDGET frame_cnange_material_id
+	CLASSWIDE real yloc_01
+
+FUNCTION init()
+
+	REAL X_LOC1, X_LOC2, X_LOC3
+		
+	X_LOC1 = FORM_WID_SML - FORM_WID_SML*3/3 + INTER_WIDGET_SPACE
+	X_LOC2 = FORM_WID_SML - FORM_WID_SML*2/3 + INTER_WIDGET_SPACE
+	X_LOC3 = FORM_WID_SML - FORM_WID_SML*1/3 + INTER_WIDGET_SPACE
+	
+	REAL WXLOC1, WXLOC2, WXLOC3
+	
+	WXLOC1 = FORM_WID_SML*1/3
+	WXLOC2 = FORM_WID_SML*2/3 - INTER_WIDGET_SPACE * 2
+	WXLOC3 = FORM_WID_SML*3/3 - INTER_WIDGET_SPACE * 2
+		
+	REAL Y_LOC = 0
+	
+	form_id = ui_form_create(	CLASS_STR,       @
+          	/* x location */  	FORM_X_LOC ,     @
+          	/* y location */  	FORM_Y_LOC,"ul", @
+          	/* width      */  	FORM_WID_SML,    @
+          	/* height     */  	FORM_HGT_TALL,   @
+          	/* label      */  	MY_APPLICATION,  @
+                            		"")
+	
+	opt_Action = ui_optionmenu_create( 	form_id,                	@
+                                        	"cb_Action",            	@
+									AOM_MENU_X_LOC,         	@
+                                        	ACTION_MENU_Y_LOC,      	@
+                                        	WXLOC1,     	@
+                                        	"Action",            		@
+                                        	FALSE )
+
+    		ui_item_create(opt_Action, "CREATE", "Create", TRUE)
+    	     ui_item_create(opt_Action, "CMATERIAL", "Change Material", TRUE)
+		ui_item_create(opt_Action, "CLEAN_UP", "Clean Up", TRUE)
+									 
+    	opt_Object = ui_optionmenu_create( 	form_id,                	@
+                                        	"cb_Object",            	@
+                                        	AOM_MENU_X_LOC,         	@
+                                        	OBJECT_MENU_Y_LOC,      	@
+                                        	WXLOC1,     	@
+                                        	"Object",            		@
+                                        	FALSE )
+
+    	ui_item_create(opt_Object, "SHELL", "SHELL", TRUE)
+    	ui_item_create(opt_Object, "BAR", "BAR", TRUE)
+    	ui_item_create(opt_Object, "BEAM", "BEAM", TRUE)
+    	ui_item_create(opt_Object, "ROD", "ROD", TRUE)
+
+	opt_Method = ui_optionmenu_create( 	form_id,                	@
+                                        	"cb_Method",            	@
+                                        	AOM_MENU_X_LOC,         	@
+                                        	METHOD_MENU_Y_LOC,      	@
+                                        	WXLOC1,     	@
+                                        	"Type",            		@
+                                        	FALSE )
+
+    	ui_item_create(opt_Method, "NONE", "None", TRUE)
+	
+	Y_LOC += OBJECT_MENU_Y_LOC + OPT_MENU_HGT_NO_LABOVE + INTER_GROUP_SPACE
+
+     ui_separator_create (  form_id, "",           @
+                            0.0,                   @
+                            AOM_SEPARATOR_Y_LOC,   @
+                            FORM_WID_SML,          @
+                            TRUE )
+	
+	Y_LOC += LINE_THICKNESS + INTER_WIDGET_SPACE
+	
+	yloc_01 = Y_LOC
+	
+	frame_cnange_material_id = FRAME_CHANGE_MATERIAL.UI_INIT(form_id, yloc_01)
+
+
+     btn_Apply = ui_button_create(                  @
+      /*   parent  */           form_id,             @
+      /*  callback */           "cb_Apply",          @
+      /*     x     */           BUTTON_HALF_X_LOC1,  @
+      /*     y     */           Y_LOC,               @
+      /*   width   */           BUTTON_WID_HALF,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Apply",             @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           TRUE)
+
+     btn_Exit = ui_button_create(                    @
+      /*   parent  */            form_id,             @
+      /*  callback */            "cb_Exit",           @
+      /*     x     */            BUTTON_HALF_X_LOC2,  @
+      /*     y     */            Y_LOC,               @
+      /*   width   */            BUTTON_WID_HALF,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Exit",              @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+
+END FUNCTION
+
+FUNCTION display()
+
+    	ui_exec_function(CLASS_STR, "init")
+    	ui_form_display(CLASS_STR)
+
+    string s_item[15]
+    ui_wid_get(opt_Object, "VALUE", s_item)
+
+END FUNCTION
+
+FUNCTION cb_Action(action_item)
+STRING action_item[]
+STRING object_item[virtual]
+
+	ui_wid_get_vstring(opt_Object, "VALUE", obj_item)
+	CLASSNAME.cb_Object(obj_item)
+END FUNCTION
+
+FUNCTION cb_Object(s_item)
+	STRING s_item[]
+	STRING action_item[virtual]
+	ui_wid_get_vstring(opt_Method, "VALUE", obj_item)
+	CLASSNAME.cb_Object(obj_item)
+END FUNCTION
+
+FUNCTION cb_Exit()
+
+    ui_form_hide(CLASS_STR)
+    ui_form_delete(CLASS_STR)
+
+END FUNCTION
+
+FUNCTION cb_Apply()
+
+     uil_primary_file.db_save()
+
+	string action_item[virtual]
+	ui_wid_get_vstring(opt_Action, "VALUE", action_item)
+
+END FUNCTION
+
+END CLASS

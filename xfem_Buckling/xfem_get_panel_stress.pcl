@@ -1,0 +1,129 @@
+#include "lpenums.p"
+FUNCTION xfem_get_panel_stress(s_ResultCasename, s_ElemIDs, CoordID, ResDev)
+string s_ResultCasename[], s_ElemIDs[], ResDev[], CoordID[]
+
+integer iv_ElemID(virtual), nElem
+real rv_ElemArea(virtual)
+nElem = xfem_get_elemids_from_list(s_ElemIDs, iv_ElemID, rv_ElemArea)
+
+/* Result Case -> Result Id */
+integer i_ResultId(5), idx
+i_ResultId(1:4) = xfem_get_result_id4(s_ResultCasename)
+i_ResultId(5) = xfem_get_layer_id(i_ResultId(1:4), "At Z1")
+
+integer dtype,resloc,nelm,eids(VIRTUAL),minloc(2,6),maxloc(2,6), ErrCode
+integer nStressAtZ1(VIRTUAL), nStressAtZ2(virtual)
+real StressAtZ1(virtual), StressAtZ2(virtual)
+
+ErrCode=res_utl_extract_elem_results(i_ResultId,s_ElemIDs,ResDev,"C",CoordID, @ 
+                              /* 1=scalar 2=vector 3=tensor */       dtype, @
+                              /* 1=centroid 2=nodal 3=multiple */    resloc, @
+                              /* The number of elements selected */  nelm, @
+                              /* The list of element ids */          eids, @
+                              /* The number of results per elm */    nStressAtZ1, @
+                              /* result value */ StressAtZ1, @
+                                                 minloc,maxloc)
+
+
+i_ResultId(5) = xfem_get_layer_id(i_ResultId(1:4), "At Z2")
+
+ErrCode=res_utl_extract_elem_results(i_ResultId,s_ElemIDs,ResDev,"C",CoordID, @ 
+                              /* 1=scalar 2=vector 3=tensor */       dtype, @
+                              /* 1=centroid 2=nodal 3=multiple */    resloc, @
+                              /* The number of elements selected */  nelm, @
+                              /* The list of element ids */          eids, @
+                              /* The number of results per elm */    nStressAtZ2, @
+                              /* result value */ StressAtZ2, @
+                                                 minloc,maxloc)
+
+$ dump i_ResultId
+real mean_stress
+real SumStressArea = 0.
+real SumArea = 0.
+
+for(idx=1 to nElem)
+    mean_stress = (StressAtZ1(idx) + StressAtZ2(idx))/2
+    SumStressArea += mean_stress * rv_ElemArea(idx)
+    SumArea += rv_ElemArea(idx)
+end for
+real panel_stress
+    panel_stress = SumStressArea/SumArea
+
+return panel_stress
+/*
+
+integer i_ElemId, i_ResultId()
+
+        integer i
+        string pri_label[15], sec_label[15], ResDev[15], layer[7]
+        real ElemStress(virtual), StressAtZ1(virtual), StressAtZ2(virtual)
+        string lc_title[80], sc_title[80]
+              
+              db_get_load_case_title( i_ResultId(1), lc_title)
+              db_get_sub_case_title(i_ResultId(1), 1, sc_title)
+       
+
+              
+                     layer = "At Z1"
+                     i_ResultId(5) = xfem_get_layer_id(i_ResultId(1:4), layer)
+                     xfem_get_result_data(i_ResultId, "Coord 0", ResDev, "Elem " // str_from_integer(i_ElemId), StressAtZ1)
+                     
+                     layer = "At Z2"
+                     i_ResultId(5) = xfem_get_layer_id(i_ResultId(1:4), layer)
+                     xfem_get_result_data(i_ResultId, "Coord 0", ResDev, "Elem " // str_from_integer(i_ElemId), StressAtZ2)
+                     sys_allocate_array(ElemStress, 1, 1)
+                     
+                     ElemStress(1) = (StressAtZ1(1) + StressAtZ2(1))/2
+
+             
+        return ElemStress
+*/
+END FUNCTION
+
+function xfem_get_elemids_from_list(sElems, ElemIDs, rv_ElemArea)
+string sElems[]
+integer ElemIDs()
+real rv_ElemArea()
+
+/*  Get Element Id from Element list 
+    input    string Elems : Element list
+    ouput    ElemIDs
+    return   nElem : Number of Elements in list
+*/
+
+integer nElem, status
+$ nElem = fem_u_count_id_list(LP_SUBLIST_ELEMENT, sElems, false, status)
+fem_geom_face_area (sElems, rv_ElemArea, nElem)
+
+if(nElem == 0) then return -1
+
+sys_allocate_array(ElemIDs, 1, nElem)
+
+fem_u_get_id_list(LP_SUBLIST_ELEMENT, sElems, nElem, TRUE, ElemIDs)
+
+return nElem
+end function
+
+function xfem_get_result_id4(result_case)
+string result_case[]
+
+string LoadCase_Name[63], subCase_Name[64]
+LoadCase_Name = str_token(result_case,",",1)
+subCase_Name = str_token(result_case,",",2)
+
+integer lc_ids, sc_ids
+db_get_load_case_id(LoadCase_Name, lc_ids)
+db_get_sub_case_id(lc_ids, subCase_Name, sc_ids)
+
+integer i_ResultID(4)
+i_ResultID(1) = lc_ids
+i_ResultID(2) = sc_ids
+
+string pri_label[32] = "Stress Tensor"
+string sec_label[2] = ""
+xfem_get_result_id(LoadCase_Name, subCase_Name, pri_label, sec_label, i_ResultID)
+
+$ dump "xfem_get_result_id4 =" , i_ResultID
+
+return i_ResultID
+end function

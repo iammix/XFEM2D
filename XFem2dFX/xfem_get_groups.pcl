@@ -1,0 +1,24 @@
+FUNCTION ideasFx_get_groups(num_groups, groups, group_ids)
+
+	   Integer i
+	   Integer num_groups, group_ids()
+	   String  groups[]()
+	   
+	   
+	   ga_group_ngroups_get(num_groups)
+	   If (num_groups == 0) Then return (0)
+	   
+	   sys_allocate_array(groups,              1, num_groups)
+	   sys_allocate_array(group_ids,           1, num_groups)
+	   
+	   ga_group_groups_get(groups)
+	   
+$	   p3db_Group.sort_names(num_groups, groups)
+	   
+	   for (i = 1 to num_groups)
+		  db_get_group_id(groups(i), group_ids(i))
+	   end for
+	   
+	   return (0)
+
+END FUNCTION /* get_groups */

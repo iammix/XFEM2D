@@ -1,0 +1,40 @@
+FUNCTION xfem_get_elems_ass_1d(nNode, NodeID, i_nElem, i_ElemID)
+INTEGER nNode, NodeID()
+INTEGER i_nElem, i_ElemID()
+INTEGER	nElem(virtual), ElemID(virtual) 
+INTEGER ShapeID(virtual), i_ShapeID(virtual)
+INTEGER i_Elem2D(virtual), nElem2D
+INTEGER cnt, i, j, k
+INTEGER nNode_Ass_Elem, i_NodeID_Ass_Elem(virtual)
+
+sys_allocate_array(nElem, 1, nNode)
+sys_allocate_array(ElemID, 1, 16)
+db_get_elems_using_nodes(nNode, NodeID, 16, nElem, ElemID)
+
+sys_allocate_array(ShapeID, 1, nElem(1))
+db_get_elem_shape_for_id(nElem(1), ElemID, ShapeID)
+
+cnt = 0
+sys_allocate_array(i_ElemID, 1, 1)
+
+FOR(i=1 TO nElem(1))
+	IF(ShapeID(i) == 3 || ShapeID(i) == 4) THEN
+		sys_allocate_array(i_NodeID_Ass_Elem, 1, ShapeID(i))
+		db_get_elem_nodes(ElemID(i), nNode_Ass_Elem, i_NodeID_Ass_Elem)
+		FOR(j=1 TO nNode_Ass_Elem)
+			IF(NodeID(2) == i_NodeID_Ass_Elem(j)) THEN
+				cnt += 1
+				sys_reallocate_array(i_ElemID, 1, cnt)
+				i_ElemID(cnt) = ElemID(i)
+			END IF		
+		END FOR
+	END IF
+END FOR
+
+i_nElem = cnt
+
+sys_free_array(nElem)
+sys_free_array(ShapeID)
+sys_free_array(ElemID)
+
+END FUNCTION

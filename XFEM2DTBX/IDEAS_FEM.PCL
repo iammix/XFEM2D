@@ -1,0 +1,131 @@
+/************************************************************************************
+                iDEASoft ( Patran Modeling & Analysis Tools R2009 )
+                DEVELOPED BY JEONG WOO-YEOL
+*************************************************************************************/
+CLASS IDEAS_FEM
+
+FUNCTION Move_nodes()
+
+      function_exec("MOVE_NODES")
+                         
+END FUNCTION
+
+FUNCTION Move_elements()
+
+      function_exec("transform_element")
+                         
+END FUNCTION
+
+FUNCTION Modify_elem_connectivity()
+
+      function_exec("MODIFY_ELEMENT_CONNECTIVITY")
+                         
+END FUNCTION
+
+FUNCTION create_mpc()
+
+      function_exec("MPC")
+                         
+END FUNCTION
+
+FUNCTION Beam_to_shell()
+
+      function_exec("BEAM_TO_SHELL")
+                         
+END FUNCTION
+
+FUNCTION Move_nodes_on_curve()
+
+      function_exec("bv_f_move_nodes_on_curve")
+                         
+END FUNCTION
+
+FUNCTION Move_nodes_on_element()
+
+      function_exec("bv_f_nodes_on_element")
+                         
+END FUNCTION
+
+FUNCTION Move_nodes_on_surface()
+
+      function_exec("bv_f_nodes_on_surface")
+                         
+END FUNCTION
+
+function elems_combine()
+
+		function_exec("bv_f_quad_combine")
+end function
+
+function break_elems()
+
+		function_exec("au_f_break_elms")
+end function
+
+function modify_nodes()
+
+		function_exec("au_modify_nodes")
+
+end function
+
+function  equivalence
+real r_global_tolerance, r_update_tolerance
+integer i_warning_message, i_segment_id
+logical l_confirm
+
+static integer idx = 0
+
+if(idx == 0) then
+     pref_global_get(l_confirm,i_warning_message,r_global_tolerance)
+     fem_equiv_all_group3( [" "], 0, "", 1, r_global_tolerance, FALSE, r_update_tolerance, i_segment_id )
+     idx = 1
+else if(idx == 1) then
+     gm_segment_delete(i_segment_id)
+     idx = 0
+end if
+
+end function
+
+function auto_plot_fem
+
+     function_exec("au_auto_plot_fem")
+
+end function
+
+function rbe_spider
+
+     function_exec("cf_rbe_spider")
+
+end function
+
+function Element_Pattern_Split_tb
+
+     function_exec("Element_Pattern_Split")
+
+end function
+
+function Element_Line_Split_tb
+
+     function_exec("Element_Line_Split")
+
+end function
+
+function Element_Modify_tb
+
+     function_exec("Element_Modify")
+
+end function
+
+END CLASS
+
+FUNCTION function_exec(select_menu)
+
+		string select_menu[]
+
+		if(ui_form_exists(select_menu) == false) then
+			ui_exec_function(select_menu, "init")
+		end if
+		
+		ui_exec_function(select_menu, "display")
+		
+END FUNCTION

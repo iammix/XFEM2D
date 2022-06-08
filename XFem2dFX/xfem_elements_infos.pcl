@@ -1,0 +1,59 @@
+FUNCTION xfem_elements_infos(i_MaxId, ia_ElemId, ia_ShapeId, ia_ElemNodeId, ra_CElemLocation, ra_ElemVector, la_ElemChk)
+        integer i_MaxId, ia_ElemId(), ia_ShapeId(), ia_ElemNodeId()
+        logical la_ElemChk()
+        real ra_ElemVector(), ra_CElemLocation()
+
+        $ db element information
+        integer nElem, ia_Elem(virtual)
+		db_count_elems(nElem)
+		sys_allocate_array(ia_Elem, 1, nElem)
+        db_get_elem_ids(nElem, ia_Elem)
+
+        string ElemList[virtual]
+		app_int_array_to_vstring("Element", nElem, ia_Elem, ElemList)
+
+        $ Element Shape Information
+		integer ia_shape(virtual)
+		sys_allocate_array(ia_Shape, 1, nElem)
+		db_get_elem_shape_for_id(nElem, ia_Elem, ia_Shape)
+
+        $ Element Center Location Information
+		integer i_count
+		real ra_cxyz(virtual)
+		fem_geom_elem_location(ElemList, ra_cxyz, i_count)
+
+        $ Maximum element Id in db
+		db_get_max_elem_id(i_MaxId)
+
+        $ Memory allocate
+		sys_allocate_array(ia_ElemId, 1, i_MaxId)
+		sys_allocate_array(ia_ShapeId, 1, i_MaxId)
+        sys_allocate_array(ia_ElemNodeId, 1, i_MaxId, 1, 4)
+		sys_allocate_array(ra_CElemLocation, 1, i_MaxId, 1, 3)
+		sys_allocate_array(ra_ElemVector, 1, i_MaxId, 1, 3)
+    	sys_allocate_array(la_ElemChk, 1, i_MaxId)
+
+		integer idx, i_nNode, nid(virtual)
+
+		FOR(idx=1 TO nElem)
+			ia_ElemId(ia_Elem(idx)) = ia_Elem(idx)
+			ia_ShapeId(ia_Elem(idx)) = ia_Shape(idx)
+            eid(1) = ia_Elem(idx)
+            db_get_node_ass_elem (1, eid, i_nNode, nid)
+            for(i=1 to i_Node)
+                ia_ElemNodeId(ia_Elem(idx), i) = nid(i)
+            end for
+
+            ra_CElemLocation(ia_Elem(idx),1:3) = ra_cxyz(idx,1:3)
+
+			IF(ia_ShapeId(ia_Elem(idx)) == 3 || ia_ShapeId(ia_Elem(idx)) == 4) then
+				xfem_get_elem_normal(ia_ElemId(ia_Elem(idx)), ra_ElemVector(idx, 1:3))
+			END IF
+
+            la_ElemChk(ia_Elem(idx)) = TRUE
+
+		END FOR
+
+
+
+END FUNCTION

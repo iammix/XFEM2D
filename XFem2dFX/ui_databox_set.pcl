@@ -1,0 +1,42 @@
+#include "appforms.p"
+#include "lpenums.i"
+
+function ui_databox_set(parent, child, labels, datatypes, callbacks, y_loc)
+
+    widget parent
+    widget child()
+    string labels[]()
+    string callbacks[]()
+    string datatypes[]()
+
+    real y_loc
+
+    integer idx, nchild
+
+    nchild = sys_array_hbound( child , 1 )
+
+    real label_length, box_length
+
+    label_length = DBOX_LABEL_LEN_SINGLE
+    box_length = DBOX_WID_SINGLE*0.3
+
+    for(idx = 1 to nchild)
+
+      child(idx) = ui_databox_create(                   @
+      /*    parent    */            parent,                 @
+      /*   callback   */            callbacks(idx),         @
+      /*       x      */            FRAME_L_MARGIN,          @
+      /*       y      */            y_loc,                   @
+      /* label_length */            DBOX_LABEL_LEN_TRIPLE,  @
+      /*  box_length  */            box_length,             @
+      /*     label    */            labels(idx),            @
+      /*     value    */            0.0,                    @
+      /*  label_above */            FALSE,                  @
+      /*   datatype   */            datatypes(idx),         @
+      /*   num_vals   */            1)
+
+       y_loc += DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE/2
+
+    end for
+
+end function

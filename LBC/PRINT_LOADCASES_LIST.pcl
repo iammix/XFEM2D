@@ -1,0 +1,29 @@
+FUNCTION PRINT_LOADCASES_LIST()
+
+   	string LC_NAME[125]
+    	integer LC_ID
+    	
+     integer status
+	string fname[64]
+     status = DB_NAME_GET(fname)
+	file_get_bfname(fname, fname)
+
+	fname = fname // "_LOADCASES_LIST.CSV"
+     
+     integer fid
+     text_open(fname,"nowv",0,0,fid)
+
+	db_get_all_load_case_names()
+
+    real r_temp
+    
+    while(db_get_next_load_case_name(LC_NAME) == 0 )
+		
+		db_get_load_case_id (LC_NAME, LC_ID)
+		text_write(fid,"%A%,%I%", LC_ID, r_temp, LC_NAME)
+		dump str_from_integer(LC_ID) // " - " // LC_NAME
+    end while
+
+	TEXT_CLOSE(fid,"")
+
+END FUNCTION

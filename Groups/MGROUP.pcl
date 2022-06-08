@@ -1,0 +1,1052 @@
+#include "appforms.p"
+#include "lpenums.i"
+#include "widget_space.p"
+#define CLASSNAME MGROUP
+#define CLASS_STR "MGROUP"
+
+class CLASSNAME
+
+CLASSWIDE WIDGET form_id, opt_Action, opt_Object, sframe_position, sdbox_position, frame_xyz, sframe_box
+CLASSWIDE WIDGET label_XYZ, label_C1BOX, label_C2BOX
+CLASSWIDE WIDGET btn_Add, btn_Modify, btn_Remove, btn_Apply, btn_Exit, listbox_group_list, dbox_group_name
+CLASSWIDE WIDGET listbox_frame, btn_ProfileList, sdbox_corner1_box(3), sdbox_corner2_box(3), dbox_distance(3), dbox_Nos(3)
+
+function init()
+
+   real Y_LOC = 0
+
+   form_id = ui_form_create(CLASS_STR,       @
+          /* x location */  FORM_X_LOC ,     @
+          /* y location */  FORM_Y_LOC,"ul", @
+          /* width      */  FORM_WID_MED,    @
+          /* height     */  FORM_HGT_3_QTRS,   @
+          /* label      */  CLASS_STR,       @
+                            "")
+       opt_Action = ui_optionmenu_create(  form_id,            @
+                                        "cb_Action",        @
+                                        AOM_MENU_X_LOC,     @
+                                        ACTION_MENU_Y_LOC,  @
+                                        AOM_MENU_LABEL_LEN, @
+                                        "ACTION",           @
+                                        FALSE )
+
+       ui_item_create(opt_Action, "CREATE", "Create", TRUE)
+       ui_item_create(opt_Action, "MODIFY", "Modify", TRUE)
+    
+       opt_Object = ui_optionmenu_create(  form_id,            @
+                                        "cb_Object",        @
+                                        FORM_WID_SML,     @
+                                        ACTION_MENU_Y_LOC,  @
+                                        AOM_MENU_LABEL_LEN, @
+                                        "OBJECT",           @
+                                        FALSE )
+
+       ui_item_create(opt_Object, "XS", "X:Section", TRUE)
+       ui_item_create(opt_Object, "YE", "Y:Elevation", TRUE)
+       ui_item_create(opt_Object, "ZP", "Z:Plan", TRUE)
+       ui_item_create(opt_Object, "TANK", "Tank", TRUE)                                   
+       ui_item_create(opt_Object, "BOX", "Box", TRUE)
+
+       Y_LOC +=  ACTION_MENU_Y_LOC + OPT_MENU_HGT_LABOVE 
+
+       ui_separator_create (    form_id, "",            @
+                                0.0,                    @
+                                Y_LOC,                   @
+                                FORM_WID_MED,        @
+                                TRUE )
+
+      Y_LOC += LINE_THICKNESS + INTER_WIDGET_SPACE
+          
+      frame_XYZ = CLASSNAME.UI_SFRAME_SELECT_XYZ(form_id, Y_LOC)
+   
+      sframe_BOX = CLASSNAME.UI_SFRAME_SELECT_BOX(form_id, Y_LOC)
+      
+$      ui_wid_set(sframe_BOX, "VISIBLE", FALSE)
+    
+$     REAL BUTTON_THIRD_X_LOC1 = BUTTON_HALF_X_LOC1
+    REAL HGT
+    UI_WID_GET(frame_XYZ, "HEIGHT", HGT)
+    Y_LOC += HGT + INTER_WIDGET_SPACE
+    DUMP HGT
+    DUMP Y_LOC
+    REAL X_LOC
+    X_LOC = FORM_L_MARGIN
+dbox_group_name = ui_databox_create(                   @
+      /*    parent    */            form_id,    @
+      /*   callback   */            "",                     @
+      /*       x      */            X_LOC,     @
+      /*       y      */            Y_LOC,             @
+      /* label_length */            0.0, @
+      /*  box_length  */            DBOX_WID_SINGLE,      @
+      /*     label    */            "GROUP NAME:",                  @
+      /*     value    */            "",                    @
+      /*  label_above */            TRUE,                  @
+      /*   datatype   */            "STRING",                 @
+      /*   num_vals   */            1.0)
+
+      X_LOC += DBOX_WID_SINGLE + INTER_WIDGET_SPACE
+      Y_LOC += LABEL_HGT
+      btn_Add = ui_button_create(                  @
+      /*   parent  */           form_id,             @
+      /*  callback */           "cb_Add",          @
+      /*     x     */           X_LOC,  @
+      /*     y     */           Y_LOC,               @
+      /*   width   */           BUTTON_WID_HALF,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Add",             @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           TRUE)
+
+      X_LOC += BUTTON_WID_HALF + INTER_WIDGET_SPACE
+      btn_Modify = ui_button_create(                    @
+      /*   parent  */            form_id,             @
+      /*  callback */            "cb_Modify",           @
+      /*     x     */            X_LOC,  @
+      /*     y     */            Y_LOC,               @
+      /*   width   */            BUTTON_WID_HALF,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Modify",              @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+
+      X_LOC += BUTTON_WID_HALF + INTER_WIDGET_SPACE
+      btn_Remove = ui_button_create(                    @
+      /*   parent  */            form_id,             @
+      /*  callback */            "cb_Remove",           @
+      /*     x     */            X_LOC,  @
+      /*     y     */            Y_LOC,               @
+      /*   width   */           BUTTON_WID_HALF,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Remove",              @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+        
+      Y_LOC += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+      
+     ui_separator_create (   form_id, "",           @
+                            0.0,                   @
+                            Y_LOC,   @
+                            FORM_WID_MED,          @
+                            TRUE )
+
+      Y_LOC += LINE_THICKNESS + INTER_WIDGET_SPACE
+
+      listbox_group_list = ui_listbox_create(                     @
+      /*     parent     */                form_id,          @
+      /*    callback    */                "cb_listbox_group_list",      @
+      /*        x       */                FORM_L_MARGIN,    @
+      /*        y       */                Y_LOC,        @
+      /*      width     */                FORM_WID_MED-FORM_L_MARGIN*2-FORM_R_MARGIN*2,  @
+      /*    num_rows    */                30,               @
+      /*      label     */                "GROUP LIST",     @
+      /* selection_type */                "EXTEND",       @
+      /*      sort      */                TRUE)
+
+      real listbox_hgt
+      ui_wid_get(listbox_group_list, "height", listbox_hgt) 
+      
+      Y_LOC += listbox_hgt + INTER_WIDGET_SPACE*3
+
+      btn_Apply = ui_button_create(                  @
+      /*   parent  */           form_id,             @
+      /*  callback */           "cb_Apply",          @
+      /*     x     */           BUTTON_HALF_X_LOC1,  @
+      /*     y     */           Y_LOC,               @
+      /*   width   */           BUTTON_WID_HALF,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Apply",             @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           TRUE)
+
+      btn_Exit = ui_button_create(                    @
+      /*   parent  */            form_id,             @
+      /*  callback */            "cb_Exit",           @
+      /*     x     */            BUTTON_HALF_X_LOC2,  @
+      /*     y     */            Y_LOC,               @
+      /*   width   */            BUTTON_WID_HALF,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Exit",              @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+
+end function
+
+FUNCTION UI_SFRAME_SELECT_XYZ(parent, FRAME_Y_LOC)
+WIDGET parent
+REAL FRAME_Y_LOC, X_LOC, box_length, label_length
+WIDGET frame_id, sdbox_entity, label_Distance, label_Nos
+
+REAL FRAME_HGT
+    
+    FRAME_HGT = INTER_WIDGET_SPACE + DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE + DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+    frame_id = ui_frame_create(                       @
+        /* Parent     */  parent,         @
+        /* callback   */  "",                   @
+        /*   x        */  FORM_L_MARGIN,        @
+        /*   y        */  FRAME_Y_LOC,        @
+        /* width      */  FORM_WID_MED-FORM_L_MARGIN*2-FORM_R_MARGIN*2,           @
+        /* height     */  FRAME_HGT,          @
+        /* title      */    "")
+                
+        X_LOC = INTER_WIDGET_SPACE
+        
+        label_Distance = ui_label_create(         @
+         /*    parent    */       frame_id,       @
+         /*   callback   */       "",             @
+         /*       x      */       X_LOC,  @
+         /*       y      */       SFRAME_1SDB_HGT_NO_LABOVE/2 - LABEL_HGT/2 + SFRAME_T_MARGIN,  @
+         /*     label    */       "Distance")			
+	
+    X_LOC += (FORM_WID_MED-FORM_L_MARGIN*2-FORM_R_MARGIN*2)/6
+    box_length = ((FORM_WID_MED-FORM_L_MARGIN*2-FORM_R_MARGIN*2) - (FORM_WID_MED-FORM_L_MARGIN*2-FORM_R_MARGIN*2)/6) /3  - INTER_WIDGET_SPACE
+    
+    integer i
+    string label[9](3) = ["START :", "SPACE : ", "COUNT :"]
+    string DTYPE[9](3) = ["REAL", "REAL", "INTEGER"]
+              
+    FOR( i = 1 to 3)
+        dbox_distance(i) = ui_databox_create(                    @
+                        /*    parent    */      frame_id,        @
+                        /*   callback   */      "",                 @
+                        /*       x      */      X_LOC,      @
+                        /*       y      */      FRAME_T_MARGIN,   @
+                        /* label_length */      box_length/2,                 @
+                        /*  box_length  */      box_length/2,         @
+                        /*     label    */      label(i),  @
+                        /*     value    */      0,              @
+                        /*  label_above */      FALSE,              @
+                        /*   datatype   */      DTYPE(i),          @
+                        /*   num_vals   */       1)
+    
+          X_LOC += box_length + INTER_WIDGET_SPACE
+    END FOR          
+
+    X_LOC = INTER_WIDGET_SPACE  
+    label_Nos=ui_label_create(                @
+     /*    parent    */       frame_id,       @
+     /*   callback   */       "",             @
+     /*       x      */       X_LOC,  @
+     /*       y      */       SFRAME_1SDB_HGT_NO_LABOVE/2 - LABEL_HGT/2 + SFRAME_T_MARGIN + SFRAME_1SDB_HGT_NO_LABOVE,  @
+     /*     label    */       "NOs")
+    
+    X_LOC += (FORM_WID_MED-FORM_L_MARGIN*2-FORM_R_MARGIN*2)/6
+    FOR( i = 1 to 3)
+          dbox_Nos(i) = ui_databox_create(                    @
+                        /*    parent    */      frame_id,        @
+                        /*   callback   */      "",                 @
+                        /*       x      */      X_LOC,      @
+                        /*       y      */      FRAME_T_MARGIN + DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE,   @
+                        /* label_length */      box_length/2,                 @
+                        /*  box_length  */      box_length/2,         @
+                        /*     label    */      label(i),  @
+                        /*     value    */      0,              @
+                        /*  label_above */      FALSE,              @
+                        /*   datatype   */      "INTEGER",           @
+                        /*   num_vals   */       1)
+          
+           X_LOC += box_length + INTER_WIDGET_SPACE
+    END FOR
+       UI_WID_SET(dbox_Nos(3), "ENABLE", FALSE) 
+REAL HGT
+UI_WID_GET(frame_id, "HEIGHT", HGT)
+UI_WID_SET(frame_id, "HEIGHT", HGT + INTER_WIDGET_SPACE)
+    
+    return frame_id
+END FUNCTION
+
+FUNCTION UI_SFRAME_SELECT_BOX(parent, FRAME_Y_LOC)
+WIDGET parent
+REAL FRAME_Y_LOC, X_LOC, box_length, label_length
+WIDGET sframe_id, sdbox_entity
+
+    sframe_id = ui_selectframe_create(                            @
+                                            parent,                   @
+                                            "",                        @
+	             					        FORM_L_MARGIN,         @
+							                FRAME_Y_LOC,                     @
+							                FORM_WID_MED-FORM_L_MARGIN*2-FORM_R_MARGIN*2,         @
+							                SFRAME_2SDB_HGT_NO_LABOVE, @
+							                "",            @
+							                FALSE)
+	 
+    X_LOC = INTER_WIDGET_SPACE
+    label_C1BOX=ui_label_create(                @
+     /*    parent    */       sframe_id,       @
+     /*   callback   */       "",             @
+     /*       x      */       X_LOC,  @
+     /*       y      */       SFRAME_1SDB_HGT_NO_LABOVE/2 - LABEL_HGT/2 + SFRAME_T_MARGIN,  @
+     /*     label    */       "CORNER-1")			
+	
+    X_LOC += (FORM_WID_MED-FORM_L_MARGIN*2-FORM_R_MARGIN*2)/6
+    box_length = ((FORM_WID_MED-FORM_L_MARGIN*2-FORM_R_MARGIN*2) - (FORM_WID_MED-FORM_L_MARGIN*2-FORM_R_MARGIN*2)/6) /3  - INTER_WIDGET_SPACE
+    
+    integer i
+    string label[5](3) = ["X :", "Y :", "Z :"]
+    string sdbox_c1_cb[11](3) = ["cb_c1x", "cb_c1y", "cb_c1z"]
+    string sdbox_c2_cb[11](3) = ["cb_c2x", "cb_c2y", "cb_c2z"]
+      
+    FOR( i = 1 to 3)
+          sdbox_corner1_box(i) = ui_selectdatabox_create(sframe_id,sdbox_c1_cb(i), @
+          			                              X_LOC, @
+          	             				          SFRAME_T_MARGIN, @
+          						                  box_length/3, @
+          	             				          box_length/2, @
+          						                  label(i),@
+          						                  "",@
+                                                    FALSE, @
+          						                  "NODE",@
+                                                    "" )
+          X_LOC += box_length + INTER_WIDGET_SPACE
+    END FOR          
+
+    X_LOC = INTER_WIDGET_SPACE  
+    label_C2BOX=ui_label_create(                @
+     /*    parent    */       sframe_id,       @
+     /*   callback   */       "",             @
+     /*       x      */       X_LOC,  @
+     /*       y      */       SFRAME_1SDB_HGT_NO_LABOVE/2 - LABEL_HGT/2 + SFRAME_T_MARGIN + SFRAME_1SDB_HGT_NO_LABOVE,  @
+     /*     label    */       "CORNER-2")
+    
+    X_LOC += (FORM_WID_MED-FORM_L_MARGIN*2-FORM_R_MARGIN*2)/6
+    FOR( i = 1 to 3)
+          sdbox_corner2_box(i) = ui_selectdatabox_create(sframe_id,sdbox_c2_cb(i), @
+          			                              X_LOC, @
+          	             				          SFRAME_T_MARGIN + SDBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE, @
+          						                  box_length/3, @
+          	             				          box_length/2, @
+          						                  label(i),@
+          						                  "",@
+                                                    FALSE, @
+          						                  "NODE",@
+                                                    "" )
+          X_LOC += box_length + INTER_WIDGET_SPACE
+    END FOR
+    
+    $ FRAME_Y_LOC = 
+        
+    return sframe_id
+END FUNCTION
+
+/******************************************************************************/
+function display()
+
+$     ui_exec_function(CLASS_STR, "init")
+    ui_form_display(CLASS_STR)
+     CLASSNAME.read_listbox_group()
+
+end function
+/******************************************************************************/
+function cb_Exit()
+
+    ui_form_hide(CLASS_STR)
+    ui_form_delete(CLASS_STR)
+end function
+
+Function cb_Action(s_value)
+string s_value[]
+    switch(s_value)
+        case("CREATE")
+            ui_wid_set(btn_Add, "ENABLE", TRUE)
+            ui_wid_set(btn_Modify, "ENABLE", FALSE)
+            ui_wid_set(dbox_distance(2), "ENABLE", TRUE)
+            ui_wid_set(dbox_distance(3), "ENABLE", TRUE)
+            ui_wid_set(dbox_Nos(2), "ENABLE", TRUE)
+            ui_wid_set(dbox_Nos(3), "ENABLE", TRUE)
+                
+        case("MODIFY")
+            ui_wid_set(btn_Add, "ENABLE", FALSE)
+            ui_wid_set(btn_Modify, "ENABLE", TRUE)
+            ui_wid_set(dbox_distance(2), "ENABLE", FALSE)
+            ui_wid_set(dbox_distance(3), "ENABLE", FALSE)
+            ui_wid_set(dbox_Nos(2), "ENABLE", TRUE)
+            ui_wid_set(dbox_Nos(3), "ENABLE", TRUE)        
+            ui_wid_set(dbox_distance(2), "VALUE", 0.0)
+            ui_wid_set(dbox_distance(3), "VALUE", 1)
+    end switch
+                
+end function
+     
+function cb_Object(s_value)
+string s_value[]
+
+    ui_wid_set(label_C1BOX, "LABEL", "CORNER-1")
+    ui_wid_set(label_C2BOX, "LABEL", "CORNER-2")
+
+     switch(s_value)
+          case("XS");
+                     ui_wid_set(frame_XYZ, "VISIBLE", TRUE)
+                     ui_wid_set(sframe_BOX, "VISIBLE", FALSE)
+          case("YE");
+                     ui_wid_set(frame_XYZ, "VISIBLE", TRUE)
+                     ui_wid_set(sframe_BOX, "VISIBLE", FALSE)         
+          case("ZP");
+                     ui_wid_set(frame_XYZ, "VISIBLE", TRUE)
+                     ui_wid_set(sframe_BOX, "VISIBLE", FALSE)        
+          case("TANK");
+                     ui_wid_set(frame_XYZ, "VISIBLE", FALSE)
+                     ui_wid_set(sframe_BOX, "VISIBLE", TRUE)
+          case("BOX");
+                     ui_wid_set(frame_XYZ, "VISIBLE", FALSE)
+                     ui_wid_set(sframe_BOX, "VISIBLE", TRUE)                    
+     end switch
+                
+end function
+/******************************************************************************/
+FUNCTION cb_listbox_group_list(nsel, sel_item)
+    integer nsel
+    string sel_item[]()
+
+    string s_Action[virtual]
+    ui_wid_get_vstring(opt_Action, "VALUE", s_Action)
+  
+    if(s_Action != "MODIFY")then
+        ui_wid_set(dbox_distance(2), "ENABLE", TRUE)
+        ui_wid_set(dbox_distance(3), "ENABLE", TRUE)
+        ui_wid_set(btn_Add, "ENABLE", TRUE)
+      
+        return 0
+    end if      
+    
+$    ui_wid_set(dbox_distance(2), "ENABLE", FALSE)
+$    ui_wid_set(dbox_distance(3), "ENABLE", FALSE)
+$    ui_wid_set(btn_Add, "ENABLE", FALSE)
+        
+    string s_method[12]
+    s_method = str_token(sel_item(1), ":", 1)
+    ui_wid_set(opt_object, "value", s_method)
+    CLASSNAME.cb_Object(s_method)
+    
+    string s_group_name[63]
+    s_group_name = str_token(sel_item(1), ":", 2)
+    ui_wid_set(dbox_group_name, "value", s_group_name)
+    
+    if(s_method == "XS" || s_method == "YE" || s_method == "ZP") then
+        string s_position[63]
+        s_position = str_token(sel_item(1), ":", 3)
+        ui_wid_set(dbox_distance(1), "value", str_to_real(s_position))
+        ui_wid_set(dbox_distance(3), "value", 1)
+    else
+        string s_c1[32](3), s_c2[32](3)
+        string s_cor1[125], s_cor2[125]
+        s_cor1 = str_token(sel_item(1), ":", 3)
+        s_cor2 = str_token(sel_item(1), ":", 4)
+        integer i
+        real j
+        string_read(s_cor1, "%3A%", i, j, s_c1)   
+        string_read(s_cor2, "%3A%", i, j, s_c2)
+        for(i=1 to 3)
+            ui_wid_set(sdbox_corner1_box(i), "value", s_c1(i))
+            ui_wid_set(sdbox_corner2_box(i), "value", s_c2(i))
+        end for
+    end if
+  
+END FUNCTION
+/******************************************************************************/
+
+function cb_c1x(s_input)
+    string s_input[]
+    
+    integer status
+    real ra_xyz(3)
+    status = GrpFx.NodeXYZ(sdbox_corner1_box(1), ra_xyz)
+
+    if(status != 0) then return status
+
+    ui_wid_set(sdbox_corner1_box(1), "VALUE", str_from_real(ra_xyz(1)))
+    ui_wid_set(sdbox_corner1_box(2), "VALUE", str_from_real(ra_xyz(2)))
+    ui_wid_set(sdbox_corner1_box(3), "VALUE", str_from_real(ra_xyz(3)))
+
+    ui_set_focus(sdbox_corner1_box(2))
+end function    
+
+function cb_c1y(s_input)
+    string s_input[]
+
+    integer status
+    real ra_xyz(3)
+    status = GrpFx.NodeXYZ(sdbox_corner1_box(2), ra_xyz)
+
+    if(status != 0) then return status
+
+    ui_wid_set(sdbox_corner1_box(2), "VALUE", str_from_real(ra_xyz(2)))
+ 
+    ui_set_focus(sdbox_corner1_box(3))
+end function
+
+function cb_c1z(s_input)
+    string s_input[]
+
+    integer status
+    real ra_xyz(3)
+    status = GrpFx.NodeXYZ(sdbox_corner1_box(3), ra_xyz)
+
+    if(status != 0) then return status
+
+    ui_wid_set(sdbox_corner1_box(3), "VALUE", ra_xyz(3))
+
+$    ui_set_focus(sdbox_corner1_box(2))
+end function
+
+function cb_c2x(s_input)
+    string s_input[]
+
+    integer status
+    real ra_xyz(3)
+    status = GrpFx.NodeXYZ(sdbox_corner2_box(1), ra_xyz)
+
+    if(status != 0) then return status
+
+    ui_wid_set(sdbox_corner2_box(1), "VALUE", str_from_real(ra_xyz(1)))
+    ui_wid_set(sdbox_corner2_box(2), "VALUE", str_from_real(ra_xyz(2)))
+    ui_wid_set(sdbox_corner2_box(3), "VALUE", str_from_real(ra_xyz(3)))
+
+    ui_set_focus(sdbox_corner2_box(2))
+end function            
+
+function cb_c2y(s_input)
+    string s_input[]
+
+    integer status
+    real ra_xyz(3)
+    status = GrpFx.NodeXYZ(sdbox_corner2_box(2), ra_xyz)
+
+    if(status != 0) then return status
+
+    ui_wid_set(sdbox_corner2_box(2), "VALUE", str_from_real(ra_xyz(2)))
+
+    ui_set_focus(sdbox_corner2_box(3))
+end function            
+
+function cb_c2z(s_input)
+    string s_input[]
+
+    integer status
+    real ra_xyz(3)
+    status = GrpFx.NodeXYZ(sdbox_corner2_box(3), ra_xyz)
+
+    if(status != 0) then return status
+
+    ui_wid_set(sdbox_corner2_box(3), "VALUE", str_from_real(ra_xyz(3)))
+
+$    ui_set_focus(sdbox_corner2_box(2))
+end function                        
+/******************************************************************************/
+function cb_Add()
+
+     string s_Action[virtual], s_Method[virtual]
+     ui_wid_get_vstring(opt_Action, "value", s_Action)
+     ui_wid_get_vstring(opt_Object, "value", s_Method)
+     
+     integer count
+     ui_wid_get(dbox_distance(3), "value", count)
+    
+     if(count == 1 || count == 0) then
+           switch(s_Method)
+                case("XS");
+                           CLASSNAME.ADD_LIST_A_PLANE(s_Method)
+                case("YE");
+                           CLASSNAME.ADD_LIST_A_PLANE(s_Method)         
+                case("ZP");
+                           CLASSNAME.ADD_LIST_A_PLANE(s_Method)        
+                case("TANK");
+                           CLASSNAME.ADD_LIST_BOX(s_Method)
+                case("BOX");
+                           CLASSNAME.ADD_LIST_BOX(s_Method)                   
+           end switch
+     else if(count > 1) then
+         switch(s_Method)
+              case("XS");
+                         CLASSNAME.ADD_LIST_PLANE(s_Method)
+              case("YE");
+                         CLASSNAME.ADD_LIST_PLANE(s_Method)         
+              case("ZP");
+                         CLASSNAME.ADD_LIST_PLANE(s_Method)        
+              case("TANK");
+                         CLASSNAME.ADD_LIST_BOX(s_Method)
+              case("BOX");
+                         CLASSNAME.ADD_LIST_BOX(s_Method)                   
+         end switch
+    end if
+
+     CLASSNAME.listbox_update()
+              
+end function
+/******************************************************************************/
+function cb_Modify()
+     
+     CLASSNAME.cb_remove()
+     
+     string s_Method[virtual]
+     ui_wid_get_vstring(opt_Object, "value", s_Method)
+         
+     switch(s_Method)
+          case("XS");
+                     CLASSNAME.ADD_LIST_A_PLANE(s_Method)
+          case("YE");
+                     CLASSNAME.ADD_LIST_A_PLANE(s_Method)         
+          case("ZP");
+                     CLASSNAME.ADD_LIST_A_PLANE(s_Method)        
+          case("TANK");
+                     CLASSNAME.ADD_LIST_BOX(s_Method)
+          case("BOX");
+                     CLASSNAME.ADD_LIST_BOX(s_Method)                   
+     end switch
+
+     CLASSNAME.listbox_update()
+         
+/*    
+     ui_item_deleteselected(listbox_group_list)
+     
+     string s_Action[virtual], s_Method[virtual]
+     
+     ui_wid_get_vstring(opt_Action, "value", s_Action)
+     
+     IF(s_Action != "MODIFY") THEN RETURN -1
+     
+     ui_wid_get_vstring(opt_Object, "value", s_Method)
+         
+     switch(s_Method)
+          case("XS");
+                     CLASSNAME.ADD_LIST_A_PLANE(s_Method)
+          case("YE");
+                     CLASSNAME.ADD_LIST_A_PLANE(s_Method)         
+          case("ZP");
+                     CLASSNAME.ADD_LIST_A_PLANE(s_Method)        
+          case("TANK");
+                     CLASSNAME.ADD_LIST_BOX(s_Method)
+          case("BOX");
+                     CLASSNAME.ADD_LIST_BOX(s_Method)                   
+     end switch
+
+     CLASSNAME.listbox_update()
+*/    
+end function
+/******************************************************************************/
+function cb_remove()
+
+     ui_item_deleteselected(listbox_group_list)
+     
+     CLASSNAME.listbox_update()
+     
+end function
+/******************************************************************************/
+FUNCTION ADD_LIST_PLANE(s_Method)
+string s_Method[]
+
+    real r_start
+    ui_wid_get(dbox_distance(1), "value", r_start)
+    
+    real r_space
+    ui_wid_get(dbox_distance(2), "value", r_space)
+    
+    integer count
+    ui_wid_get(dbox_distance(3), "value", count)
+
+    integer i_start
+    ui_wid_get(dbox_Nos(1), "value", i_start)
+
+    integer i_space
+    ui_wid_get(dbox_Nos(2), "value", i_space)
+    
+    integer i_count
+    ui_wid_get(dbox_Nos(3), "value", i_count)
+
+    string group_name[virtual]
+    ui_wid_get_vstring(dbox_group_name, "VALUE", group_name)
+        
+    string list_items[1024](virtual)
+    sys_allocate_array(list_items, 1, count)
+
+    integer idx = 0
+
+    for(idx=1 to count)
+        list_items(idx) = s_Method // " : " // group_name // str_from_integer(i_start) //" : "//str_from_real(r_start)
+        
+        i_start = i_start + i_space
+        r_start = r_start + r_space        
+         
+    end for
+     
+    ui_listbox_items_create(listbox_group_list, list_items, list_items, count, "")
+       
+END FUNCTION
+
+FUNCTION ADD_LIST_A_PLANE(s_Method)
+string s_Method[]
+    
+    real r_start
+    ui_wid_get(dbox_distance(1), "value", r_start)
+
+    string group_name[virtual]
+    ui_wid_get_vstring(dbox_group_name, "VALUE", group_name)
+        
+    string list_item[1024]
+    list_item = s_Method // " : " // group_name //" : "// str_from_real(r_start)
+
+    ui_item_create(listbox_group_list, list_item, list_item, FALSE)
+
+END FUNCTION
+
+FUNCTION ADD_LIST_BOX(s_Method)
+string s_Method[]
+
+    string s_corner1[31](3)
+    ui_wid_get(sdbox_corner1_box(1), "VALUE", s_corner1(1))
+    ui_wid_get(sdbox_corner1_box(2), "VALUE", s_corner1(2))
+    ui_wid_get(sdbox_corner1_box(3), "VALUE", s_corner1(3))
+
+    string s_corner2[31](3)
+    ui_wid_get(sdbox_corner2_box(1), "VALUE", s_corner2(1))
+    ui_wid_get(sdbox_corner2_box(2), "VALUE", s_corner2(2))
+    ui_wid_get(sdbox_corner2_box(3), "VALUE", s_corner2(3))
+
+    string group_name[virtual]
+    ui_wid_get_vstring(dbox_group_name, "VALUE", group_name)
+        
+    string list_items[1024]
+
+    list_items = s_Method // " : "        @
+                // group_name // " : "    @
+                // s_corner1(1) //","   @
+                // s_corner1(2) //","   @
+                // s_corner1(3) //" : "   @
+                // s_corner2(1) //","   @
+                // s_corner2(2) //","   @
+                // s_corner2(3)         @                                       
+    
+    ui_item_create(listbox_group_list, list_items, list_items, FALSE)
+
+END FUNCTION
+
+function listbox_update()
+
+  
+     integer nitem
+     
+     ui_wid_get(listbox_group_list, "NITEMS", nitem)
+
+     if(nitem == 0) then return -1
+     
+     string items[256](virtual)
+
+     sys_allocate_array(items, 1, nitem)
+
+     ui_wid_get(listbox_group_list, "ITEMS", items)
+
+     string fname[256]
+    
+     db_name_get(fname)
+    
+    file_get_bfname(fname, fname)
+
+    fname = fname // ".group"
+    
+     integer f_id
+     text_open(fname, "NOW", 0, 0, f_id)
+     
+     real r_tmp
+     string s_tmp[1]
+     
+     text_write(f_id, "%I%", nitem, r_tmp, s_tmp)
+     
+     integer idx
+     
+     for(idx = 1 to nitem)
+          text_write_string(f_id, items(idx))
+     end for
+
+     text_close(f_id, "")
+
+end function
+/******************************************************************************/
+function read_listbox_group()
+     
+     ui_listbox_items_delete(listbox_group_list)
+    
+     string fname[256]
+    
+     db_name_get(fname)
+    
+    file_get_bfname(fname, fname)
+
+    fname = fname // ".group"
+
+	if(file_exists(fname, "") == FALSE) then
+		return -1
+	end if     
+	
+     integer f_id
+     text_open(fname, "OR", 0, 0, f_id)
+
+     integer nitem
+     real r_tmp
+     string s_tmp[1]
+     
+     text_read(f_id, "%I%", nitem, r_tmp, s_tmp)
+
+	string listbox_items[1024](virtual)
+
+     integer line_length
+     string view_name[50](virtual)
+     
+     sys_allocate_array(listbox_items, 1, nitem)
+     sys_allocate_array(view_name, 1, nitem)
+
+     integer idx
+     
+     for(idx = 1 to nitem)
+          text_read_string(f_id, listbox_items(idx), line_length)
+          view_name(idx) = str_token(listbox_items(idx), " ", 1)
+	end for
+     
+    text_close(f_id, "")
+
+    ui_listbox_items_create(listbox_group_list, view_name, listbox_items, nitem, "")
+     
+end function
+/******************************************************************************/
+FUNCTION cb_Apply()
+     integer nitem     
+     ui_wid_get(listbox_group_list, "NSELECTED", nitem)
+
+     string sa_items[125](virtual)
+     sys_allocate_array(sa_items, 1, nitem)
+     ui_wid_get(listbox_group_list, "value", sa_items)
+
+      logical l_confirm
+	  integer i_wm_opt
+      real r_tol
+       
+       pref_global_get( l_confirm, i_wm_opt, r_tol )
+              
+     integer i, group_id
+     real r_plane, r_cor1(3), r_cor2(3)
+     string ga_group[125]
+     string s_method[12], s_cor1[63], s_cor2[63] 
+     
+     
+     FOR(i = 1 to nitem)
+        s_method = str_token(sa_items(i), ":", 1)
+        ga_group = str_token(sa_items(i), ":", 2)
+
+         switch(s_method)
+            case("XS");     r_plane = str_to_real(str_token(sa_items(i), ":", 3))
+                            r_cor1(1) = r_plane - r_tol
+                            r_cor1(2) = 1E17
+                            r_cor1(3) = 1E17
+                            r_cor2(1) = r_plane + r_tol
+                            r_cor2(2) = -1E17
+                            r_cor2(3) = -1E17
+                                                                                 
+            case("YE");     r_plane = str_to_real(str_token(sa_items(i), ":", 3))
+                            r_cor1(1) = 1E17
+                            r_cor1(2) = r_plane - r_tol
+                            r_cor1(3) = 1E17
+                            r_cor2(1) = -1E17 
+                            r_cor2(2) = r_plane + r_tol
+                            r_cor2(3) = -1E17
+                        
+            case("ZP");     r_plane = str_to_real(str_token(sa_items(i), ":", 3))
+                            r_cor1(1) = 1E17
+                            r_cor1(2) = 1E17
+                            r_cor1(3) = r_plane - r_tol
+                            r_cor2(1) = -1E17 
+                            r_cor2(2) = -1E17
+                            r_cor2(3) = r_plane + r_tol
+                        
+            case("TANK");   s_cor1 = str_token(sa_items(i), ":", 3)
+                            s_cor2 = str_token(sa_items(i), ":", 4)
+                            r_cor1(1) = str_to_real(str_token(s_cor1, ",", 1))
+                            r_cor1(2) = str_to_real(str_token(s_cor1, ",", 2))
+                            r_cor1(3) = str_to_real(str_token(s_cor1, ",", 3))
+                            r_cor2(1) = str_to_real(str_token(s_cor2, ",", 1))
+                            r_cor2(2) = str_to_real(str_token(s_cor2, ",", 2))
+                            r_cor2(3) = str_to_real(str_token(s_cor2, ",", 3))
+                        
+            case("BOX");    s_cor1 = str_token(sa_items(i), ":", 3)
+                            s_cor2 = str_token(sa_items(i), ":", 4)
+                            r_cor1(1) = str_to_real(str_token(s_cor1, ",", 1))
+                            r_cor1(2) = str_to_real(str_token(s_cor1, ",", 2))
+                            r_cor1(3) = str_to_real(str_token(s_cor1, ",", 3))
+                            r_cor2(1) = str_to_real(str_token(s_cor2, ",", 1))
+                            r_cor2(2) = str_to_real(str_token(s_cor2, ",", 2))
+                            r_cor2(3) = str_to_real(str_token(s_cor2, ",", 3))
+         end switch
+         
+         ga_group_clear( ga_group )
+         GrpFx.group_add_elem_in_box(ga_group, r_cor1, r_cor2)
+         $ GrpFx.group_add_surface_in_box(ga_group, r_cor1, r_cor2)
+     
+         integer i_count
+         IF(s_method == "TANK")then
+            db_get_group_id(ga_group, group_id)
+            GrpFx.remove_nodes_in_group(group_id, ga_group)
+            GrpFx.remove_1d_elems_in_group(group_id, ga_group)         
+            repeat
+                i_count = GrpFx.exclude_free_edge_elements(group_id, ga_group)
+            until(i_count == 0)
+         END IF
+         
+    END FOR
+    
+END FUNCTION               
+/******************************************************************************/
+function ideasx_group_add_elements(View, view_coord)
+string View[]
+real view_coord
+
+       $ db element information
+       integer nElem
+       db_count_elems(nElem)
+       
+       integer ia_ElemId(virtual)
+       sys_allocate_array(ia_ElemId, 1, nElem)
+       db_get_elem_ids(nElem, ia_ElemId)
+
+       $ Maximum element Id in db
+	integer i_MaxId
+       db_get_max_elem_id(i_MaxId)
+
+       integer iv_ElemId(virtual)
+       logical chk_Elem(virtual)
+       real rv_X(virtual), rv_Y(virtual), rv_Z(virtual)
+
+       sys_allocate_array(iv_ElemId, 1, i_MaxId)
+       sys_allocate_array(chk_Elem, 1, i_MaxId)
+       sys_allocate_array(rv_X, 1, i_MaxId)
+       sys_allocate_array(rv_Y, 1, i_MaxId)
+       sys_allocate_array(rv_Z, 1, i_MaxId)
+
+       integer idx, nNode, NodeID(8), i
+       
+end function
+/******************************************************************************/
+function get_group_elements(group_name, i_Axis, base_vec, view_loc, tol, nElem, ia_ElemId, ia_ShapeId, ra_ElemLoc, ra_ElemVct)
+     string group_name[]
+     integer i_Axis
+     real base_vec(), view_loc, tol
+     integer nElem, ia_ElemId(), ia_ShapeId()
+     real ra_ElemLoc(), ra_ElemVct()
+     
+     integer Matched_ElemId(virtual)
+     integer nMatchElem
+
+     nMatchElem = CLASSNAME.matched_vector_elements(10., base_vec, nElem, ia_ElemId, ia_ShapeId, ra_ElemVct, Matched_ElemId)
+               
+     integer idx
+     integer cnt = 0
+     integer ElemInGrp(virtual)
+     
+     sys_allocate_array(ElemInGrp, 1, nMatchElem)
+
+     for(idx = 1 to nMatchElem)
+          if(ra_ElemLoc(Matched_ElemId(idx), i_Axis) > view_loc-tol && ra_ElemLoc(Matched_ElemId(idx), i_Axis) < view_loc+tol) then
+               cnt += 1
+               sys_reallocate_array(ElemInGrp, 1, cnt)
+               ElemInGrp(cnt) = Matched_ElemId(idx)
+          end if
+     end for           
+
+     string Elems[virtual]
+     app_int_array_to_vstring("Element", cnt, ElemInGrp, Elems)
+     
+$     string Elem1d[virtual]
+     
+$     GROUP_UTIL.import_1d_elems(cnt, ElemInGrp, Elem1d)
+
+$     string ElemList[virtual]
+$     list_create_boolean_list(Elem2d, Elem1d, "or", ElemList)
+     
+return Elems          
+end function
+/******************************************************************************/     
+
+FUNCTION db_get_element_geometry_info(nElem, ia_ElemId, ia_ShapeId, ra_ElemLoc, ra_ElemVct)
+        integer nElem, i_MaxId, ia_ElemId(), ia_ShapeId()
+        real ra_ElemVct(), ra_ElemLoc()
+
+        $ db element information
+	    db_count_elems(nElem)
+	    sys_allocate_array(ia_ElemId, 1, nElem)
+         db_get_elem_ids(nElem, ia_ElemId)
+
+         string ElemList[virtual]
+	    app_int_array_to_vstring("Element", nElem, ia_ElemId, ElemList)
+
+        $ Element Shape Information
+		integer ia_shape(virtual)
+		sys_allocate_array(ia_Shape, 1, nElem)
+		db_get_elem_shape_for_id(nElem, ia_ElemId, ia_Shape)
+
+        $ Element Center Location Information
+		integer i_count
+		real ra_cxyz(virtual)
+		fem_geom_elem_location(ElemList, ra_cxyz, i_count)
+
+        $ Maximum element Id in db
+		db_get_max_elem_id(i_MaxId)
+
+        $ Memory allocate
+		sys_allocate_array(ia_ShapeId, 1, i_MaxId)
+		sys_allocate_array(ra_ElemLoc, 1, i_MaxId, 1, 3)
+		sys_allocate_array(ra_ElemVct, 1, i_MaxId, 1, 3)
+
+		integer idx, nn, nid(4)
+          real xyzs(2,3)
+     
+		FOR(idx=1 TO nElem)
+			ia_ShapeId(ia_ElemId(idx)) = ia_Shape(idx)
+               ra_ElemLoc(ia_ElemId(idx),1:3) = ra_cxyz(idx,1:3)
+
+		     switch(ia_ShapeId(ia_ElemId(idx)))
+                    case(1);
+                         ra_ElemVct(ia_ElemId(idx), 1:3) = [0., 0., 0.]
+                    
+                    case(2);
+                        db_get_elem_nodes(ia_ElemId(idx), nn, nid)
+                        db_get_node(nid(1), xyzs(1,1:3))
+                        db_get_node(nid(2), xyzs(2,1:3))
+
+                        ra_ElemVct(ia_ElemId(idx), 1) = xyzs(2, 1) - xyzs(1, 1)
+                        ra_ElemVct(ia_ElemId(idx), 2) = xyzs(2, 2) - xyzs(1, 2)
+                        ra_ElemVct(ia_ElemId(idx), 3) = xyzs(2, 3) - xyzs(1, 3)
+                    
+                    case(3);
+                         xfem_get_elem_normal(ia_ElemId(idx), ra_ElemVct(ia_ElemId(idx), 1:3))
+                    
+                    case(4);
+                         xfem_get_elem_normal(ia_ElemId(idx), ra_ElemVct(ia_ElemId(idx), 1:3))                    
+			
+               end switch
+          END FOR
+
+END FUNCTION
+/******************************************************************************/
+function matched_vector_elements(tolerence, base_vec, nElem, ia_ElemId, ia_Shape, ra_evec, Matched_ElemId)
+          integer ia_ElemId(), Matched_ElemId(), nElem, ia_Shape()
+          real tolerence, base_vec(), ra_evec()
+          
+          integer i
+          integer idx = 0
+          real r_vct(3), r_angle
+          for(i = 1 to nElem)
+               r_angle = mth_abs(xfem_vector.angle_2v(base_vec, ra_evec(ia_ElemId(i),1:3)))               
+               if(ia_shape(ia_ElemId(i)) == 2) then
+                    if(r_angle < 90 + tolerence && r_angle > 90 - tolerence) then
+    				       idx += 1
+    				       sys_reallocate_array(Matched_ElemId, 1, idx)
+    			            Matched_ElemId(idx) = ia_ElemId(i)
+				end if                         
+               else if(ia_shape(ia_ElemId(i)) == 3 || ia_shape(ia_ElemId(i)) == 4) then
+                    if(r_angle < tolerence) then
+    				       idx += 1
+    				       sys_reallocate_array(Matched_ElemId, 1, idx)
+    			            Matched_ElemId(idx) = ia_ElemId(i)
+				end if
+               end if
+          end for
+     return idx     
+end function
+/******************************************************************************/
+
+END CLASS /* GROUP_UTILITY */

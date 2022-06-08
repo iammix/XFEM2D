@@ -1,0 +1,255 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME FRAME_MODIFY_ELEM_CONNECT
+#define CLASS_STR "FRAME_MODIFY_ELEM_CONNECT"
+
+class CLASSNAME
+
+classwide widget frame_01, sframe_00, sframe_01, wa_sdbox_00(1), wa_sdbox_01(4)
+
+/*******************************************************************************
+ 	Action-Modify, Object-Element, Method - Connectivity 
+ *******************************************************************************/
+function UI_FRAME_MODIFY_ELEM_CONNECT(form_id, Y_LOC)
+real Y_LOC
+widget form_id
+
+	widget frame_id
+
+	REAL WXLOC1, WXLOC2, WXLOC3
+	
+	WXLOC1 = FORM_WID_SML*1/3
+	WXLOC2 = FORM_WID_SML*2/3 - INTER_WIDGET_SPACE * 2
+
+	frame_id = ui_frame_create(form_id,"", @
+								 0, @
+								 Y_LOC, @
+								 FORM_WID_SML, @
+								 0, @
+								 "")
+
+	REAL Y_LOCF
+     Y_LOCF = FRAME_T_MARGIN
+
+	string sa_callback00[64](1)
+	sa_callback00(1) = CLASS_STR // ".cb_sdbox_00"   
+	
+	sframe_00 = ui_select_frame_set(				@
+	/* parent widget id(input) 	*/	frame_id,		@
+	/*	select frame callback	*/	"",	@	
+	/* 	select frame label		*/	"",	@
+	/*		x				*/	FORM_L_MARGIN,	@	
+	/*		y				*/	Y_LOCF, 		@
+	/*	select databax array	*/	wa_sdbox_00,	@
+	/* 	data type	array		*/	["ELEMENT"],		@
+	/* 	select databox label array	*/ 	["Select Element"],	@
+	/*	select databox collback array	*/ 	sa_callback00, @
+	/*	label avove logical	*/			TRUE)	
+	 
+	string sa_dtype[5](4) = ["NODE", "NODE", "NODE", "NODE"]
+	string sa_label[8](4) = ["Node 1 =", "Node 2 =", "Node 3 =", "Node 4 ="]
+	string sa_callback[64](4) 
+	
+	sa_callback(1) = CLASS_STR // ".cb_Node_1"
+	sa_callback(2) = CLASS_STR // ".cb_Node_2"
+	sa_callback(3) = CLASS_STR // ".cb_Node_3"
+	sa_callback(4) = CLASS_STR // ".cb_Node_4"
+	
+	sframe_01 = ui_select_frame_set(				@
+	/* parent widget id(input) 	*/	frame_id,		@
+	/*	select frame callback	*/	CLASS_STR // ".Apply_Click",	@	
+	/* 	select frame label		*/	"Autoexec",	@
+	/*		x				*/	FORM_L_MARGIN,	@	
+	/*		y				*/	Y_LOCF, 		@
+	/*	select databax array	*/	wa_sdbox_01,	@
+	/* 	data type	array		*/	sa_dtype,		@
+	/* 	select databox label array	*/ 	sa_label,	@
+	/*	select databox collback array	*/ 	sa_callback, @
+	/*	label avove logical	*/			FALSE)
+     
+	 Y_LOCF += INTER_WIDGET_SPACE
+
+      ui_wid_set(frame_id, "HEIGHT", Y_LOCF)
+	
+	 Y_LOC += Y_LOCF + INTER_WIDGET_SPACE
+	 	 
+	return frame_id
+end function
+
+function cb_sdbox_00(s_event)
+string s_event[]
+
+if(s_event == "VALUE_CHANGED")then
+	ui_set_focus(wa_sdbox_01(1))
+end if
+
+end function
+function cb_Node_1(s_event)
+	string s_event[]
+
+	if(s_event == "VALUE_CHANGED")then	
+		string node_list[virtual]
+		ui_wid_get_vstring(wa_sdbox_01(1), "VALUE", node_list)
+		
+		integer nNode, status
+	     nNode = fem_u_count_id_list(LP_SUBLIST_NODE, node_list, FALSE, status)
+	     if(nNode <= 1) then return 0
+
+		integer iv_node_id(virtual)
+		sys_allocate_array(iv_node_id, 1, nNode)	 
+		fem_u_get_id_list(LP_SUBLIST_NODE, node_list, nNode, TRUE, iv_node_id)
+		
+		integer idx
+		for(idx = 1 to nNode)
+			if(idx == 5)then return 0
+			ui_wid_set(wa_sdbox_01(idx), "VALUE", "Node " // str_from_integer(iv_node_id(idx)))
+		end for
+		
+		if(nNode < 4) then ui_set_focus(wa_sdbox_01(nNode+1))
+		
+		sys_free_array(iv_node_id)
+	end if
+end function
+
+function cb_Node_2(s_event)
+	string s_event[]
+
+	if(s_event == "VALUE_CHANGED")then	
+		string node_list[virtual]
+		ui_wid_get_vstring(wa_sdbox_01(2), "VALUE", node_list)
+		
+		integer nNode, status
+	     nNode = fem_u_count_id_list(LP_SUBLIST_NODE, node_list, FALSE, status)
+	     if(nNode <= 1) then return 0
+
+		integer iv_node_id(virtual)
+		sys_allocate_array(iv_node_id, 1, nNode)	 
+		fem_u_get_id_list(LP_SUBLIST_NODE, node_list, nNode, TRUE, iv_node_id)
+		
+		integer idx
+		for(idx = 1 to nNode)
+			if(idx == 4)then return 0
+			ui_wid_set(wa_sdbox_01(idx+1), "VALUE", "Node " // str_from_integer(iv_node_id(idx)))
+		end for
+
+		if(nNode < 3) then ui_set_focus(wa_sdbox_01(nNode+1))
+		
+		sys_free_array(iv_node_id)
+	end if
+end function
+
+function cb_Node_3(s_event)
+	string s_event[]
+
+	if(s_event == "VALUE_CHANGED")then	
+		string node_list[virtual]
+		ui_wid_get_vstring(wa_sdbox_01(3), "VALUE", node_list)
+		
+		integer nNode, status
+	     nNode = fem_u_count_id_list(LP_SUBLIST_NODE, node_list, FALSE, status)
+	     if(nNode <= 1) then return 0
+
+		integer iv_node_id(virtual)
+		sys_allocate_array(iv_node_id, 1, nNode)	 
+		fem_u_get_id_list(LP_SUBLIST_NODE, node_list, nNode, TRUE, iv_node_id)
+		
+		integer idx
+		for(idx = 1 to nNode)
+			if(idx == 3)then return 0
+			ui_wid_set(wa_sdbox_01(idx+2), "VALUE", "Node " // str_from_integer(iv_node_id(idx)))
+		end for
+
+		if(nNode < 2) then ui_set_focus(wa_sdbox_01(nNode+1))
+
+		sys_free_array(iv_node_id)
+	end if		
+end function
+
+function cb_Node_4(s_event)
+	string s_event[]
+
+	if(s_event == "VALUE_CHANGED")then	
+		string node_list[virtual]
+		ui_wid_get_vstring(wa_sdbox_01(4), "VALUE", node_list)
+		
+		integer nNode, status
+	     nNode = fem_u_count_id_list(LP_SUBLIST_NODE, node_list, FALSE, status)
+	     if(nNode <= 1) then return 0
+
+		integer iv_node_id(virtual)
+		sys_allocate_array(iv_node_id, 1, nNode)	 
+		fem_u_get_id_list(LP_SUBLIST_NODE, node_list, nNode, TRUE, iv_node_id)
+		
+		ui_wid_set(wa_sdbox_01(4), "VALUE", "Node " // str_from_integer(iv_node_id(1)))
+		
+		sys_free_array(iv_node_id)
+	 end if		
+end function
+
+function Apply_Click()
+	uil_primary_file.db_save()
+/*  */ 
+	string sel_elem[virtual]
+	ui_wid_get_vstring(wa_sdbox_00(1), "value", sel_elem)
+
+    integer nelem, i_ElemId(1)
+	fem_u_get_id_list(LP_SUBLIST_ELEMENT, sel_elem, 1, TRUE, i_ElemId)
+
+    integer i_reg_id(1)
+	db_get_region_for_elements(1, i_ElemId, i_reg_id)
+
+    integer i_ShapeId(1)
+    db_get_elem_shape_for_id(1, i_ElemId, i_ShapeId)
+
+/*  */
+	string node_list[virtual]
+	string sel_node[32](4)
+	
+	integer i
+
+	for(i = 1 to 4)
+		ui_wid_get(wa_sdbox_01(i), "VALUE", sel_node(i))
+		list_create_boolean_list(node_list, sel_node(i), "or" ,node_list)
+	end for
+
+	integer nNode, status
+     nNode = fem_u_count_id_list(LP_SUBLIST_NODE, node_list, FALSE, status)
+
+     string s_eid[virtual]
+     integer new_shape_id
+	switch(nNode)
+		case(1); return -1
+		case(2); s_eid = FemFx.nodes_BAR2(node_list)
+			    new_shape_id = 2	
+		case(3); s_eid = FemFx.nodes_TRI3(node_list)
+			    new_shape_id = 3	
+		case(4); 
+				fem_create_elems_1( "Quad", "Quad4", "#", "Standard", 3, @
+                         sel_node(1), sel_node(2), sel_node(3), sel_node(4), @
+                         "", "", "", "", s_eid )
+				new_shape_id = 4	
+	end switch
+
+     string fem_deleted_element[virtual]
+	fem_delete_element(sel_elem, fem_deleted_element)
+
+	integer e_id
+	if(i_ShapeId(1) == 2 && new_shape_id > 2) then
+		return -1
+	else if((i_ShapeId(1) > 2 && new_shape_id == 2)) then
+		return -1
+	else
+		e_id = str_to_integer(s_eid)	
+		db_associate_element_to_region (e_id, i_reg_id(1))
+	end if
+
+    	ui_wid_set(wa_sdbox_01(1), "VALUE", "")
+	ui_wid_set(wa_sdbox_01(2), "VALUE", "")
+	ui_wid_set(wa_sdbox_01(3), "VALUE", "")
+	ui_wid_set(wa_sdbox_01(4), "VALUE", "")
+
+	ui_set_focus (wa_sdbox_00(1))
+
+end function /* cbApply */
+
+END CLASS

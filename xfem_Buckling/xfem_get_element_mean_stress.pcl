@@ -1,0 +1,91 @@
+#include "appforms.p"
+#include "lpenums.p"
+#define CLASSNAME MeanStress
+#define CLASS_STR "MeanStress"
+$ Start
+
+FUNCTION xfem_get_element_mean_stress(nRC, ResultCase, CoordOpt, ResDev, s_Elems)
+integer nRC
+string ResultCase[]()
+string CoordOpt[], ResDev[], s_Elems[]
+
+integer idx, i, j, k
+integer lc_ids(virtual), sc_ids(virtual)
+sys_allocate_array(lc_ids, 1, nRC)
+sys_allocate_array(sc_ids, 1, nRC)
+
+integer ResulID(virtual)
+sys_allocate_array(ResulID,1, nRC, 1, 5)
+
+string lc_title[63], sc_title[63]
+
+for(idx = 1 to nRC)
+    lc_title = str_token(vRcList(idx), ",", 1)
+    sc_title = str_token(vRcList(idx), ",", 2)
+    db_get_load_case_id(lc_title, lc_ids(idx))
+    db_get_sub_case_id(lc_ids(idx), sc_title, sc_ids(idx))
+    ResulID(idx, 1) = lc_ids(idx)
+    ResulID(idx, 2) = sc_ids(idx)
+end for
+
+integer nElem, status
+nElem = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_Elems, false, status)
+
+if(nElem == 0) then return -1
+
+integer iv_ElemID(virtual)
+sys_allocate_array(iv_ElemID, 1, nElem)
+
+fem_u_get_id_list(LP_SUBLIST_ELEMENT, s_Elems, nElem, TRUE, iv_ElemID)
+
+string Layer[7](2) = [ "At Z1", "At Z2"]
+real StressAtZ1(virtual), StressAtZ2(virtual)
+
+Result_ID(5) = xfem_get_layer_id(Result_ID, Layer(1))
+xfem_get_result_data(Result_ID, CoordOpt, ResDev, s_Elems, StressAtZ1)
+
+Result_ID(5) = xfem_get_layer_id(Result_ID, Layer(2))
+xfem_get_result_data(Result_ID, CoordOpt, ResDev, s_Elems, StressAtZ2)
+
+real r_Areas(virtual)
+integer i_count
+fem_geom_face_area (s_Elems, r_Areas, i_count)
+
+real sum_res = 0.
+real sum_AreaStress = 0.
+real sum_Area = 0.
+real r_temp(3)
+
+real r_Stress
+real ReturnValue(virtual)
+sys_allocate_array(ReturnValue, 1, nElem)
+
+for(idx=1 to nRC)
+    for(i = 1 to nElem )
+        r_Stress = (StressAtZ1(idx)+StressAtZ2(idx))/2
+
+        sum_AreaStress += (r_Stress * r_Areas(i))
+        sum_Area += r_Areas(i)
+    end for
+
+ReturnValue(idx) = sum_AreaStress / Sum_Area
+
+end for
+
+return ReturnValue
+END FUNCTION
+
+END CLASS
+
+$ End 
+
+/*
+
+for(idx=1 to nCase)
+     text_write_string(fid, str_from_integer(lc_ids(idx)) //","// str_from_integer(sc_ids(idx))// " : " // vRcList(idx))
+end for
+
+ui_wid_get(listbox_rescase, "VALUE", vRcList)
+          
+*/
+        

@@ -1,0 +1,55 @@
+function xfem_get_2delem_stress(nRC, s_ResultCasename, s_ElemIDs)
+
+    integer nRC
+    string s_ResultCasename[](), s_ElemIDs[]
+    
+    string sa_LoadCase_Name[64](virtual), sa_subCase_Name[64](virtual)
+
+	sys_allocate_array(sa_LoadCase_Name, 1, nRC)
+	sys_allocate_array(sa_subCase_Name, 1, nRC)
+
+	integer idx
+	for(idx=1 to nRC)
+		sa_LoadCase_Name(idx)=str_token(s_ResultCasename(idx),",",1)
+	    sa_subCase_Name(idx)=str_token(s_ResultCasename(idx),",",2)
+	end for
+
+	integer ia_ResultID(virtual)
+    sys_allocate_array(ia_ResultID, 1, nRC, 1, 5)
+
+	for(idx=1 to nRC)
+        xfem_get_result_id(sa_LoadCase_Name(idx), sa_subCase_Name(idx), "Stress Tensor", "",ia_ResultID(idx, 1:4))
+	end for
+		
+	integer nLAY, ia_LayID(VIRTUAL)
+	string sa_LayLabel[16](VIRTUAL)
+
+	res_utl_get_result_layers(ia_ResultID, nLAY, ia_LayID, sa_LayLabel)
+
+integer data_type,ResLoc,nEids, Eids(VIRTUAL), nresult(VIRTUAL), minloc(2,6), maxloc(2,6), ErrCode
+
+real result(virtual)
+
+string Res_Dev[5], CoordID[8]
+integer i, j, k
+
+    for (i=1 to nRC)
+       	for (j=1 to nLAY)
+        	ia_ResultID(i, 5) = ia_LayID(j)
+        	ErrCode = res_utl_extract_elem_results(ia_ResultID(i,1:5),s_ElemIDs,"XX","C","ResCoord 0.1", @ 
+	            	                  /* 1=scalar 2=vector 3=tensor */       	data_type, @
+	                	              /* 1=centroid 2=nodal 3=multiple */    	ResLoc, @
+	                    	          /* The number of elements selected */  	nEids, @
+	                        	      /* The list of element ids */          	Eids, @
+	                            	  /* The number of results per elm */    	nresult, @
+	                              	  /* result value */ 					 	result, @
+	                                                 					     	minloc, @
+	                                                 					     	maxloc)
+			
+			dump s_ElemIDs
+			dump nresult
+			dump result
+		end for
+	end for
+	
+end function

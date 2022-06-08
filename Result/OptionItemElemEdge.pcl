@@ -1,0 +1,137 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME OptionItemElemEdge
+#define CLASS_STR "OptionItemElemEdge"
+
+class CLASSNAME
+
+classwide widget mform_id, optElemEdge, COLMNU_ElemEdge, COLBAR_Edge, wdbox_option, DBOX_RANGE_MIN, DBOX_RANGE_MAX
+CLASSWIDE WIDGET BTN_OK
+
+function init()
+real YLOC = 0.0
+
+   mform_id = ui_modalform_create(CLASS_STR,       @
+          /* x location */  FORM_X_LOC ,     @
+          /* y location */  FORM_Y_LOC,"UL", @
+          /* width      */  FORM_WID_SML,    @
+          /* height     */  LBOX_5L_HGT_LABOVE + FORM_T_MARGIN + FORM_B_MARGIN,   @
+          /* label      */  "",       @
+                            0)
+    YLOC = FORM_T_MARGIN
+
+      optElemEdge = ui_optionmenu_create(                @
+      /*    parent    */              mform_id,        @
+      /*   callback   */              "",     @
+      /*       x      */              FORM_L_MARGIN,  @
+      /*       y      */              YLOC,      @
+      /* label_length */              FORM_WID_SML/3,            @
+      /*     label    */              "Elem Edge",        @
+      /*  label_above */              FALSE)
+        
+        ui_item_create(optElemEdge,"FreeEdge", "Free Edges", TRUE)
+        ui_item_create(optElemEdge,"ElemEdge", "Element Edges", TRUE)
+        ui_item_create(optElemEdge,"None", "No Edge", TRUE)
+        
+      YLOC =+ OPT_MENU_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+    
+      COLMNU_ElemEdge = ui_colormenu_create(                @
+      /*    parent    */              mform_id,        @
+      /*   callback   */              "",     @
+      /*       x      */              FORM_WID_SML/3,  @
+      /*       y      */              YLOC,      @
+      /*    width     */              COLOR_MENU_WID, @
+      /*    height     */             COLOR_MENU_HGT, @
+      /*     label    */              "Edge Color",        @
+      "Left",  @
+      0, @
+      0, @
+     /*     ncolor   **/                1, @               
+      /*  user_data */              1)
+
+          
+$      COLBAR_Edge = ui_colorbar_create(                @
+      /*    parent                  mform_id,        @
+      /*   callback                 "",     @
+      /*       x                    FORM_L_MARGIN,  @
+      /*       y                    YLOC,      @
+      /*    width                   1, @
+      /*    height                 1, @      
+      /*     label                  "Edge Color",        @      
+     /*     ncolor                   4, @               
+      /*  user_data               1) */
+        
+
+    YLOC += COLOR_MENU_HGT + COLOR_MENU_LABEL_Y_OFFSET + INTER_WIDGET_SPACE
+    
+    BTN_OK = ui_button_create(                     @
+      /*   parent  */              mform_id,             @
+      /*  callback */              "cb_OK",       @
+      /*     x     */              BUTTON_HALF_X_LOC1 + BUTTON_WID_HALF/2,  @
+      /*     y     */              YLOC,           @
+      /*   width   */              BUTTON_WID_HALF,     @
+      /*   height  */              BUTTON_DEFAULT_HGT,  @
+      /*   label   */              "OK",    @
+      /*    TRUE   */              TRUE,                @
+      /* highlight */              FALSE)
+    
+    
+end function
+
+function display()
+
+    ui_form_display(CLASS_STR)
+    
+end function
+
+function cb_OK()
+    string ElemEdgeOption[63]
+    string ElemEdge[16]
+    
+    ui_wid_get(optElemEdge, "VALUE", ElemEdge)
+    dump ElemEdge
+
+    INTEGER EdgeColor
+    ui_wid_get(COLMNU_ElemEdge, "COLOR", EdgeColor)
+    dump EdgeColor    
+    
+    string EdgeColorName[11]
+    
+    EdgeColorName = get_color_name_from_id(EdgeColor)
+    
+    ElemEdgeOption = ElemEdge // "," // EdgeColorName // "," // "Solid" //","// "1"
+    
+    ui_wid_set(wdbox_option, "VALUE", ElemEdgeOption)
+
+    ui_form_hide(CLASS_STR)
+  
+end function
+
+end class
+
+FUNCTION get_color_name_from_id(COLOR_ID)
+INTEGER COLOR_ID
+STRING COLOR_NAME[11]
+
+    switch(COLOR_ID)
+        case(0); COLOR_NAME = "Black"
+        case(1); COLOR_NAME = "Red"
+        case(2); COLOR_NAME = "Green"
+        case(3); COLOR_NAME = "Yellow"
+        case(4); COLOR_NAME = "Blue"
+        case(5); COLOR_NAME = "Magenta"
+        case(6); COLOR_NAME = "Cyan"
+        case(7); COLOR_NAME = "White"
+        case(8); COLOR_NAME = "Orange"
+        case(9); COLOR_NAME = "LtOrange"                                                                        
+        case(10); COLOR_NAME = "DkGreen"
+        case(11); COLOR_NAME = "LtGreen"
+        case(12); COLOR_NAME = "DkBlue"
+        case(13); COLOR_NAME = "LtBlue"
+        case(14); COLOR_NAME = "DkMagenta"
+        case(15); COLOR_NAME = "LtMagenta"                
+    end switch
+    
+    return COLOR_NAME
+    
+END FUNCTION

@@ -1,0 +1,16 @@
+function xfem_get_layer_id(result_id, layer)
+
+integer result_id(),lay_num,lay_id(VIRTUAL),laycnt,result_lay, layer_id
+string lay_label[16](VIRTUAL), layer[]
+
+res_utl_get_result_layers(result_id,lay_num,lay_id,lay_label)
+
+    for(laycnt=1 TO lay_num)
+        if(lay_label(laycnt)==layer) then
+            layer_id=lay_id(laycnt)
+          break 
+        end if 
+    end for
+
+return layer_id
+end function

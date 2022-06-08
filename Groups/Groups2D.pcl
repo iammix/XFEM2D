@@ -1,0 +1,613 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME GROUPS2D
+#define CLASS_STR "GROUPS2D"
+
+class CLASSNAME
+
+classwide widget form_id, opt_Action, opt_Object, opt_Method, btn_Apply, btn_Exit
+classwide widget frame_wid, btn_Gemoerty_Plot, btn_Gemoerty_Erase, btn_FEM_Plot, btn_FEM_Erase, btn_All_Plot, btn_All_Erase 
+classwide widget frame_01, frame_02, frame_03, frame_04, frame_05
+classwide real yloc_01, yloc_02, yloc_03, yloc_04, yloc_05
+
+function init()
+   real yloc = 0
+
+   form_id = ui_form_create(CLASS_STR,       @
+          /* x location */  FORM_X_LOC ,     @
+          /* y location */  FORM_Y_LOC,"ul", @
+          /* width      */  FORM_WID_SML,    @
+          /* height     */  FORM_HGT_TALL,   @
+          /* label      */  CLASS_STR,       @
+                            "")
+
+    opt_Action = ui_optionmenu_create(  form_id,            @
+                                        "cb_Action",        @
+                                        AOM_MENU_X_LOC,     @
+                                        ACTION_MENU_Y_LOC,  @
+                                        AOM_MENU_LABEL_LEN, @
+                                        "ACTION",           @
+                                        FALSE )
+
+        ui_item_create(	opt_Action, "CREATE", "Create", TRUE)
+        ui_item_create( opt_Action, "MODIFY", "Modify", TRUE)
+        ui_item_create(	opt_Action, "PLOT", "Plot", TRUE)
+        ui_item_create(	opt_Action, "ERASE", "Erase", TRUE)
+        ui_item_create(	opt_Action, "DELETE", "Delete", TRUE)
+
+    opt_Object = ui_optionmenu_create(  form_id,                @
+                                        "cb_Object",            @
+                                        AOM_MENU_X_LOC,         @
+                                        OBJECT_MENU_Y_LOC,      @
+                                        AOM_MENU_LABEL_LEN,     @
+                                        "OBJECT",               @
+                                        FALSE )
+
+    opt_Method = ui_optionmenu_create(  form_id,                @
+                                        "cb_Method",            @
+                                        AOM_MENU_X_LOC,         @
+                                        METHOD_MENU_Y_LOC,      @
+                                        AOM_MENU_LABEL_LEN,     @
+                                        "METHOD",               @
+                                        FALSE )
+    
+        ui_separator_create (   form_id, "",           @
+                            0.0,                   @
+                            AOM_SEPARATOR_Y_LOC,   @
+                            FORM_WID_SML,          @
+                            TRUE )
+
+    yloc += AOM_SEPARATOR_Y_LOC + LINE_THICKNESS + INTER_WIDGET_SPACE
+
+    yloc_01 = yloc
+    frame_01 = FRAME_TANK_SEARCH.UI_FRAME_TANK_SEARCH(form_id, yloc_01)
+
+    yloc_02 = yloc
+    frame_02 = FRAME_GUIDE_ELEMENTS.UI_FRAME_GUIDE_ELEMENTS(form_id, yloc_02)
+
+    yloc_03 = yloc
+    frame_03 = FRAME_CREATE_GROUPLIST.UI_FRAME_CREATE_GROUPLIST(form_id, yloc_03)
+
+    yloc_04 = yloc
+    frame_04 = FRAME_GROUP_BOX.UI_FRAME_GROUP_BOX(form_id, yloc_04)
+
+    yloc_05 = yloc
+    frame_05 = FRAME_GROUP_XYZ.UI_FRAME_GROUP_XYZ(form_id, yloc_05)
+
+    btn_Apply = ui_button_create(                  @
+      /*   parent  */           form_id,             @
+      /*  callback */           "cb_Apply",          @
+      /*     x     */           BUTTON_HALF_X_LOC1,  @
+      /*     y     */           yloc,                @
+      /*   width   */           BUTTON_WID_HALF,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Apply",             @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           TRUE)
+
+    btn_Exit = ui_button_create(                    @
+      /*   parent  */            form_id,             @
+      /*  callback */            "cb_Exit",           @
+      /*     x     */            BUTTON_HALF_X_LOC2,  @
+      /*     y     */            yloc,                @
+      /*   width   */            BUTTON_WID_HALF,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Exit",              @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+
+    yloc += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+
+    real yloc_f
+    frame_wid=ui_frame_create(                   @
+        /* parent */             form_id,           @
+        /*  name  */             "",                @
+        /*    x   */             FRAME_X_LOC_COL1,  @
+        /*    y   */             yloc,         @
+        /*  width */             FRAME_L_MARGIN + FRAME_WID_SINGLE + FRAME_R_MARGIN,  @
+        /* height */             0.0,               @
+        /*  label */             "Posted Entities")
+
+    yloc_f = LABEL_HGT + FRAME_T_MARGIN
+
+    ui_label_create(frame_wid, "", BUTTON_HALF_X_LOC1, yloc_f, "Geomerty")
+
+    yloc_f += LABEL_HGT
+
+    btn_Gemoerty_Plot = ui_button_create(                  @
+      /*   parent  */           frame_wid,             @
+      /*  callback */           "cb_Geomerty_Plot",          @
+      /*     x     */           BUTTON_HALF_X_LOC1,  @
+      /*     y     */           yloc_f,                @
+      /*   width   */           BUTTON_WID_HALF,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Plot",             @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           TRUE)
+
+    btn_Gemoerty_Erase = ui_button_create(                    @
+      /*   parent  */            frame_wid,             @
+      /*  callback */            "cb_Geomerty_Erase",           @
+      /*     x     */            BUTTON_HALF_X_LOC2,  @
+      /*     y     */            yloc_f,                @
+      /*   width   */            BUTTON_WID_HALF,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Erase",              @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+
+    yloc_f += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+    
+    ui_label_create(frame_wid, "", BUTTON_HALF_X_LOC1, yloc_f, "FEM")
+
+    yloc_f += LABEL_HGT
+
+    btn_FEM_Plot = ui_button_create(                  @
+      /*   parent  */           frame_wid,             @
+      /*  callback */           "cb_FEM_Plot",          @
+      /*     x     */           BUTTON_HALF_X_LOC1,  @
+      /*     y     */           yloc_f,                @
+      /*   width   */           BUTTON_WID_HALF,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Plot",             @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           TRUE)
+
+    btn_FEM_Erase = ui_button_create(                    @
+      /*   parent  */            frame_wid,             @
+      /*  callback */            "cb_FEM_Erase",           @
+      /*     x     */            BUTTON_HALF_X_LOC2,  @
+      /*     y     */            yloc_f,                @
+      /*   width   */            BUTTON_WID_HALF,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Erase",              @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+
+    yloc_f += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+
+    ui_label_create(frame_wid, "", BUTTON_HALF_X_LOC1, yloc_f, "All")
+
+    yloc_f += LABEL_HGT
+
+    btn_All_Plot = ui_button_create(                  @
+      /*   parent  */           frame_wid,             @
+      /*  callback */           "cb_All_Plot",          @
+      /*     x     */           BUTTON_HALF_X_LOC1,  @
+      /*     y     */           yloc_f,                @
+      /*   width   */           BUTTON_WID_HALF,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Plot",             @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           TRUE)
+
+    btn_All_Erase = ui_button_create(                    @
+      /*   parent  */            frame_wid,             @
+      /*  callback */            "cb_All_Erase",           @
+      /*     x     */            BUTTON_HALF_X_LOC2,  @
+      /*     y     */            yloc_f,                @
+      /*   width   */            BUTTON_WID_HALF,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Erase",              @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+
+    yloc_f += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+
+    ui_wid_set(frame_wid, "HEIGHT", yloc_f)
+
+end function
+
+function display()
+
+    ui_exec_function(CLASS_STR, "init")
+    ui_form_display(CLASS_STR)
+    CLASSNAME.cb_Action("CREATE")
+    
+end function
+
+function cb_Exit()
+
+    ui_form_hide(CLASS_STR)
+    ui_form_delete(CLASS_STR)
+
+end function
+
+function cb_Action(s_item)
+    string s_item[]
+    
+    ui_item_deleteall(opt_Object)
+
+    switch(s_item)
+        case("CREATE")
+            ui_item_create(opt_Object, "GROUP", "Group", FALSE)
+            ui_item_create(opt_Object, "GROUPLIST", "Group List", FALSE)
+        case("MODIFY")
+            ui_item_create(opt_Object, "GROUP", "Group", FALSE)
+            ui_item_create(opt_Object, "GROUPLIST", "Group List", FALSE)
+        case("PLOT")
+            ui_item_create(opt_Object, "CURVIEW", "Current View", FALSE)
+        case("ERASE")
+            ui_item_create(opt_Object, "CURVIEW", "Current View", FALSE)
+        case("DELETE")
+            ui_item_create(opt_Object, "GROUP", "Groups", FALSE)
+            ui_item_create(opt_Object, "GROUPLIST", "Group List", FALSE)
+    end switch
+
+    string obj_item[virtual]
+    ui_wid_get_vstring(opt_Object, "VALUE", obj_item)
+    CLASSNAME.cb_Object(obj_item)
+
+end function
+
+function cb_Object(s_item)
+    string s_item[]
+    
+    string action_item[virtual]
+    ui_wid_get_vstring(opt_Action, "VALUE", action_item)
+    ui_item_deleteall(opt_Method)
+
+    if(action_item == "CREATE" )then
+        if(s_item == "GROUP")then
+            ui_item_create(opt_Method, "GUIDELEM", "Guide Element", FALSE)
+            ui_item_create(opt_Method, "TANKSEARCH", "Tank Search", FALSE)
+            ui_item_create(opt_Method, "BOX", "Group Box", FALSE)
+            ui_item_create(opt_Method, "XS", "X:Section", FALSE)
+            ui_item_create(opt_Method, "YE", "Y:Elevation", FALSE)
+            ui_item_create(opt_Method, "ZP", "Z:Plan", FALSE)
+
+        else if(s_item == "GROUPLIST")then
+            ui_wid_set(opt_Method, "LABEL", "TYPE")
+            ui_item_create(opt_Method, "XS", "X:Section", FALSE)
+            ui_item_create(opt_Method, "YE", "Y:Elevation", FALSE)
+            ui_item_create(opt_Method, "ZP", "Z:Plan", FALSE)
+            ui_item_create(opt_Method, "BOX", "BOX", FALSE)
+            ui_item_create(opt_Method, "TANK", "TANK", FALSE)
+        end if
+    end if
+    
+    if(action_item == "MODIFY" )then
+        if(s_item == "GROUP")then
+            ui_item_create(opt_Method, "GELEMADD", "Add(Guide Elem.)", FALSE)
+            ui_item_create(opt_Method, "GELEMREMOVE", "Remove(Guide Elem.)", FALSE)
+            ui_item_create(opt_Method, "ADDNODES", "Add Nodes in Group", FALSE)
+            ui_item_create(opt_Method, "ADD1DELEMS", "Add 1D Elements", FALSE)
+            ui_item_create(opt_Method, "AXS", "X:Section(Add)", FALSE)
+            ui_item_create(opt_Method, "AYE", "Y:Elevation(Add)", FALSE)
+            ui_item_create(opt_Method, "AZP", "Z:Plan(Add)", FALSE)
+            ui_item_create(opt_Method, "RXS", "X:Section(Remove)", FALSE)
+            ui_item_create(opt_Method, "RYE", "Y:Elevation(Remove)", FALSE)
+            ui_item_create(opt_Method, "RZP", "Z:Plan(Remove)", FALSE)
+            ui_item_create(opt_Method, "X+", "Remove X+", FALSE)
+            ui_item_create(opt_Method, "Y+", "Remove Y+", FALSE)
+            ui_item_create(opt_Method, "Z+", "Remove Z+", FALSE)    
+            ui_item_create(opt_Method, "X-", "Remove X-", FALSE)
+            ui_item_create(opt_Method, "Y-", "Remove Y-", FALSE)
+            ui_item_create(opt_Method, "Z-", "Remove Z-", FALSE)            
+
+        else if(s_item == "GROUPLIST")then
+            ui_wid_set(opt_Method, "LABEL", "TYPE")
+            ui_item_create(opt_Method, "XS", "X:Section", FALSE)
+            ui_item_create(opt_Method, "YE", "Y:Elevation", FALSE)
+            ui_item_create(opt_Method, "ZP", "Z:Plan", FALSE)
+            ui_item_create(opt_Method, "BOX", "BOX", FALSE)
+            ui_item_create(opt_Method, "TANK", "TANK", FALSE)
+        end if
+    end if
+
+    if(action_item == "PLOT" || action_item == "ERASE")then
+        ui_item_create(opt_Method, "GUIDELEM", "Guide Element", FALSE)        
+        ui_item_create(opt_Method, "XS", "X:Section", FALSE)
+        ui_item_create(opt_Method, "YE", "Y:Elevation", FALSE)
+        ui_item_create(opt_Method, "ZP", "Z:Plan", FALSE)
+        ui_item_create(opt_Method, "X+", "Plot/Erase X+", FALSE)
+        ui_item_create(opt_Method, "Y+", "Plot/Erase Y+", FALSE)
+        ui_item_create(opt_Method, "Z+", "Plot/Erase Z+", FALSE)    
+        ui_item_create(opt_Method, "X-", "Plot/Erase X-", FALSE)
+        ui_item_create(opt_Method, "Y-", "Plot/Erase Y-", FALSE)
+        ui_item_create(opt_Method, "Z-", "Plot/Erase Z-", FALSE)    
+    end if
+
+    if(action_item == "DELETE")then
+        if(s_item == "GROUP")then
+            ui_item_create(opt_Method, "EMPTYGROUP", "Empty Groups", FALSE)
+        else if(s_item == "GROUPLIST")then
+            ui_wid_set(opt_method, "ENABLE", FALSE)
+        end if
+    end if
+
+    string method_item[virtual]
+    ui_wid_get_vstring(opt_Method, "VALUE", method_item)
+
+    CLASSNAME.cb_Method(method_item)
+end function
+
+function cb_Method(s_item)
+    string s_item[]
+    real yloc
+
+    ui_wid_set(frame_01,"VISIBLE", FALSE)
+    ui_wid_set(frame_02,"VISIBLE", FALSE)
+    ui_wid_set(frame_03, "VISIBLE", FALSE)
+    ui_wid_set(frame_04, "VISIBLE", FALSE)
+    ui_wid_set(frame_05, "VISIBLE", FALSE)
+
+    string action_item[virtual]
+    ui_wid_get_vstring(opt_Action, "VALUE", action_item)
+
+    string object_item[virtual]
+    ui_wid_get_vstring(opt_Object,"VALUE", object_item)
+
+    widget sdbox
+    if(action_item == "CREATE" || action_item == "MODIFY" || action_item == "PLOT")then
+        sdbox = sys_class_get("FRAME_GROUP_XYZ", "wa_sdbox_sel_point")
+        switch(s_item)
+            case("XS"); ui_wid_set(sdbox, "LABEL", "X Coordinate" )
+            case("YE"); ui_wid_set(sdbox, "LABEL", "Y Coordinate" )
+            case("ZP"); ui_wid_set(sdbox, "LABEL", "Z Coordinate" )
+$            case("AXS"); ui_wid_set(sdbox, "LABEL", "X Coordinate" )
+$            case("AYE"); ui_wid_set(sdbox, "LABEL", "Y Coordinate" )
+$            case("AZP"); ui_wid_set(sdbox, "LABEL", "Z Coordinate" )
+$            case("RXS"); ui_wid_set(sdbox, "LABEL", "X Coordinate" )
+$            case("RYE"); ui_wid_set(sdbox, "LABEL", "Y Coordinate" )
+$            case("RZP"); ui_wid_set(sdbox, "LABEL", "Z Coordinate" )                        
+        end switch
+    end if
+
+    widget dbox_GroupName
+    if(action_item == "CREATE")then
+        if(object_item == "GROUP")then
+            switch(s_item)
+                case("GUIDELEM");
+                    ui_wid_set(frame_02, "VISIBLE", TRUE)
+                    dbox_GroupName = sys_class_get("FRAME_GUIDE_ELEMENTS", "dbox_GroupName")
+                    ui_wid_set(dbox_GroupName, "ENABLE", TRUE)                
+                    yloc = yloc_02
+                case("TANKSEARCH");
+                    ui_wid_set(frame_01,"VISIBLE", TRUE)
+                    yloc = yloc_01
+                case("BOX");
+                    ui_wid_set(frame_04, "VISIBLE", TRUE)
+                    yloc = yloc_04
+                case("XS");
+                    ui_wid_set(frame_05, "VISIBLE", TRUE)
+                    ui_wid_set(dbox_GroupName, "ENABLE", TRUE)
+                    yloc = yloc_05
+                case("YE");
+                    ui_wid_set(frame_05, "VISIBLE", TRUE)
+                ui_wid_set(dbox_GroupName, "ENABLE", TRUE)
+                    yloc = yloc_05
+                case("ZP")
+                    ui_wid_set(frame_05, "VISIBLE", TRUE)
+                    ui_wid_set(dbox_GroupName, "ENABLE", TRUE)
+                    yloc = yloc_05
+
+/*              case("X+");
+                    ui_wid_set(frame_05, "VISIBLE", TRUE)
+                    yloc = yloc_05
+                case("Y+");
+                    ui_wid_set(frame_05, "VISIBLE", TRUE)
+                    yloc = yloc_05
+                case("Z+")
+                    ui_wid_set(frame_05, "VISIBLE", TRUE)
+                    yloc = yloc_05
+                case("X-");
+                    ui_wid_set(frame_05, "VISIBLE", TRUE)
+                    yloc = yloc_05
+                case("Y-");
+                    ui_wid_set(frame_05, "VISIBLE", TRUE)
+                    yloc = yloc_05
+                case("Z-")
+                    ui_wid_set(frame_05, "VISIBLE", TRUE)
+                    yloc = yloc_05
+*/                                                            
+            end switch
+        else if(object_item == "GROUPLIST")then
+            ui_wid_set(frame_03, "VISIBLE", TRUE)
+            yloc = yloc_03
+        end if
+    end if
+    
+    integer group_id
+    string s_group_name[32]
+    if(action_item == "MODIFY")then
+        if(object_item == "GROUP")then
+            dump s_item
+            if(s_item == "GELEMADD" || s_item == "GELEMREMOVE")then
+                db_get_current_group_id(group_id)
+                db_get_group_name(group_id, s_group_name)
+                dbox_GroupName = sys_class_get("FRAME_GUIDE_ELEMENTS", "dbox_GroupName")
+                ui_wid_set(dbox_GroupName, "VALUE", s_group_name)
+                ui_wid_set(dbox_GroupName, "ENABLE", FALSE)
+                ui_wid_set(frame_02, "visible", true)
+                yloc = yloc_02
+            else if(s_item == "XS" || s_item == "YE" || s_item == "ZP" || @
+                    s_item == "X+" || s_item == "Y+" || s_item == "Z+" || @
+                    s_item == "X-" || s_item == "Y-" || s_item == "Z-" ) then
+    
+                db_get_current_group_id(group_id)
+                db_get_group_name(group_id, s_group_name)
+                dbox_GroupName = sys_class_get("FRAME_GROUP_XYZ", "dbox_GroupName")
+                ui_wid_set(dbox_GroupName, "VALUE", s_group_name)
+                ui_wid_set(dbox_GroupName, "ENABLE", FALSE)
+                ui_wid_set(frame_05, "visible", true)
+                yloc = yloc_05
+            end if
+        else if(object_item == "GROUPLIST")then
+            ui_wid_set(frame_03, "visible", true)
+            yloc = yloc_03
+        end if
+    end if
+                
+    if(action_item == "PLOT" || action_item == "ERASE")then
+        if(object_item == "CURVIEW")then
+            if(s_item == "GUIDELEM")then
+                ui_wid_set(frame_02, "VISIBLE", TRUE)
+                dbox_GroupName = sys_class_get("FRAME_GUIDE_ELEMENTS", "dbox_GroupName")
+                ui_wid_set(dbox_GroupName, "ENABLE", FALSE)                    
+                yloc = yloc_02
+            else if(s_item == "XS" || s_item == "YE" || s_item == "ZP" || @
+                    s_item == "X+" || s_item == "Y+" || s_item == "Z+" || @
+                    s_item == "X-" || s_item == "Y-" || s_item == "Z-" )then
+                ui_wid_set(frame_05, "VISIBLE", TRUE)
+                dbox_GroupName = sys_class_get("FRAME_GROUP_XYZ", "dbox_GroupName")
+                ui_wid_set(dbox_GroupName, "ENABLE", FALSE)                                    
+                yloc = yloc_05
+            end if
+        end if
+    end if
+
+    if(action_item == "DELETE")then 
+        if(object_item == "GROUP")then
+            if(s_item == "EMPTYGROUP")then
+
+            end if
+        end if
+    end if
+        
+    ui_wid_set(btn_Apply, "Y", yloc)
+    ui_wid_set(btn_Exit, "Y", yloc)
+    ui_wid_set(frame_wid, "Y", yloc + BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE)
+end function
+
+function cb_Apply()
+    string action_item[virtual]
+    ui_wid_get_vstring(opt_Action, "VALUE", action_item)
+    string object_item[virtual]
+    ui_wid_get_vstring(opt_Object, "VALUE", object_item)
+    string method_item[virtual]
+    ui_wid_get_vstring(opt_method, "VALUE", method_item)
+
+    if(action_item == "CREATE")then
+        if(object_item == "GROUP")then
+            if(method_item == "GUIDELEM")then
+                FRAME_GUIDE_ELEMENTS.Apply_Click()
+                return 0
+            else if(method_item == "TANKSEARCH")then
+                FRAME_TANK_SEARCH.Apply_Click()
+                return 0
+            else if(method_item == "BOX")then
+                FRAME_GROUP_BOX.Apply_Click()
+                return 0
+            else if(method_item == "XS" || method_item == "YE" || method_item == "ZP") then
+                FRAME_GROUP_XYZ.Apply_Click()
+                return 0
+            end if
+        end if
+    end if
+
+    if(action_item == "MODIFY")then
+        if(object_item == "GROUP")then
+            dump method_item
+            if(method_item == "GELEMADD" || method_item == "GELEMREMOVE")then
+                FRAME_GUIDE_ELEMENTS.Apply_Click()
+                return 0
+            else if(method_item == "ADDNODES")then
+                CLASSNAME.import_nodes_in_group()
+            else if(method_item == "ADD1DELEMS")then
+                CLASSNAME.import_1DElems_in_group()
+            else if(method_item == "AXS" || method_item == "AYE" || method_item == "AZP")then
+                FRAME_GROUP_XYZ.Apply_Click()
+            else if(method_item == "RXS" || method_item == "RYE" || method_item == "RZP")then
+                FRAME_GROUP_XYZ.Apply_Click()
+            else if(method_item == "XS" || method_item == "YE" || method_item == "ZP") then
+                FRAME_GROUP_XYZ.Apply_Click()
+            else if(method_item == "X+" || method_item == "Y+" || method_item == "Z+") then
+                FRAME_GROUP_XYZ.Apply_Click()
+            else if(method_item == "X-" || method_item == "Y-" || method_item == "Z-") then
+                FRAME_GROUP_XYZ.Apply_Click()
+            end if
+        end if
+    end if
+
+    if(action_item == "PLOT" || action_item == "ERASE")then
+        if(method_item == "GUIDELEM")then
+            FRAME_GUIDE_ELEMENTS.Apply_Click()
+        else if(method_item == "XS" || method_item == "YE" || method_item == "ZP") then
+            FRAME_GROUP_XYZ.Apply_Click()
+        else if(method_item == "X+" || method_item == "Y+" || method_item == "Z+") then
+            FRAME_GROUP_XYZ.Apply_Click()
+        else if(method_item == "X-" || method_item == "Y-" || method_item == "Z-") then
+            FRAME_GROUP_XYZ.Apply_Click()
+        end if
+    end if
+    
+    if(action_item == "DELETE")then 
+        if(object_item == "GROUP")then
+            if(method_item == "EMPTYGROUP")then
+                GrpFx.Delete_Empty_Groups()
+            end if
+        end if
+    end if
+
+end function
+
+function import_1DElems_in_group()
+
+    integer gid
+    db_get_current_group_id(gid)
+    
+    STRING gname[32]
+    db_get_group_name(gid, gname)
+    
+    integer nelem, eid(virtual)
+    db_count_elems_in_group(gid, nelem)
+    sys_allocate_array(eid, 1, nelem)
+    db_get_elem_ids_in_group(nelem, gid, eid)
+    
+    string ElemList[VIRTUAL]
+    GrpFx.get_1DElems_Ass_2DElems(nelem, eid, ElemList)
+    
+    ga_group_entity_add(gname, ElemList)
+    
+end function
+
+function import_nodes_in_group()
+    integer gid
+    db_get_current_group_id(gid)
+    
+    STRING gname[32](1)
+    db_get_group_name(gid, gname(1))
+    
+    integer i_type
+    string s_elem_list[virtual], s_new_elem_list[virtual] 
+    for(i_type = 2 to 4 )
+        list_get_elem_ass_group(                @
+            /* element type bar = 2, tria = 3, quad =4 */ i_type,          @
+            /* nubmer of group */ 1,            @
+            /* group name array */ gname,       @
+            /* element list */ s_new_elem_list)
+        list_create_boolean_list(s_elem_list, s_new_elem_list, "or", s_elem_list)
+    end for
+
+    string s_node_list[virtual]
+    list_get_node_ass_elem(s_elem_list, s_node_list)
+    ga_group_entity_add(gname(1), s_node_list)
+
+end function
+
+function cb_Geomerty_Plot()
+    gm_plot_erase_geometry( 1 )
+end function
+
+function cb_Geomerty_Erase()
+    gm_plot_erase_geometry( 0 )
+end function
+
+function cb_FEM_Plot()
+    gm_plot_erase_fem( 1 )
+end function
+
+function cb_FEM_Erase()
+    gm_plot_erase_fem( 0 )
+end function
+
+function cb_All_Plot()
+    gm_plot_erase_all( 1 )
+end function
+
+function cb_All_Erase()
+    gm_plot_erase_all( 0 )
+end function
+
+end class

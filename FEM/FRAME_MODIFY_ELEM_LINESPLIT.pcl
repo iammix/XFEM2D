@@ -1,0 +1,230 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME FRAME_MODIFY_ELEM_LINESPLIT
+#define CLASS_STR "FRAME_MODIFY_ELEM_LINESPLIT"
+
+class CLASSNAME
+
+classwide widget opt_Option, sframe_05, wa_sdbox_05(3)
+/*******************************************************************************
+ 	Action-Modify, Object-Element, Method-Line Split 
+ *******************************************************************************/
+function UI_FRAME_MODIFY_ELEM_LINESPLIT(form_id, Y_LOC)
+widget form_id
+real Y_LOC
+
+      widget frame_wid
+      
+      frame_wid=ui_frame_create(                   @
+      /* parent */             form_id,           @
+      /*  name  */             "",                @
+      /*    x   */             0.0,  @
+      /*    y   */             Y_LOC,         @
+      /*  width */             FORM_WID_SML,  @
+      /* height */             0.0,               @
+      /*  label */             "Line Split")
+     
+	real Y_LOCF = 0.
+	Y_LOCF += LABEL_HGT + INTER_WIDGET_SPACE     
+	
+	opt_Option = ui_optionmenu_create( frame_wid,                @
+                                        "",            @
+                                        AOM_MENU_X_LOC,         @
+                                        Y_LOCF,      @
+                                        AOM_MENU_LABEL_LEN,     @
+                                        "Option",               @
+                                        FALSE )
+
+     ui_item_create( opt_Option, "NodeToNode", "Node to Node", TRUE)
+
+     Y_LOCF += OPT_MENU_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+     
+	ui_separator_create (  frame_wid, "",           @
+                            0.0,                   @
+                            Y_LOCF,   @
+                            FORM_WID_SML,          @
+                            TRUE )
+
+     Y_LOCF += LINE_THICKNESS + INTER_WIDGET_SPACE
+
+     string sa_dtype[8](3) = ["ELEM2D", "NODE", "NODE"]
+	string sa_label[16](3) = ["Element 2D", "Node 1", "Node 2"]
+	string sa_callback[32](3) = ["","",""] 
+	
+	sframe_05 = ui_select_frame_set(				@
+	/* parent widget id(input) 	*/	frame_wid,		@
+	/*	select frame callback	*/	CLASS_STR // ".Apply_Click",	@	
+	/* 	select frame label		*/	"Autoexec",	@
+	/*		x				*/	FORM_L_MARGIN,	@	
+	/*		y				*/	Y_LOCF, 		@
+	/*	select databax array	*/	wa_sdbox_05,	@
+	/* 	data type	array		*/	sa_dtype,		@
+	/* 	select databox label array	*/ 	sa_label,	@
+	/*	select databox collback array	*/ 	sa_callback, @
+	/*	label avove logical	*/			TRUE)
+
+	Y_LOCF += INTER_WIDGET_SPACE
+
+     ui_wid_set(frame_wid, "HEIGHT", Y_LOCF)
+
+	Y_LOC += Y_LOCF + INTER_WIDGET_SPACE
+	
+return frame_wid
+end function
+
+function Apply_Click()
+uil_primary_file.db_save()
+$ get global tolerance
+     logical l_conf
+     integer i_warn
+     real r_tol
+
+     pref_global_get(l_conf, i_warn,r_tol)
+
+/*   First Line */
+     string s_pnt1[virtual], s_pnt2[virtual]
+
+     ui_wid_get_vstring(wa_sdbox_05(2), "VALUE", s_pnt1)
+     ui_wid_get_vstring(wa_sdbox_05(3), "VALUE", s_pnt2)
+
+     integer i_nd1(1), i_nd2(1)
+     fem_u_get_id_list(LP_SUBLIST_NODE, s_pnt1, 1, TRUE, i_nd1)
+     fem_u_get_id_list(LP_SUBLIST_NODE, s_pnt2, 1, TRUE, i_nd2)
+
+     integer i_node_id(4)
+     i_node_id(1) = i_nd1(1)
+     i_node_id(2) = i_nd2(1)
+
+     real r_pnt(4,3)
+     db_get_node(i_node_id(1), r_pnt(1,1:3))
+     db_get_node(i_node_id(2), r_pnt(2,1:3))
+
+/* Second Line */
+
+     string s_Elems[virtual]
+     ui_wid_get_vstring(wa_sdbox_05(1), "VALUE", s_Elems)
+
+     integer nElem, status
+     nElem = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_Elems, FALSE, status)
+
+     integer ia_elem_id(virtual)
+     sys_allocate_array(ia_elem_id, 1, nElem)
+
+     fem_u_get_id_list(LP_SUBLIST_ELEMENT, s_Elems, nElem, TRUE, ia_elem_id)
+
+     integer ia_elem_node_id(virtual), ia_node_id(virtual)
+     sys_allocate_array(ia_elem_node_id, 1, nElem, 1, 6)
+     sys_allocate_array(ia_node_id, 1, nElem, 1, 4)
+     db_get_nodes_for_elems(nElem, 4, ia_elem_id, ia_node_id)
+
+     integer ia_shape_id(virtual)
+     sys_allocate_array(ia_shape_id, 1, nElem)
+     db_get_elem_shape_for_id(nElem, ia_elem_id, ia_shape_id)
+
+     logical la_edge_chk(virtual)
+     sys_allocate_array(la_edge_chk, 1, nElem, 1, 4)
+
+     integer idx, idk, id, cnt
+     real r_px(3)
+
+     for(idx=1 to nElem)
+          id = 4
+          if(ia_shape_id(idx) == 3)then
+               cnt = 2
+          else if(ia_shape_id(idx)==4)then
+               cnt = 3
+          end if
+
+          for(idk = 0 to cnt)
+               i_node_id(3) = ia_node_id(idx, mth_mod(idk,cnt+1)+1)
+               i_node_id(4) = ia_node_id(idx, mth_mod(idk+1,cnt+1)+1)
+
+               db_get_node(i_node_id(3), r_pnt(3,1:3))
+               db_get_node(i_node_id(4), r_pnt(4,1:3))
+
+               real div_s
+
+               status = FemFx.intersect_point(i_node_id, div_s, r_px)
+
+               la_edge_chk(idx, idk+1) = FALSE
+               ia_elem_node_id(idx,1:4) = ia_node_id(idx,1:4)
+
+               if(div_s > 0 && div_s < 1) then
+                    id += 1
+                    la_edge_chk(idx, idk+1) = TRUE
+
+                    r_px(1) = r_pnt(3,1) + div_s*(r_pnt(4,1)-r_pnt(3,1))
+                    r_px(2) = r_pnt(3,2) + div_s*(r_pnt(4,2)-r_pnt(3,2))
+                    r_px(3) = r_pnt(3,3) + div_s*(r_pnt(4,3)-r_pnt(3,3))
+
+                    string fem_create_nodes__nodes_created[virtual]
+
+                    fem_create_nodes_1( "Coord 0", "Coord 0", 3, "#", @
+                                        "[" // str_from_real(r_px(1)) //","// str_from_real(r_px(2)) // "," // str_from_real(r_px(3)) // "]", @
+                                        fem_create_nodes__nodes_created )
+
+                    if(id> 6)then
+$                         dump id
+$                         dump r_px
+                    else
+                         ia_elem_node_id(idx, id) = str_to_integer(fem_create_nodes__nodes_created)
+                    end if
+               else
+$                    dump i_node
+$                    dump r_pnt
+               end if
+          end for
+$          dump edge_chk(idx,1:4)
+     end for
+
+     integer i_nodeX(4), i_nodeY(4), temp_node(3)
+     integer reg_id(1), i_eid(8), i, n_eid
+     real mag1, mag2, r_cxyz(3)
+     string s_temp[virtual]
+     integer nNode = 6
+     integer i_chk1, i_chk2, k
+     STRING fem_delete_element_deleted_ids[VIRTUAL]
+
+     for(idx=1 to nElem)
+
+          db_get_region_for_elements ( 1, ia_elem_id(idx:idx), reg_id)
+
+          n_eid = 0
+          if(n_eid == 0) then
+               n_eid = Line_Split.QUAD4_Edge_Split(ia_elem_id(idx), i_node_id(1:2), ia_elem_node_id(idx,1:6), ia_shape_id(idx), la_edge_chk(idx,1:4), i_eid)
+          end if
+          if(n_eid == 0) then
+               n_eid = Line_Split.QUAD4_Edge_Split2(ia_elem_id(idx), i_node_id(1:2), ia_elem_node_id(idx,1:6), ia_shape_id(idx), la_edge_chk(idx,1:4),i_eid)
+          end if
+          if(n_eid == 0) then
+               n_eid = Line_Split.QUAD4_Node_Edge_Split(ia_elem_id(idx), i_node_id(1:2), ia_elem_node_id(idx,1:6), ia_shape_id(idx), la_edge_chk(idx,1:4),i_eid)
+          end if
+          if(n_eid == 0) then
+               n_eid = Line_Split.QUAD4_Node_Node_Split(ia_elem_id(idx), i_node_id(1:2), ia_elem_node_id(idx,1:6), ia_shape_id(idx), la_edge_chk(idx,1:4),i_eid)
+          end if
+          if(n_eid == 0) then
+               n_eid = Line_Split.TRIA3_Edge_Edge_Split(ia_elem_id(idx), i_node_id(1:2), ia_elem_node_id(idx,1:6), ia_shape_id(idx), la_edge_chk(idx,1:4),i_eid)
+          end if
+          if(n_eid == 0) then
+               n_eid = Line_Split.TRIA3_Node_Edge_Split(ia_elem_id(idx), i_node_id(1:2), ia_elem_node_id(idx,1:6), ia_shape_id(idx), la_edge_chk(idx,1:4),i_eid)
+          end if
+
+          if(n_eid != 0)then
+               fem_delete_elem_and_node("Elm " // str_from_integer(ia_elem_id(idx)), fem_delete_element_deleted_ids )
+               for(i=1 to n_eid)
+                    db_associate_element_to_region(i_eid(i), reg_id(1))
+               end for
+          end if
+          $ app_int_array_to_vstring("Element", n_eid, i_eid, s_eid)
+     end for
+
+     sys_free_array(ia_elem_id)
+     sys_free_array(ia_elem_node_id)
+     sys_free_array(ia_node_id)
+     sys_free_array(ia_shape_id)
+     sys_free_array(la_edge_chk)
+
+     repaint_graphics()
+
+end function 
+end class

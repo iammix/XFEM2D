@@ -1,0 +1,118 @@
+#define CLASSNAME pcl_exec
+#define CLASS_STR "pcl_exec"
+#include "appforms.p"
+#include "lpenums.p"
+
+CLASS CLASSNAME
+
+CLASSWIDE WIDGET form_id
+CLASSWIDE WIDGET btn_Exit
+
+FUNCTION init()
+
+	form_id = ui_form_create("form",                      @
+				 /* x location */  FORM_X_LOC ,         @
+				 /* y location */ FORM_Y_LOC,"ul",      @
+				 /* width      */ FORM_WID_SML,         @
+				 /* height     */ FORM_HGT_TALL,        @
+				 /* label      */ CLASS_STR,            @
+                                    "")
+                
+widget btn_1, btn_2, btn_3
+real yloc = 0.
+
+yloc += FORM_HGT_TALL/3
+btn_1           = ui_button_create(               @
+      /* parent         */  form_id,                   @
+      /* callback       */  "cb_btn1",            @
+      /* x position     */  BUTTON_HALF_X_LOC1,          @
+      /* y position     */  yloc,                       @
+      /* width          */  BUTTON_WID_FULL,             @
+      /* auto size      */  0,                           @
+      /* label          */  "btn_1",       @
+      /* label inside   */  TRUE,                        @
+      /* default        */  FALSE )
+
+yloc += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+
+btn_2           = ui_button_create(               @
+      /* parent         */  form_id,                   @
+      /* callback       */  "cb_btn2",            @
+      /* x position     */  BUTTON_HALF_X_LOC1,          @
+      /* y position     */  yloc,                       @
+      /* width          */  BUTTON_WID_FULL,             @
+      /* auto size      */  0,                           @
+      /* label          */  "btn_2",       @
+      /* label inside   */  TRUE,                        @
+      /* default        */  FALSE )
+
+yloc += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+
+btn_3           = ui_button_create(               @
+      /* parent         */  form_id,                   @
+      /* callback       */  "cb_btn3",            @
+      /* x position     */  BUTTON_HALF_X_LOC1,          @
+      /* y position     */  yloc,                       @
+      /* width          */  BUTTON_WID_FULL,             @
+      /* auto size      */  0,                           @
+      /* label          */  "btn_3",       @
+      /* label inside   */  TRUE,                        @
+      /* default        */  FALSE )
+
+yloc += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+
+    btn_Exit           = ui_button_create(               @
+      /* parent         */  form_id,                   @
+      /* callback       */  "cb_Exit",            @
+      /* x position     */  BUTTON_HALF_X_LOC1,          @
+      /* y position     */  yloc,                       @
+      /* width          */  BUTTON_WID_FULL,             @
+      /* auto size      */  0,                           @
+      /* label          */  "Exit",       @
+      /* label inside   */  TRUE,                        @
+      /* default        */  FALSE )
+    
+
+END FUNCTION
+
+FUNCTION display()
+
+    ui_form_display(CLASS_STR)
+    
+END FUNCTION
+
+FUNCTION cb_Exit()
+
+    ui_form_hide(CLASS_STR)
+    
+END FUNCTION
+
+FUNCTION cb_btn1
+string s_elem_list[virtual]
+    
+    s_elem_list = GrpFx.get_elem_inBox_inView()
+
+dump s_elem_list
+
+END FUNCTION
+
+function cb_btn2
+string s_node_list[virtual]
+    
+    s_node_list = GrpFx.get_node_inBox_inView()
+
+dump s_node_list
+end function
+
+function cb_btn3
+string s_elem_list[virtual]
+    
+    integer eid(virtual), nElem
+
+    nElem = FemFx.db_elem_ids(eid)
+
+    dump eid
+
+end function
+
+END CLASS

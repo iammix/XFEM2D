@@ -1,0 +1,1516 @@
+#include "appforms.p"
+#include "lpenums.p"
+#define CLASSNAME xfem_Buckling
+#define CLASS_STR "xfem_Buckling"
+#define PR 0.6
+
+CLASS CLASSNAME
+
+CLASSWIDE WIDGET form_id, opt_LoadCase
+CLASSWIDE WIDGET opt_Action, opt_RULES, sep_01
+
+CLASSWIDE WIDGET frame_material, opt_Material, dbox_Yield
+CLASSWIDE REAL y_loc01, yield_stress(virtual)
+
+CLASSWIDE WIDGET frame_create, opt_Option, sframe_elem2d, sdbox_elem2d 
+CLASSWIDE REAL y_loc02
+
+CLASSWIDE WIDGET frame_modify, sframe_surface, sdbox_panel, sframe_elems_ass_pnl, sdbox_elems, dbox_PanelInfo(11)
+CLASSWIDE REAL y_loc03
+
+CLASSWIDE WIDGET frame_import, dbox_ImportFile, seldbox_Panel
+CLASSWIDE REAL y_loc04
+
+CLASSWIDE WIDGET frame_calc, dbox_Assessment, btn_Modify
+CLASSWIDE REAL y_loc05
+
+CLASSWIDE WIDGET frame_loadcase, listbox_rescase, opt_Modify
+CLASSWIDE REAL y_loc06
+
+CLASSWIDE WIDGET btn_Exit, btn_Next, opt_IC1, opt_IC2, dbox_C1, dbox_C2, btn_Previous
+ 
+classwide integer npnl, pnl_id(virtual), Pnl_NodeID(4), elem_count, elem_ids(VIRTUAL)
+classwide string sa_Elems[2048](virtual), s_Elems[virtual]
+classwide real ra_PanelInfo(virtual), ra_vtx(virtual), ra_thk(virtual), ra_ReH(virtual), ra_E(virtual), ra_PoR(virtual)
+CLASSWIDE REAL ra_l(virtual), ra_s(virtual), ra_c1(virtual), ra_c2(virtual), ra_h(virtual)
+CLASSWIDE REAL stress(VIRTUAL), uc(virtual)
+
+CLASSWIDE REAL    rv_fy(virtual)
+CLASSWIDE string  sv_mat[31](virtual)
+classwide integer mcount, nCase
+CLASSWIDE REAL    sum_area, area(VIRTUAL)
+CLASSWIDE REAL    min, max, ra_sx(virtual), ra_sy(virtual), ra_txy(virtual)
+classwide integer e_count, e_ids(VIRTUAL), e_loc, lc_ids(virtual), sc_ids(virtual)
+
+FUNCTION init()
+REAL Y_LOC
+
+	form_id = ui_form_create("form",                      @
+				 /* x location */  FORM_X_LOC ,         @
+				 /* y location */ FORM_Y_LOC,"ul",      @
+				 /* width      */ FORM_WID_SML,         @
+				 /* height     */ FORM_HGT_TALL,        @
+				 /* label      */ CLASS_STR,            @
+                                    "")
+                
+	Y_LOC = ACTION_MENU_Y_LOC
+
+	opt_RULES= ui_optionmenu_create(form_id,"",                  @
+					      AOM_MENU_X_LOC,		@
+						 Y_LOC,    	@
+						  AOM_MENU_LABEL_LEN,	       @
+					      "RULES :",			@
+						  FALSE)
+
+	    ui_item_create(opt_RULES,"ABSBLS","ABS BLS", TRUE)
+	    ui_item_create(opt_RULES,"ABSULS","ABS ULS", TRUE)
+         ui_item_create(opt_RULES,"ABSLRFD","ABS LRFD", TRUE)
+
+     Y_LOC = OBJECT_MENU_Y_LOC
+
+     opt_LoadCase = ui_optionmenu_create(form_id,"",  @
+					          AOM_MENU_X_LOC,		@
+						     Y_LOC,    	@
+						     AOM_MENU_LABEL_LEN,	       @
+					          "Load Case :",			@
+						     FALSE)
+
+    		ui_item_create(opt_LoadCase,"DOC","Operating", TRUE)
+    		ui_item_create(opt_LoadCase,"DEC","Environmental", TRUE)
+    		ui_item_create(opt_LoadCase,"SHIP","Ship Rule", TRUE)
+
+	Y_LOC = METHOD_MENU_Y_LOC
+
+     opt_Action = ui_optionmenu_create( @
+                        /* parent       */  form_id,             	 @
+	  				    /* callback     */  "cb_Action",          @
+					    /* x            */  AOM_MENU_X_LOC,       @
+			 		    /* y            */  Y_LOC,		      @
+					    /* label length */  AOM_MENU_LABEL_LEN,   @
+					    /* label        */ "ACTION",              @
+					    /*              */  FALSE)
+
+		ui_item_create(opt_Action,"MATERIAL", "MATERIAL", TRUE)
+		ui_item_create(opt_Action,"LOADCASE", "LOAD CASE", TRUE)
+		ui_item_create(opt_Action,"CREATE", "CREATE PANEL", TRUE)
+		ui_item_create(opt_Action,"MODIFY", "MODIFY PANEL", TRUE)
+		ui_item_create(opt_Action,"IMPORT", "IMPORT PANEL", TRUE)
+		ui_item_create(opt_Action,"CALC", "CALCULATION", TRUE)
+	
+	Y_LOC += OPT_MENU_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+
+	sep_01 = ui_separator_create(   /* patrent  */  form_id, @
+					               /* callback */  "",@
+					               /* x        */  0, @
+					               /* y        */  Y_LOC, @
+					               /* width    */  FORM_WID_SML, @
+					                               TRUE)
+                                    
+
+    	Y_LOC += LINE_THICKNESS + INTER_WIDGET_SPACE
+    
+    	y_loc01 = Y_LOC
+	frame_material = CLASSNAME.UI_FRAME_MATERIAL(y_loc01)
+
+	y_loc06 = Y_LOC
+	frame_loadcase = CLASSNAME.UI_FRAME_LOADCASE(y_loc06)
+
+	y_loc02 = Y_LOC
+	frame_create = CLASSNAME.UI_FRAME_CREATE_PANEL(y_loc02)
+
+	y_loc03 = Y_LOC
+	frame_modify = CLASSNAME.UI_FRAME_MODIFY_PANEL(y_loc03)
+
+	y_loc04 = Y_LOC
+	frame_import = CLASSNAME.UI_FRAME_IMPORT(y_loc04)                            
+	
+	y_loc05 = Y_LOC
+	frame_calc = CLASSNAME.UI_FRAME_CALC(y_loc05)
+
+	btn_Previous = ui_button_create(               	@
+      /* parent         */  form_id,              @
+      /* callback       */  "cb_Previous",            @
+      /* x position     */  BUTTON_HALF_X_LOC1,   @
+      /* y position     */  0,                    @
+      /* width          */  BUTTON_WID_HALF,      @
+      /* auto size      */  0,                    @
+      /* label          */  "Previous",       		@
+      /* label inside   */  TRUE,                 @
+      /* default        */  FALSE )
+
+     btn_Next = ui_button_create(               	@
+      /* parent         */  form_id,              @
+      /* callback       */  "cb_Next",            @
+      /* x position     */  BUTTON_HALF_X_LOC2,   @
+      /* y position     */  0,                    @
+      /* width          */  BUTTON_WID_HALF,      @
+      /* auto size      */  0,                    @
+      /* label          */  "Next",       		@
+      /* label inside   */  TRUE,                 @
+      /* default        */  FALSE )
+
+     btn_Exit = ui_button_create(               	@
+      /* parent         */  form_id,              @
+      /* callback       */  "cb_Exit",            @
+      /* x position     */  BUTTON_HALF_X_LOC1,   @
+      /* y position     */  0,                    @
+      /* width          */  BUTTON_WID_FULL,      @
+      /* auto size      */  0,                    @
+      /* label          */  "Exit",       		@
+      /* label inside   */  TRUE,                 @
+      /* default        */  FALSE )
+
+END FUNCTION
+
+FUNCTION cb_Action(s_value)
+string s_value[]
+
+	UI_WID_SET(frame_material, "VISIBLE", FALSE)
+	UI_WID_SET(frame_loadcase, "VISIBLE", FALSE)
+	UI_WID_SET(frame_create, "VISIBLE", FALSE)
+	UI_WID_SET(frame_modify, "VISIBLE", FALSE)
+	UI_WID_SET(frame_import, "VISIBLE", FALSE)
+	UI_WID_SET(sframe_surface, "VISIBLE", FALSE)
+	$ UI_WID_SET(opt_RULES, "VISIBLE", TRUE)
+     $ UI_WID_SET(opt_RULES, "ENABLE", TRUE)
+	UI_WID_SET(sframe_surface, "VISIBLE", FALSE)
+	UI_WID_SET(frame_calc, "VISIBLE", FALSE)
+	
+	REAL Y_LOC
+	SWITCH(s_value)
+	    CASE("MATERIAL");
+	    				UI_WID_SET(frame_material, "VISIBLE", TRUE)
+                         $UI_WID_SET(opt_RULES, "VISIBLE", FALSE)
+                         UI_WID_SET(btn_Previous,"ENABLE", FALSE)
+                         UI_WID_SET(btn_Next,"ENABLE", TRUE)          
+	    				Y_LOC = y_loc01
+	    CASE("LOADCASE");
+	    				$UI_WID_SET(opt_RULES, "VISIBLE", FALSE)
+                         UI_WID_SET(frame_loadcase, "VISIBLE", TRUE)
+	    				Y_LOC = y_loc06
+	    CASE("CREATE");
+					$UI_WID_SET(opt_RULES, "ENABLE", TRUE)
+					UI_WID_SET(frame_create, "VISIBLE", TRUE)
+	    				Y_LOC = y_loc02	                
+	    CASE("MODIFY"); 
+					$UI_WID_SET(opt_RULES, "ENABLE", TRUE)
+	    				UI_WID_SET(sframe_surface, "VISIBLE", TRUE)
+					UI_WID_SET(frame_modify, "VISIBLE", TRUE)
+	    				Y_LOC = y_loc03	                
+	    CASE("IMPORT");
+					$UI_WID_SET(opt_RULES, "ENABLE", TRUE)	     
+	                    UI_WID_SET(frame_import, "VISIBLE", TRUE)
+	    				Y_LOC = y_loc04	               
+	    CASE("CALC");
+					$UI_WID_SET(opt_RULES, "ENABLE", TRUE)	     	
+                         UI_WID_SET(frame_calc, "VISIBLE", TRUE)
+                         UI_WID_SET(btn_Next,"ENABLE",FALSE)          
+		    			Y_LOC = y_loc05
+	END SWITCH    
+
+     Y_LOC += INTER_WIDGET_SPACE
+     
+     UI_WID_SET(btn_Previous, "Y", Y_LOC)
+     UI_WID_SET(btn_Next, "Y", Y_LOC)
+
+     Y_LOC += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+     
+     UI_WID_SET(btn_Exit, "Y", Y_LOC)
+        
+END FUNCTION
+
+function cb_Previous()
+string s_value[virtual]
+
+ui_wid_get_vstring(opt_Action,"value",s_value)
+
+UI_WID_SET(btn_previous,"ENABLE",TRUE)
+UI_WID_SET(btn_Next,"ENABLE",TRUE)
+
+SWITCH(s_value)
+     CASE("MATERIAL");
+          UI_WID_SET(btn_previous,"ENABLE",FALSE)
+     CASE("LOADCASE");
+          UI_WID_SET(opt_Action,"value","MATERIAL")
+     CASE("CREATE");
+		UI_WID_SET(opt_Action,"value","LOADCASE")          
+     CASE("MODIFY"); 
+		UI_WID_SET(opt_Action,"value","CREATE")          
+     CASE("IMPORT");
+		UI_WID_SET(opt_Action,"value","MODIFY")          
+     CASE("CALC");
+          UI_WID_SET(opt_Action,"value","IMPORT")
+END SWITCH
+
+string next_value[virtual]
+     ui_wid_get_vstring(opt_Action,"value",next_value)
+     CLASSNAME.cb_Action(next_value)
+end function
+
+function  cb_Next()
+string s_value[virtual]
+
+ui_wid_get_vstring(opt_Action,"value",s_value)
+UI_WID_SET(btn_previous,"ENABLE",TRUE)
+SWITCH(s_value)
+     CASE("MATERIAL");
+          UI_WID_SET(opt_Action,"value","LOADCASE")
+     CASE("LOADCASE");
+          UI_WID_SET(opt_Action,"value","CREATE")
+     CASE("CREATE");
+		UI_WID_SET(opt_Action,"value","CALC")          
+     CASE("MODIFY"); 
+		UI_WID_SET(opt_Action,"value","CALC")          
+     CASE("IMPORT");
+		UI_WID_SET(opt_Action,"value","CALC")          
+     CASE("CALC");
+          UI_WID_SET(opt_Action,"value","MATERIAL")
+END SWITCH
+
+string next_value[virtual]
+     ui_wid_get_vstring(opt_Action,"value",next_value)
+     CLASSNAME.cb_Action(next_value)
+end function
+
+FUNCTION UI_FRAME_MATERIAL(FRAME_Y_LOC)
+REAL FRAME_Y_LOC
+    
+    widget frame_wid
+    frame_wid = ui_frame_create(                             @
+                    /* Parent     */  form_id,              @
+                    /* callback   */  "",                   @
+                    /*   x        */  FORM_L_MARGIN,        @
+                    /*   y        */  FRAME_Y_LOC,          @
+                    /* width      */  FORM_WID_SML,         @
+                    /* height     */  0,                    @
+                    /* title      */  "MATERIAL")
+
+	REAL Y_LOCF 
+	Y_LOCF = FRAME_T_MARGIN + LABEL_HGT
+
+	opt_Material = ui_optionmenu_create(frame_wid,                @
+                                        "cb_material",            @
+                                        AOM_MENU_X_LOC,         @
+                                        Y_LOCF,      @
+                                        FORM_WID_SML*1/3,     @
+                                        "Material",               @
+                                        FALSE )
+     db_count_materials(mcount)
+          
+     sys_allocate_array(sv_mat, 1, mcount)
+	sys_allocate_array(rv_fy, 1, mcount)
+     sv_mat = ui_material_list(opt_Material)
+     
+     /*
+     integer max_matId
+     max_matId = sys_array_hbound(sv_mat, 1)
+     sys_allocate_array(rv_mat_fy, 1, max_matId)
+*/
+$	integer cnt_mat
+$	sys_array_hbound(mat_name, 1, cnt_mat)
+$	real ReH(virtual)
+$	sys_allocate_array(ReH, 1, cnt_mat)
+ 
+     Y_LOCF += OPT_MENU_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+
+     dbox_Yield = ui_databox_create(          			@
+      /*    parent    */          frame_wid,     			@
+      /*   callback   */          "",		@
+      /*       x      */          AOM_MENU_X_LOC,       	@
+      /*       y      */          Y_LOCF,	          	@
+      /* label_length */          FORM_WID_SML*1/3,		@
+      /*  box_length  */          FORM_WID_SML*2/3 - INTER_WIDGET_SPACE * 2, @
+      /*     label    */          "Yield Stress",			@
+      /*     value    */          "",                   	@
+      /*  label_above */          FALSE,                 	@
+      /*   datatype   */          "REAL",	             	@
+      /*   num_vals   */          1)
+     
+	Y_LOCF += DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+	
+     widget btn_save
+	btn_Save = ui_button_create(               	@
+      /* parent         */  frame_wid,              @
+      /* callback       */  "cb_Save_Mat",            @
+      /* x position     */  BUTTON_HALF_X_LOC1,   @
+      /* y position     */  Y_LOCF,                    @
+      /* width          */  BUTTON_WID_FULL,      @
+      /* auto size      */  0,                    @
+      /* label          */  "Save",       		@
+      /* label inside   */  TRUE,                 @
+      /* default        */  FALSE )
+
+     Y_LOCF += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+
+     ui_wid_set(frame_wid, "HEIGHT", Y_LOCF)
+     
+     FRAME_Y_LOC += Y_LOCF + INTER_WIDGET_SPACE
+
+     return frame_wid
+	
+END FUNCTION
+
+function UI_FRAME_LOADCASE(FRAME_Y_LOC)
+REAL FRAME_Y_LOC
+
+	widget frame_id
+	      frame_id = ui_frame_create(                           @
+                    /* Parent     */  form_id,              @
+                    /* callback   */  "",                   @
+                    /*   x        */  FORM_L_MARGIN,        @
+                    /*   y        */  FRAME_Y_LOC,          @
+                    /* width      */  FORM_WID_SML,         @
+                    /* height     */  0,                    @
+                    /* title      */  "LOAD CASES")
+ 
+		real Y_LOC
+		Y_LOC += FRAME_T_MARGIN + LABEL_HGT
+		
+		listbox_rescase = ui_listbox_create(frame_id,"", @
+                             FRAME_L_MARGIN, @
+                             Y_LOC, @
+                             LBOX_WID_SINGLE,@
+                             15, @
+                             "RESULT CASE", @
+                             "EXTEND", @
+                             TRUE)
+                         
+		Y_LOC += LBOX_5L_HGT_LABOVE + LBOX_5L_HGT_NO_LABOVE + @
+				INTER_WIDGET_SPACE + INTER_WIDGET_SPACE + INTER_WIDGET_SPACE
+		
+		ui_resultcases_list(listbox_rescase)
+
+		UI_WID_SET(frame_id, "HEIGHT", Y_LOC)
+		
+		FRAME_Y_LOC += Y_LOC + INTER_WIDGET_SPACE
+		
+		return frame_id
+end function
+
+FUNCTION UI_FRAME_CREATE_PANEL(Y_LOC)
+REAL Y_LOC
+
+	 widget frame_id
+      frame_id = ui_frame_create(                           @
+                    /* Parent     */  form_id,              @
+                    /* callback   */  "",                   @
+                    /*   x        */  FORM_L_MARGIN,        @
+                    /*   y        */  Y_LOC,          @
+                    /* width      */  FORM_WID_SML,         @
+                    /* height     */  0,                    @
+                    /* title      */  "CREATE PANEL")
+
+     REAL FRAME_Y_LOC = 0
+
+     FRAME_Y_LOC += FRAME_T_MARGIN + INTER_WIDGET_SPACE
+
+     dbox_C1 = ui_databox_create(          			@
+      /*    parent    */          frame_id,     			@
+      /*   callback   */          "",		@
+      /*       x      */          FRAME_L_MARGIN,       	@
+      /*       y      */          FRAME_Y_LOC,	          	@
+      /* label_length */          FORM_WID_SML*1/3,		@
+      /*  box_length  */          FORM_WID_SML*1/3, @
+      /*     label    */          "C1",			@
+      /*     value    */          1.1,                   	@
+      /*  label_above */          FALSE,                 	@
+      /*   datatype   */          "REAL",	             	@
+      /*   num_vals   */          1)
+     
+	FRAME_Y_LOC += DBOX_HGT_NO_LABOVE 
+     $ + INTER_WIDGET_SPACE
+
+     dbox_C2 = ui_databox_create(          			@
+      /*    parent    */          frame_id,     			@
+      /*   callback   */          "",		@
+      /*       x      */          FRAME_L_MARGIN,       	@
+      /*       y      */          FRAME_Y_LOC,	          	@
+      /* label_length */          FORM_WID_SML*1/3,		@
+      /*  box_length  */          FORM_WID_SML*1/3, @
+      /*     label    */          "C2",			@
+      /*     value    */          1.2,                   	@
+      /*  label_above */          FALSE,                 	@
+      /*   datatype   */          "REAL",	             	@
+      /*   num_vals   */          1)
+     
+     FRAME_Y_LOC += DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+
+
+	opt_Option = ui_optionmenu_create(frame_id,"cb_Option",  @
+					          AOM_MENU_X_LOC,		@
+						     FRAME_Y_LOC,    	@
+						     AOM_MENU_LABEL_LEN,	       @
+					          "Option :",			@
+						     FALSE)
+
+    		ui_item_create(opt_Option,"CGROUP","Current Group", TRUE)
+    		ui_item_create(opt_Option,"SELECT","Select Elements", TRUE)
+    		ui_item_create(opt_Option,"SINGLE","Add a Panel", TRUE)    
+
+     FRAME_Y_LOC += OPT_MENU_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+     DUMP FRAME_Y_LOC
+	sframe_elem2d = CLASSNAME.UI_SFRAME_SELECT_BOX(frame_id, "", FRAME_Y_LOC, sdbox_elem2d, "Select Elements", "ELEM2D")
+     DUMP FRAME_Y_LOC
+     widget btn_BuckPanel
+     
+	FRAME_Y_LOC += INTER_WIDGET_SPACE
+ 
+	 btn_BuckPanel     = ui_button_create(               @
+      /* parent         */  frame_id,                   @
+      /* callback       */  "cb_BuckPanel",            @
+      /* x position     */  BUTTON_HALF_X_LOC1,          @
+      /* y position     */  FRAME_Y_LOC,                       @
+      /* width          */  BUTTON_WID_FULL,             @
+      /* auto size      */  0,                           @
+      /* label          */  "Buckling Panel",       @
+      /* label inside   */  TRUE,                        @
+      /* default        */  FALSE )
+        
+        FRAME_Y_LOC += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+
+	 widget btn_Save
+	 btn_Save      = ui_button_create(               @
+      /* parent         */  frame_id,                   @
+      /* callback       */  "cb_Save",            @
+      /* x position     */  BUTTON_HALF_X_LOC1,          @
+      /* y position     */  FRAME_Y_LOC,                       @
+      /* width          */  BUTTON_WID_FULL,             @
+      /* auto size      */  0,                           @
+      /* label          */  "Save",       @
+      /* label inside   */  TRUE,                        @
+      /* default        */  FALSE )
+        
+        FRAME_Y_LOC += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+        
+	 widget btn_DeleteAll
+	 btn_DeleteAll      = ui_button_create(               @
+      /* parent         */  frame_id,                   @
+      /* callback       */  "cb_DeleteAll",            @
+      /* x position     */  BUTTON_HALF_X_LOC1,          @
+      /* y position     */  FRAME_Y_LOC,                       @
+      /* width          */  BUTTON_WID_FULL,             @
+      /* auto size      */  0,                           @
+      /* label          */  "Delete All",       @
+      /* label inside   */  TRUE,                        @
+      /* default        */  FALSE )
+        
+        FRAME_Y_LOC += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+	           
+        UI_WID_SET(frame_id, "HEIGHT", FRAME_Y_LOC)
+        
+        Y_LOC += FRAME_Y_LOC + INTER_WIDGET_SPACE
+     
+        CLASSNAME.cb_Option("CGROUP")
+	   
+RETURN frame_id
+        
+END FUNCTION
+
+function cb_Option(s_item)
+	string s_item[]
+	
+	if(s_item == "CGROUP")then
+		ui_wid_set(sframe_elem2d, "ENABLE", FALSE)
+	else
+		ui_wid_set(sframe_elem2d, "ENABLE", TRUE)
+	end if
+	
+end function
+
+FUNCTION cb_BuckPanel()
+	string s_Option[virtual]
+     $ , s_Elems[virtual]
+	integer nElem, iv_ElemID(virtual), group_id, i_tmp
+	
+	ui_wid_get_vstring(opt_Option, "VALUE", s_Option)
+
+	switch(s_Option)
+		case("CGROUP");
+			db_get_current_group_id(group_id)
+		     db_count_elems_in_group ( group_id, nElem )
+		     sys_allocate_array(iv_ElemID, 1, nElem)
+		     db_get_elem_ids_in_group ( nElem, group_id, iv_ElemID)
+		     app_int_array_to_vstring("Element", nElem, iv_ElemID, s_Elems)
+			$ setPanel.getPanel(-1, s_Elems, i_count, pnl_id, sa_Elems, ra_ReH, ra_thk, ra_PanelInfo, ra_vtx)
+		
+		case("SELECT");
+			ui_wid_get_vstring(sdbox_elem2d, "VALUE", s_Elems)
+			$ setPanel.getPanel(-1, s_Elems, i_count, pnl_id, sa_Elems, ra_ReH, ra_thk, ra_PanelInfo, ra_vtx)
+
+		case("SINGLE");
+               dump -100001
+               return -100001
+	
+	end switch
+
+	integer num_elems
+     string group_name[63]
+     integer ia_elem_id(virtual)
+     $ real ra_PanelInfo(virtual)
+
+     db_get_current_group_id(group_id)
+     db_get_group_name(group_id,group_name)
+                     		
+     setPanel.getPanel(-1, s_Elems, npnl, pnl_id, sa_Elems, ra_PanelInfo, ra_vtx)
+
+     integer idx
+     $ string suf[100]
+     $ for(idx = 1 to npnl)
+     $     suf = "surface " // str_from_integer(pnl_id(idx))
+     $     $ dump suf
+     $     $ dump sa_Elems(idx)
+     $     sgm_assoc_element_surface_v1(sa_Elems(pnl_id(idx)), suf, 17)
+     $ end for
+		
+	integer gid
+	db_get_current_group_id(gid)
+
+	string fname[64]
+	db_get_group_name(gid, fname)
+
+	integer fid
+	fname = fname // ".panel"
+	text_open(fname,"nowv",0,0,fid)
+		
+	real r_tmp
+	text_write(fid, "%I%", npnl, r_tmp ,"")
+
+     
+     sys_allocate_array(ra_h, 1, npnl)
+     sys_allocate_array(ra_E, 1, npnl)
+     sys_allocate_array(ra_PoR, 1, npnl)
+     sys_allocate_array( ra_ReH, 1, npnl)
+	sys_allocate_array( ra_thk, 1, npnl)
+
+	sys_allocate_array(ra_l, 1, npnl)
+     sys_allocate_array(ra_s, 1, npnl)
+     sys_allocate_array(ra_c1, 1, npnl)
+     sys_allocate_array(ra_c2, 1, npnl)
+
+     real r_c1, r_c2, r_h
+     string s_h[32], panel_name[32]
+
+     ui_wid_get(dbox_C1, "VALUE", r_C1)
+     ui_wid_get(dbox_C2, "VALUE", r_C2)
+     ui_wid_get(opt_LoadCase, "VALUE",s_h)
+     
+     SWITCH(s_h)
+          CASE("DOC");
+               r_h = 0.6
+          CASE("DEC");
+               r_h = 0.8
+          CASE("SHIP")
+               r_h = 1.0
+     END SWITCH
+
+     r_h = str_to_real(s_h)
+
+     DUMP r_C1, r_C2, r_h
+
+     integer i, pid
+     real r_panelInfo(9)
+     for(idx=1 to npnl)
+
+$          text_write_string(fid, str_from_integer(pnl_id(idx)))
+
+$          for(idxx=1 to 4)
+$               text_write(fid, "%3F15.3%", i_tmp, ra_vtx(idx, idxx,1:3) ,"")
+$          end for
+          pid = pnl_id(idx)
+          ra_h(pid) = r_h
+          $ Extracted From DB
+          ra_E(pid) = 206000.   
+          $ Extracted From DB
+          ra_PoR(pid) = 0.3
+          ra_ReH(pid) = BukFx.get_pnl_yield(sa_Elems(pid)) 
+          ra_thk(pid) = BukFx.get_pnl_thk(sa_Elems(pid))
+          r_panelInfo(1) = ra_h(pid)
+          r_panelInfo(2) = ra_E(pid)
+          r_panelInfo(3) = ra_PoR(pid)
+          r_panelInfo(4) = ra_ReH(pid)
+          r_panelInfo(5) = ra_thk(pid)
+          ra_l(pid) = ra_PanelInfo(idx, 1)
+          ra_s(pid) = ra_PanelInfo(idx, 2)
+          ra_c1(pid) = r_c1
+          ra_c2(pid) = r_c2
+          r_panelInfo(6) = ra_l(pid)
+          r_panelInfo(7) = ra_s(pid)
+          r_panelInfo(8) = ra_C1(pid)
+          r_panelInfo(9) = ra_C2(pid)
+          $ r_panelInfo(10:16) = ra_PanelInfo(idx, 1:7)
+          $ panel_name = str_from_integer(pid)
+          text_write(fid, "%I15%%9F15.3%", pid, r_panelInfo, "")
+          text_write_string(fid, sa_Elems(pid))
+	end for
+
+     text_close(fid,"")     
+
+$		CLASSNAME.get_panel_stress2( group_name, vRcList, pnl_id, sa_Elems, ra_PanelInfo )
+     
+/*
+     integer max_sid, pid, idx     
+
+     db_get_max_surface_label(max_sid)
+ 
+     for(idx = 1 to npnl)
+          pid = max_sid + pnl_id(idx) 
+          sgm_assoc_element_surface_v1( sa_Elems(idx), "Surface " // str_from_integer(pid), 17 )
+     end for 
+*/
+
+END FUNCTION
+
+function cb_Save_Mat()
+     
+     string s_mat[virtual]
+
+     ui_wid_get_vstring(opt_Material, "value", s_mat)
+
+     integer idx
+     for(idx=1 to mcount)
+          if(sv_mat(idx)==s_mat)then
+               ui_wid_get(dbox_Yield, "VALUE", rv_fy(idx))
+          end if
+     end for
+
+     dump rv_fy
+
+end function
+
+function cb_material(s_item)
+     string s_item[]
+     integer idx
+     for(idx=1 to mcount)
+          if(sv_mat(idx) == s_item)then
+               ui_wid_set(dbox_Yield, "value", rv_fy(idx))
+          end if
+     end for
+
+     dump sv_mat
+     dump rv_fy
+
+end function
+
+function cb_DeleteAll()
+	integer max_id
+	db_get_max_surface_label(max_id)
+
+	string asm_delete_surface_deleted_ids[virtual]
+     asm_delete_surface( "Surface 1:" // str_from_integer(max_id), asm_delete_surface_deleted_ids )
+	
+     sys_free_array(pnl_id)
+
+
+end function
+
+FUNCTION UI_FRAME_IMPORT(FRAME_Y_LOC)
+REAL FRAME_Y_LOC
+      
+      widget frame_id, btn_Import, btn_FileSelect
+      
+      frame_id = ui_frame_create(                       @
+                    /* Parent     */  form_id,         @
+                    /* callback   */  "",                   @
+                    /*   x        */  FORM_L_MARGIN,  @
+                    /*   y        */  FRAME_Y_LOC,        @
+                    /* width      */  FORM_WID_SML,           @
+                    /* height     */  0,          @
+                    /* title      */  "IMPORT :")
+                      
+      real Y_LOC
+      
+      Y_LOC = LABEL_HGT
+
+      btn_FileSelect = ui_button_create(               @
+      /* parent         */  frame_id,                   @
+      /* callback       */  "cb_SelectFile",            @
+      /* x position     */  BUTTON_HALF_X_LOC1,          @
+      /* y position     */  Y_LOC,                       @
+      /* width          */  BUTTON_WID_FULL,             @
+      /* auto size      */  0,                           @
+      /* label          */  "Select File",       @
+      /* label inside   */  TRUE,                        @
+      /* default        */  FALSE )
+           
+      Y_LOC += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+      
+      dbox_ImportFile =ui_databox_create(                   @
+            /*    parent    */          frame_id,          @
+            /*   callback   */          "cb_ImportFile",                @
+            /*       x      */          BUTTON_HALF_X_LOC1 ,     @
+            /*       y      */          Y_LOC,     @
+            /* label_length */          0 , @
+            /*  box_length  */          BUTTON_WID_FULL,   @
+            /*     label    */          "",  @
+            /*     value    */          "",                @
+            /*  label_above */          FALSE,              @
+            /*   datatype   */          "STRING",          @
+            /*   num_vals   */          1)
+
+      Y_LOC += DBOX_HGT_NO_LABOVE  + @
+                            INTER_WIDGET_SPACE
+                                        
+      btn_Import = ui_button_create(               @
+      /* parent         */  frame_id,                   @
+      /* callback       */  "cb_Import",            @
+      /* x position     */  BUTTON_HALF_X_LOC1,          @
+      /* y position     */  Y_LOC,                       @
+      /* width          */  BUTTON_WID_FULL,             @
+      /* auto size      */  0,                           @
+      /* label          */  "IMPORT",       @
+      /* label inside   */  TRUE,                        @
+      /* default        */  FALSE )
+        
+        Y_LOC += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+        
+        UI_WID_SET(frame_id, "HEIGHT", Y_LOC)
+        
+        FRAME_Y_LOC += Y_LOC + INTER_WIDGET_SPACE
+        
+        RETURN frame_id
+
+END FUNCTION
+
+FUNCTION UI_FRAME_CALC(Y_LOC)
+REAL Y_LOC
+      
+      widget frame_id, btn_BuckFileSelect, btn_Assessment
+
+      frame_id = ui_frame_create(                       @
+                    /* Parent     */  form_id,         @
+                    /* callback   */  "",                   @
+                    /*   x        */  FORM_L_MARGIN,  @
+                    /*   y        */  Y_LOC,        @
+                    /* width      */  FORM_WID_SML,           @
+                    /* height     */  0,          @
+                    /* title      */  "BUCKLING ASSESSMENT :")
+
+     real FRAME_Y_LOC                 
+      
+      FRAME_Y_LOC = LABEL_HGT
+
+      btn_BuckFileSelect = ui_button_create(               @
+      /* parent         */  frame_id,                   @
+      /* callback       */  "cb_BuckSelectFile",            @
+      /* x position     */  BUTTON_HALF_X_LOC1,          @
+      /* y position     */  FRAME_Y_LOC,                       @
+      /* width          */  BUTTON_WID_FULL,             @
+      /* auto size      */  0,                           @
+      /* label          */  "Select File",       @
+      /* label inside   */  TRUE,                        @
+      /* default        */  FALSE )
+           
+      FRAME_Y_LOC += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+      
+      dbox_Assessment =ui_databox_create(                   @
+            /*    parent    */          frame_id,          @
+            /*   callback   */          "cb_BuckData",                @
+            /*       x      */          BUTTON_HALF_X_LOC1 ,     @
+            /*       y      */          FRAME_Y_LOC,     @
+            /* label_length */          0 , @
+            /*  box_length  */          BUTTON_WID_FULL,   @
+            /*     label    */          "",  @
+            /*     value    */          "",                @
+            /*  label_above */          FALSE,              @
+            /*   datatype   */          "STRING",          @
+            /*   num_vals   */          1)
+
+      FRAME_Y_LOC += DBOX_HGT_NO_LABOVE  + @
+                            INTER_WIDGET_SPACE
+                                        
+      btn_Assessment = ui_button_create(               @
+      /* parent         */  frame_id,                   @
+      /* callback       */  "cb_Assessment",            @
+      /* x position     */  BUTTON_HALF_X_LOC1,          @
+      /* y position     */  FRAME_Y_LOC,                       @
+      /* width          */  BUTTON_WID_FULL,             @
+      /* auto size      */  0,                           @
+      /* label          */  "BUCKLING ASSESSMENT",       @
+      /* label inside   */  TRUE,                        @
+      /* default        */  FALSE )
+        
+        FRAME_Y_LOC += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+     
+     widget btn_DeleteAll
+	 btn_DeleteAll      = ui_button_create(               @
+      /* parent         */  frame_id,                   @
+      /* callback       */  "cb_DeleteAll",            @
+      /* x position     */  BUTTON_HALF_X_LOC1,          @
+      /* y position     */  FRAME_Y_LOC,                       @
+      /* width          */  BUTTON_WID_FULL,             @
+      /* auto size      */  0,                           @
+      /* label          */  "Delete All",       @
+      /* label inside   */  TRUE,                        @
+      /* default        */  FALSE )
+        
+        FRAME_Y_LOC += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+
+        UI_WID_SET(frame_id, "HEIGHT", FRAME_Y_LOC)
+        
+        Y_LOC += FRAME_Y_LOC + INTER_WIDGET_SPACE
+        
+        RETURN frame_id
+
+END FUNCTION
+
+FUNCTION UI_SFRAME_SELECT_BOX(parent, call_back, FRAME_Y_LOC, sdbox_entity, s_label, s_datatype)
+WIDGET parent, sdbox_entity
+REAL FRAME_Y_LOC
+STRING s_datatype[], s_label[], call_back[]
+WIDGET sframe_id
+
+    sframe_id = ui_selectframe_create(                            @
+                                            parent,                   @
+                                            "",                        @
+	             					        SFRAME_X_LOC_COL1,         @
+							                FRAME_Y_LOC,                     @
+							                SFRAME_WID_SINGLE,         @
+							                SFRAME_1SDB_HGT_LABOVE, @
+							                "",            @
+							                FALSE)
+				
+	sdbox_entity = ui_selectdatabox_create(sframe_id, @
+                                             call_back, @
+			                              SFRAME_L_MARGIN, @
+	             				          SFRAME_T_MARGIN, @
+						                  0.0, @
+	             				          SDBOX_WID_SINGLE, @
+						                  s_label,@
+						                  "",@
+                                          TRUE, @
+						                  s_datatype,@
+                                          "" )
+
+    FRAME_Y_LOC += SFRAME_1SDB_HGT_LABOVE + INTER_WIDGET_SPACE
+    
+    return sframe_id
+END FUNCTION
+
+FUNCTION UI_FRAME_MODIFY_PANEL(FRAME_Y_LOC)
+REAL FRAME_Y_LOC
+WIDGET frame_id
+WIDGET sep_00    
+    
+    sframe_surface = CLASSNAME.UI_SFRAME_SELECT_BOX(form_id, "cb_PanelInfo", FRAME_Y_LOC, sdbox_panel, "Select Panel", "SURFACE")
+
+    frame_id = ui_frame_create(                       @
+                    /* Parent     */  form_id,         @
+                    /* callback   */  "",                   @
+                    /*   x        */  FORM_L_MARGIN,  @
+                    /*   y        */  FRAME_Y_LOC,        @
+                    /* width      */  FORM_WID_SML,           @
+                    /* height     */  0,          @
+                    /* title      */  "Panel Information :")    
+ 
+      real Y_LOC = 0.
+      integer idx
+      string callbacks[7](8) = ["", "", "", "", "", "", "", ""]
+      string labels[15](8) = ["ID", "h", "Yield", "Thickness", "Span(l)", "Space(s)", "C1", "C2"] 
+
+      Y_LOC +=  INTER_WIDGET_SPACE
+     opt_Modify = ui_optionmenu_create(frame_id,"",  @
+					          AOM_MENU_X_LOC,		@
+						     Y_LOC,    	@
+						     AOM_MENU_LABEL_LEN,	       @
+					          "Modify Item :",			@
+						     FALSE)
+
+    		for(idx=1 to 8)
+              ui_item_create(opt_Modify,labels(idx),labels(idx), TRUE)
+          end for
+    		      
+      Y_LOC += OPT_MENU_HGT_NO_LABOVE @
+               + INTER_WIDGET_SPACE
+      LABEL_HGT
+      for(idx = 1 to 8)
+
+           dbox_PanelInfo(idx) =ui_databox_create(                   @
+            /*    parent    */          frame_id,          @
+            /*   callback   */          callbacks(idx),                @
+            /*       x      */          FORM_L_MARGIN ,     @
+            /*       y      */          Y_LOC,     @
+            /* label_length */          DBOX_WID_SINGLE/2 , @
+            /*  box_length  */          DBOX_WID_SINGLE/2,   @
+            /*     label    */          labels(idx),  @
+            /*     value    */          "",                @
+            /*  label_above */          FALSE,              @
+            /*   datatype   */          "STRING",          @
+            /*   num_vals   */          1)
+
+      Y_LOC += DBOX_HGT_NO_LABOVE  + @
+                            INTER_WIDGET_SPACE
+
+      end for    
+
+      sframe_elems_ass_pnl = CLASSNAME.UI_SFRAME_SELECT_BOX(frame_id, "",Y_LOC,sdbox_elems, "Elements Ass. Panel", "ELEM2D")
+
+      btn_Modify = ui_button_create(               @
+      /* parent         */  frame_id,                   @
+      /* callback       */  "cb_Modify",            @
+      /* x position     */  BUTTON_HALF_X_LOC1,          @
+      /* y position     */  Y_LOC,                       @
+      /* width          */  BUTTON_WID_FULL,             @
+      /* auto size      */  0,                           @
+      /* label          */  "Modify",       @
+      /* label inside   */  TRUE,                        @
+      /* default        */  FALSE )
+
+      Y_LOC += DBOX_HGT_NO_LABOVE  + @
+                            INTER_WIDGET_SPACE
+    
+      UI_WID_SET(frame_id, "HEIGHT", Y_LOC)
+      
+      FRAME_Y_LOC += Y_LOC 
+      
+RETURN frame_id
+
+END FUNCTION
+
+FUNCTION display()
+
+    ui_form_display(CLASS_STR)
+    CLASSNAME.cb_Action("MATERIAL")
+    
+END FUNCTION
+
+FUNCTION cb_SelectFile()
+    ui_FileSelectBox.init()
+    ui_FileSelectBox.display(dbox_ImportFile, "*.BUK")
+END FUNCTION
+
+FUNCTION cb_BuckSelectFile()
+    ui_FileSelectBox.init()
+    ui_FileSelectBox.display(dbox_Assessment, "*.BUK")
+END FUNCTION
+
+FUNCTION cb_Exit()
+
+    ui_form_hide(CLASS_STR)
+    
+END FUNCTION
+
+function cb_Save()
+
+$     integer nCase
+
+     ui_wid_get(listbox_rescase, "NSELECTED", nCase)
+     
+     string vRcList[63](virtual)
+     sys_allocate_array(vRcList, 1, nCase)
+
+     ui_wid_get(listbox_rescase, "VALUE", vRcList)
+
+     INTEGER  loadcase_ids(VIRTUAL), subcase_ids(VIRTUAL)
+     sys_allocate_array(loadcase_ids, 1, nCase)
+     sys_allocate_array(subcase_ids, 1, nCase)
+
+     integer idx
+     string load_case[63], sub_case[63]
+     
+     for(idx = 1 to nCase)
+          load_case = str_token(vRcList(idx), ",", 1)
+          db_get_load_case_id(load_case, loadcase_ids(idx))
+
+          sub_case = str_token(vRcList(idx), ",", 2)          
+          db_get_sub_case_id(sub_case, subcase_ids(idx))
+     end for
+
+     
+     CLASSNAME.save()
+     
+     $ extractStress.doit(loadcase_ids, sa_Elems, elem_count, elem_ids, stress)
+
+
+$	integer group_id
+$	db_get_current_group_id(group_id)
+
+$	string fname[64]
+$	db_get_group_name(group_id, fname)
+$	fname = fname // ".buk"
+	
+$	integer fid	
+$	text_open(fname,"nowv",0,0,fid)
+
+$ ===========================================================================
+$	integer npnl
+$	real r_tmp
+$	text_write(fid, "%I%", npnl, r_tmp ,"")
+    
+$	integer max_id
+$	max_id = sys_array_hbound(pnl_id, 1)
+
+$	real r_tmp
+$	text_write(fid, "%I%", max_id, r_tmp ,"")
+
+$	integer idx, cnt, i_tmp
+$	real r_Panel(9)
+$	for (idx=1 to max_id)
+$		text_write(fid, "%I%", pnl_id(idx), r_tmp, "")
+$		text_write(fid, "%A%", i_tmp, r_tmp, sa_Elems(pnl_id(idx)))
+$		for(cnt=1 to 4)
+$			text_write(fid, "%3F15.3%", i_tmp, ra_vtx(pnl_id(idx),cnt,1:3), "")
+$		end for
+$		r_Panel(1) = ra_ReH(pnl_id(idx))
+$		r_Panel(2) = ra_thk(pnl_id(idx))
+$		r_Panel(3:9) = ra_PanelInfo(pnl_id(idx),1:7) 	        
+$		text_write(fid, "%9F15.3%", i_tmp, r_Panel, "")
+$	end for
+$ ===========================================================================         
+$	text_close(fid, "")
+end function
+
+
+	
+$	integer idx
+$	integer i, j
+	
+$	string BK2FILE[63]
+$	string NodeLst[virtual]
+$	integer NodeId(1)
+
+function cb_PanelInfo(cb_value)
+	string cb_value[]
+	
+	if(cb_value == "VALUE_CHANGED") then
+          string selected_element[virtual]
+		ui_wid_get_vstring(sdbox_Panel, "value", selected_element)
+		
+          integer status, count
+		count = fem_u_count_id_list( LP_SUBLIST_SURFACE, selected_element, FALSE, status)
+
+		integer pid(virtual)
+          sys_allocate_array(pid, 1, count)
+		fem_u_get_id_list(LP_SUBLIST_SURFACE, selected_element, count, TRUE, pid)
+$		dump "pnl_id ", pid(1)
+
+		ui_wid_set(dbox_PanelInfo(1) ,"VALUE",str_from_integer(pid(1)))
+          ui_wid_set(dbox_PanelInfo(2) ,"VALUE",str_from_real(ra_h(pid(1))))
+          ui_wid_set(dbox_PanelInfo(3) ,"VALUE",str_from_real(ra_ReH(pid(1))))
+          ui_wid_set(dbox_PanelInfo(4) ,"VALUE",str_from_real(ra_thk(pid(1))))
+          ui_wid_set(dbox_PanelInfo(5) ,"VALUE",str_from_real(ra_l(pid(1))))
+          ui_wid_set(dbox_PanelInfo(6) ,"VALUE",str_from_real(ra_s(pid(1))))
+          ui_wid_set(dbox_PanelInfo(7) ,"VALUE",str_from_real(ra_C1(pid(1))))
+		ui_wid_set(dbox_PanelInfo(8) ,"VALUE",str_from_real(ra_C2(pid(1))))
+          ui_wid_set(sdbox_elems ,"VALUE", sa_Elems(pid(1)))
+		
+	end if
+	
+end function
+
+function save()
+     
+/* Read Result Case Data */
+ui_wid_get(listbox_rescase, "NSELECTED", nCase)
+
+string vRcList[63](virtual)
+sys_allocate_array(vRcList, 1, nCase)
+
+ui_wid_get(listbox_rescase, "VALUE", vRcList)
+integer idx, pid, i
+
+string dbName[63], fname[63]
+db_name_get(dbName)
+file_get_bfname(dbName, fname)
+fname = fname // ".buk"
+integer fid
+text_open(fname,"nowv",0,0,fid)
+/* Line 1 The number of Panels*/
+text_write_string(fid, str_from_integer(npnl))
+/* Line 2 The number of Result Cases*/
+text_write_string(fid, str_from_integer(nCase))
+/* Line 3 ~ N Result Cases List*/
+string LoadCase_Name[63], SubCase_Name[63]
+integer sc_id
+real r_tmp
+sys_allocate_array(lc_ids, 1, nCase)
+for(idx=1 to nCase)
+     LoadCase_Name = str_token(vRcList(idx),",",1)
+     SubCase_Name = str_token(vRcList(idx),",",2)
+     db_get_load_case_id(LoadCase_Name, lc_ids(idx))
+     db_get_sub_case_id(lc_ids(idx), subCase_Name, sc_id)
+     $ i_tmp(1) = lc_id
+     $ i_tmp(2) = sc_id
+     text_write(fid, "%I%,%A%", lc_ids(idx), r_tmp,vRcList(idx))
+end for
+$string panel_name[64], 
+
+sys_allocate_array(ra_sx, 1, npnl, 1, nCase)
+sys_allocate_array(ra_sy, 1, npnl, 1, nCase)
+sys_allocate_array(ra_txy, 1, npnl, 1, nCase)
+
+integer i_tmp(2)
+real r_panelInfo(9), stress1(3)
+string CoordOpt[32] = "ResCoord 0.1"
+
+for(idx=1 to npnl)
+     pid = pnl_id(idx)
+     text_write_string(fid, str_from_integer(pid))
+     for(i=1 to 4)
+          /* Line 2~5 Panel Vortex Coordinate for Rectangular Buckling Panel */
+          text_write(fid, "%3F15.3%", i_tmp, ra_vtx(pid, i,1:3) ,"")
+     end for
+
+     r_panelInfo(1) = ra_h(pid)
+     r_panelInfo(2) = ra_E(pid)  
+     r_panelInfo(3) = ra_PoR(pid)
+     r_panelInfo(4) = ra_ReH(pid)
+     r_panelInfo(5) = ra_thk(pid)
+     r_panelInfo(6) = ra_l(pid)
+     r_panelInfo(7) = ra_s(pid)
+     r_panelInfo(8) = ra_c1(pid)
+     r_panelInfo(9) = ra_c2(pid)     
+
+     text_write(fid, "%I15%%9F15.3%", pid, r_panelInfo, "")
+
+
+     for(i=1 to nCase)
+          $ panel_name = str_from_integer(pid) // "_" // str_from_integer(lc_ids(i))
+          
+          i_tmp(1) = pid
+          i_tmp(2) = lc_ids(i)
+
+          ra_sx(idx,i) = xfem_get_panel_stress(vRcList(i), sa_Elems(pid),CoordOpt, "XX")
+          ra_sy(idx,i) = xfem_get_panel_stress(vRcList(i), sa_Elems(pid),CoordOpt, "YY")
+          ra_txy(idx,i) = xfem_get_panel_stress(vRcList(i), sa_Elems(pid),CoordOpt,"XY")
+
+          stress1(1) = ra_sx(idx,i)
+          stress1(2) = ra_sy(idx,i)
+          stress1(3) = ra_txy(idx,i)
+	     text_write(fid, "%I%_%I%%3F15.3%", i_tmp, stress1,"")          
+     end for
+end for
+text_close(fid, "")
+return 0
+
+
+$     string vRcList[63](virtual)
+$     sys_allocate_array(vRcList, 1, nCase)
+
+
+
+$     string dbNmame[63]
+$     integer idx
+
+
+
+/*
+
+	integer gid
+	db_get_current_group_id(gid)
+
+	string fname[64]
+	db_get_group_name(gid, fname)
+
+	integer fid
+	fname = fname // ".buk"
+	text_open(fname,"nowv",0,0,fid)
+
+     text_write_string(fid, str_from_integer(npnl))
+     
+$ db_name_get(dbName)
+ $    integer i, i_tmp, pid
+     real r_panelInfo(9), stress1(3)
+     string panel_name[64], CoordOpt[32]
+     string ResDev[5](3) = [ "XX", "YY", "XY"]
+
+     sys_allocate_array(ra_sx, 1, npnl, 1, nCase)
+     sys_allocate_array(ra_sy, 1, npnl, 1, nCase)
+     sys_allocate_array(ra_txy, 1, npnl, 1, nCase)
+
+     for(idx=1 to npnl)
+          pid = pnl_id(idx)
+          text_write_string(fid, str_from_integer(pid))
+               for(i=1 to 4)
+                    text_write(fid, "%3F15.3%", i_tmp, ra_vtx(pid, i,1:3) ,"")
+               end for
+
+          r_panelInfo(1) = ra_h(pid)
+          r_panelInfo(2) = ra_E(pid)  
+          r_panelInfo(3) = ra_PoR(pid)
+          r_panelInfo(4) = ra_ReH(pid)
+          r_panelInfo(5) = ra_thk(pid)
+          r_panelInfo(6) = ra_l(pid)
+          r_panelInfo(7) = ra_s(pid)
+          r_panelInfo(8) = ra_c1(pid)
+          r_panelInfo(9) = ra_c2(pid)
+          
+          $ Load Condition - Operating:0.6, Environmetal:0.8, Ship:1.0
+          $ panel_name = str_from_integer(pnl_id(idx))
+          text_write(fid, "%10F15.3%", i_tmp, r_panelInfo, "")
+          CoordOpt = "ResCoord 0.1"
+          ra_sx(idx,1:nCase) = xfem_get_element_mean_stress(nCase, vRcList, CoordOpt, ResDev(1), sa_Elems(pid))
+          ra_sy(idx,1:nCase) = xfem_get_element_mean_stress(nCase, vRcList, CoordOpt, ResDev(2), sa_Elems(pid))
+          ra_txy(idx,1:nCase) = xfem_get_element_mean_stress(nCase, vRcList, CoordOpt, ResDev(3), sa_Elems(pid))
+
+          $ xfem_get_stress(nCase, ResID, sa_Elems(pid))
+          dump pid
+          dump vRcList
+
+          for(i=1 to nCase)
+               panel_name = str_from_integer(pid) // "_" // str_from_integer(lc_ids(i))
+
+               stress1(1) = ra_sx(idx,i)
+               stress1(2) = ra_sy(idx,i)
+               stress1(3) = ra_txy(idx,i)
+	          text_write(fid, "%A15%%3F15.3%", i_tmp, stress1, panel_name)
+
+          end for
+
+     end for
+
+     text_close(fid, "")     */
+$     dump "*** Complete save of  buckling panel information ***"
+end function
+
+function cb_Assessment()
+     integer idx, i, i_tmp
+     
+     string dbName[32], fname[63]
+     
+     db_name_get(dbName)
+     
+     file_get_bfname(dbName, fname)
+     
+     string RULES[virtual]
+     ui_wid_get_vstring(opt_RULES, "VALUE", RULES)
+     
+     dump RULES
+
+     SWITCH(RULES)
+          CASE("ABSBLS");
+               CLASSNAME.ABS_BLS(fname)
+          CASE("ABSULS");
+               CLASSNAME.ABS_ULS(fname)
+          CASE("ABDLRFD")
+               CLASSNAME.ABS_LRFD(fname)
+     
+     END SWITCH
+
+     CLASSNAME.read_result()
+
+end function
+
+FUNCTION ABS_BLS(fname)
+string fname[]
+integer idx, i_tmp
+real r_tmp
+
+fname = fname // ".bls"
+
+integer fid
+text_open(fname,"now", 0, 0, fid )
+
+integer i, pid
+real ksx, ksy, kst, sex, sey, te, scx, scy, tc, t0, value(10)
+
+sys_allocate_array(uc, 1, npnl)
+for(idx = 1 to npnl)
+     pid = pnl_id(idx)
+     ksx = BucklingABS.ksx(ra_C1(pid), 1.0)
+     ksy = BucklingABS.ksy(ra_l(pid), ra_s(pid), ra_C2(pid), 1.0)
+     kst = BucklingABS.kst(ra_l(pid), ra_s(pid), ra_C1(pid))
+     sex = BucklingABS.Elastic_Buckling_Stress(ra_E(pid), ra_PoR(pid), ksx, ra_thk(pid), ra_s(pid))
+     sey = BucklingABS.Elastic_Buckling_Stress(ra_E(pid), ra_PoR(pid), ksy, ra_thk(pid), ra_s(pid))
+     te = BucklingABS.Elastic_Buckling_Stress(ra_E(pid), ra_PoR(pid), kst, ra_thk(pid), ra_s(pid))
+     scx = BucklingABS.Critical_Buckling_Stress(ra_ReH(pid), PR, sex)
+     scy = BucklingABS.Critical_Buckling_Stress(ra_ReH(pid), PR, sey)
+     t0 = ra_ReH(pid)/mth_sqrt(3)
+     tc = BucklingABS.Critical_Buckling_Stress(t0, PR, te)
+     dump ksx, tc
+$     xfem_get_value_mat_ass_elem(nmat, sa_mat_name, ia_ElemID)
+     for(i=1 to nCase)
+          value(1) = ra_h(pid)
+          value(2) = ra_E(pid)
+          value(3) = ra_PoR(pid)
+          value(4) = ra_ReH(pid)
+          value(5) = ra_thk(pid)
+          value(6) = ra_l(pid)
+          value(7) = ra_s(pid)
+          value(8) = ra_c1(pid)
+          value(9) = ra_c2(pid)
+
+          text_write(fid, "%I15%%9F15.3%", pid, value, "")
+          value(1) = ksx; value(2) = ksy; value(3) = kst;
+          value(4) = sex; value(5) = sey; value(6) = te;
+          value(7) = scx; value(8) = scy; value(9) = tc;
+          uc(pid) = (ra_sx(pid, i)/(ra_h(pid)*scx))**2 + @
+                         (ra_sy(pid, i)/(ra_h(pid)*scy))**2 + @ 
+                              (ra_txy(pid, i)/(ra_h(pid)*tc))**2               
+               
+          dump (ra_sx(pid, i)/(ra_h(pid)*scx))**2
+          dump (ra_sy(pid, i)/(ra_h(pid)*scy))**2
+          dump (ra_txy(pid, i)/(ra_h(pid)*tc))**2
+
+          value(10) = uc(pid)
+
+          dump ksx, ksy, kst
+          text_write(fid, "%A15%%10F15.3%", i_tmp, value, "")
+     end for
+end for
+
+text_close(fid,"")
+
+END FUNCTION 
+
+FUNCTION ABS_ULS(fname)
+string fname[]
+integer idx, i_tmp
+real r_tmp
+
+fname = fname // ".uls"
+
+integer fid
+text_open(fname,"now", 0, 0, fid )
+
+integer i, pid
+real ksx, ksy, kst, sex, sey, te, scx, scy, tc, t0, value(9)
+real alpha, beta, psi, Cx, Cy, sux, suy, tu
+
+sys_allocate_array(uc, 1, npnl)
+
+for(idx = 1 to npnl)
+     pid = pnl_id(idx)
+$ aspect ratio
+     alpha = ra_l(pid)/ra_s(pid)
+$ slenderness ratio
+     beta = ra_s(pid)/ra_thk(pid)*mth_sqrt(ra_ReH(pid)/ra_E(pid))
+     psi = 1.0 - 0.5*beta
+          ksx = BucklingABS.ksx(ra_C1(pid), 1.0)
+          ksy = BucklingABS.ksy(ra_l(pid), ra_s(pid), ra_C2(pid), 1.0)
+          kst = BucklingABS.kst(ra_l(pid), ra_s(pid), ra_C1(pid))
+          sex = BucklingABS.Elastic_Buckling_Stress(ra_E(pid), ra_PoR(pid), ksx, ra_thk(pid), ra_s(pid))
+          sey = BucklingABS.Elastic_Buckling_Stress(ra_E(pid), ra_PoR(pid), ksy, ra_thk(pid), ra_s(pid))
+          te = BucklingABS.Elastic_Buckling_Stress(ra_E(pid), ra_PoR(pid), kst, ra_thk(pid), ra_s(pid))
+          scx = BucklingABS.Critical_Buckling_Stress(ra_ReH(pid), 0.6, sex)
+          if(beta>1) then 
+               Cx = 2/beta - 1 /beta**2 
+          else 
+               Cx=1.0
+          end if
+          dump Cx
+          sux = mth_max(Cx*ra_ReH(pid), scx)
+          dump sux
+          scy = BucklingABS.Critical_Buckling_Stress(ra_ReH(pid), 0.6, sey)
+          Cy = mth_min(Cx*ra_s(pid)/ra_l(pid)+0.1*(1-ra_s(pid)/ra_l(pid))*(1+1/beta**2)**2, 1.0)
+          dump Cy
+          suy = mth_max(Cy*ra_ReH(pid), scy)
+          dump sux
+          t0 = ra_ReH(pid)/mth_sqrt(3)
+          tc = BucklingABS.Critical_Buckling_Stress(t0, 0.6, te)
+          tu = tc+0.5*(ra_ReH(pid)-mth_sqrt(3)*tc)/ mth_sqrt(1+alpha + alpha**2)
+          dump tu
+          for(i=1 to nCase)
+               value(1) = ra_h(pid)
+               value(2) = ra_E(pid) 
+               value(3) = ra_PoR(pid)     
+               value(4) = ra_ReH(pid)
+               value(5) = ra_thk(pid)
+               value(6) = ra_l(pid)
+               value(7) = ra_s(pid)
+               value(8) = ra_c1(pid)
+               value(9) = ra_c2(pid)
+               text_write(fid, "%I15%%9F15.3%", pid, value, "")
+               
+               value(1) = ksx; value(2) = ksy; value(3) = kst;
+               value(4) = sex; value(5) = sey; value(6) = te;
+               value(7) = scx; value(8) = scy; value(9) = tc;
+               text_write(fid, "%A15%%9F15.3%", i_tmp, value, "")
+               
+               value(1) = alpha; value(2) = beta; value(3) = psi;
+               value(4) = Cx; value(5) = Cy; 
+               value(6) = sux; value(7) = suy; value(8) = tu;
+
+               uc(pid) = (ra_sx(pid, i)/(ra_h(pid)*sux))**2 @
+                         - psi * (ra_sx(pid, i)/(ra_h(pid)*sux)) * (ra_sy(pid, i)/(ra_h(pid)*suy)) @
+                              + (ra_sy(pid, i)/(ra_h(pid)*suy))**2 @ 
+                                   + (ra_txy(pid, i)/(ra_h(pid)*tu))**2               
+               
+               dump (ra_sx(pid, i)/(ra_h(pid)*sux))**2
+               dump psi * (ra_sx(pid, i)/(ra_h(pid)*sux)) * (ra_sy(pid, i)/(ra_h(pid)*suy))
+               dump (ra_sy(pid, i)/(ra_h(pid)*suy))**2
+               dump (ra_txy(pid, i)/(ra_h(pid)*tu))**2
+
+               value(9) = uc(pid)
+
+               dump ksx, ksy, kst
+               dump uc
+               text_write(fid, "%A15%%9F15.3%", i_tmp, value, "")
+
+               
+          end for
+     end for
+
+     text_close(fid,"")
+
+END FUNCTION 
+
+function read_result()
+integer idx, i, cnt
+integer lc_id, sc_id, pri_id, sec_id, lay_id, res_id(5)
+integer data_type
+
+STRING RULES[VIRTUAL]
+
+ui_wid_get_vstring(opt_RULES, "VALUE", RULES)
+
+     integer pid, i_status, e_id(virtual), j
+     string location[2], primary_title[32], secondary_title[32]
+     integer nresult(virtual), i_return_value
+     real result(virtual)
+     location = "C"
+
+     for(idx=1 to nCase)
+          res_id(1) = lc_ids(i)
+          db_create_sub_case(lc_ids(i), RULES, sc_id, res_id(2))
+     end for
+
+     for(idx=1 to npnl)
+          pid = pnl_id(idx)
+          for(i = 1 to nCase)
+     
+               
+               res_id(3) = 0
+               res_id(4) = 0
+               res_id(5) = 0
+
+               primary_title = "ABS BLS"
+               secondary_title = "Buckling"
+/*               
+               data_type = 1
+
+               cnt = fem_u_count_id_list(LP_SUBLIST_ELEMENT, sa_Elems(idx), TRUE, i_status)
+               
+               sys_allocate_array(e_id, 1, cnt)
+               sys_allocate_array(nresult, 1, cnt)
+               sys_allocate_array(result, 1, cnt)
+
+               fem_u_get_id_list(LP_SUBLIST_ELEMENT, sa_Elems(idx), cnt, TRUE, e_id)
+
+               sys_allocate_array(nresult, 1, cnt)
+               sys_allocate_array(result, 1, cnt)
+
+               for(j=1 to cnt)
+                    nresult(j) = 1
+                    result(j) = uc(pid)
+               end for
+
+               i_return_value = res_utl_create_elem_result( res_id, @
+               primary_title, @
+               secondary_title, @
+               cnt, @
+               e_id, @
+               "coord 0", @
+               data_type, @
+               location, @
+               nresult, @
+               result )
+               DUMP res_id
+          */
+          end for
+     end for   
+
+
+end function
+
+END CLASS
+

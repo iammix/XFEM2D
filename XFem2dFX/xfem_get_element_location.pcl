@@ -1,0 +1,78 @@
+FUNCTION get_element_location()
+
+integer group_id
+  db_get_current_group_id (group_id)
+
+integer nElem
+db_count_elems_in_group ( group_id, nElem)
+
+integer ia_ElemId(virtual)
+sys_allocate_array(ia_ElemId, 1, nElem)
+
+db_get_elem_ids_in_group ( nElem, group_id, ia_ElemId )
+
+string s_ElemIds[virtual]
+app_int_array_to_vstring("Element", nElem, ia_ElemId, s_ElemIds)
+
+real ra_ElemLoc(virtual)
+fem_geom_elem_location(s_ElemIds, ra_ElemLoc, nElem)
+
+	string fname[32]
+	integer fid
+
+	fname = "elem_node_info.out"
+	
+	text_open(fname,"nowv",0,0,fid)
+
+  integer idx
+  string s_dat[5]
+  
+  for(idx=1 to nElem)
+    text_write(fid,"%I10% %3F15.3%", ia_ElemId(idx), ra_ElemLoc(idx, 1:3), s_dat)
+  end for
+
+
+  text_close(fid, "")
+
+END FUNCTION
+
+FUNCTION get_node_info()
+
+integer group_id
+  db_get_current_group_id (group_id)
+
+integer ncount
+    db_count_nodes_in_group(group_id, ncount)
+
+integer ia_NodeId(virtual)
+sys_allocate_array(ia_NodeId, 1, ncount)
+
+db_get_all_node_ids_in_group(ncount, group_id, ia_NodeId)
+
+real ra_NodeXYZ(virtual)
+integer ia_ref(virtual)
+integer ia_anl(virtual)
+
+sys_allocate_array(ia_ref,1,ncount)
+sys_allocate_array(ia_anl,1,ncount)
+sys_allocate_array(ra_NodeXYZ, 1, ncount, 1, 3)
+
+db_get_nodes(ncount, ia_NodeId, ia_ref, ia_anl, ra_NodeXYZ)
+
+	string fname[32]
+	integer fid
+
+	fname = "node_info.out"
+	
+	text_open(fname,"nowv",0,0,fid)
+
+  integer idx
+  
+  for(idx=1 to ncount)
+    text_write(fid,"%I10% %3F15.3%", ia_NodeId(idx), ra_NodeXYZ(idx, 1:3), "")
+  end for
+
+
+  text_close(fid, "")
+
+END FUNCTION

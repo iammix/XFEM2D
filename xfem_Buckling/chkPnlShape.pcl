@@ -1,0 +1,274 @@
+/*******************************************************************************
+ *
+ *   function chkPnlShape( )
+ *
+ *   Purpose :
+ *             return ra_PanelInfo value
+ *   Input   :
+ *             string  array    elmList[]()
+ *             integer array    LoopNodes()
+ *             real             r_chkAngle - angle tolerance about 2.87 degree	 
+ *
+ *   Output  :
+ *             real array   ra_PanelInfo()
+ *                           ra_PanelInfo(1): span  -a
+ *                           ra_PanelInfo(2): space -b
+ *                           ra_PanelInfo(3): angle
+ *                           ra_PanelInfo(4): projected Coordinate (1 or 2)
+ *
+ *   Side Effects :
+ *        <none>
+ *******************************************************************************/
+#include "XFEM2D.h"
+function chkPnlShape(i_CntPanel, elmList, LoopNodes, r_chkAngle, ra_PanelInfo, EdgeCrd)
+
+   integer  i_CntPanel
+   integer  LoopNodes()
+   string   elmList[]	
+   real     r_chkAngle,ra_PanelInfo(), EdgeCrd()
+   	
+   integer  i,j,k, CntFreeEdge, chkPoly,EdgeNid(VIRTUAL)
+   real     Values(3,3), Vector(2,3), xyz(3), ANGLE 
+   real     elmArea
+   
+   real     r_span(VIRTUAL), r_space
+   real     ra_normVect(3) , ra_spanVect(3), ra_spaceVect(3), r_mag
+   real     ra_prjCrd(3),  ra_cornerAngle(VIRTUAL)
+   
+   integer  ia_chkVect(3), ia_cornerID(VIRTUAL) ,status
+   logical l_dummy
+   
+   CntFreeEdge = sys_array_hbound(LoopNodes,1)-1
+   chkPoly =0
+   
+   if( CntFreeEdge <3 ) then 
+        DUMP "NOT Shell elements!"	
+   	return 0
+   end if
+   
+$DUMP    LoopNodes
+   
+   for( i=1 TO CntFreeEdge )
+      for( j=1 TO 3 )
+         if( (i==CntFreeEdge) && j==3 ) then 
+            db_get_node(LoopNodes(2),xyz)
+         else   
+            db_get_node(LoopNodes(i+j-1),xyz)
+         end if   
+         	
+         for ( k=1 TO 3)              
+           Values(j,k)=xyz(k)
+         end for
+      end for
+      
+      for( j=1 TO 3 )
+         Vector(1,j)= Values(2,j)-Values(1,j)
+         Vector(2,j)= Values(2,j)-Values(3,j)
+      end for   
+      
+       ANGLE = ( UTL_getAngles(Vector(1,1:3), Vector(2,1:3)) )
+    
+$      if ( !((ANGLE <(r_chkAngle)) && (ANGLE >(-r_chkAngle))) ) then  
+         chkPoly =  chkPoly+ 1
+         sys_reallocate_array(EdgeNid,1,chkPoly)
+         sys_reallocate_array(ra_cornerAngle,1,chkPoly,1,3)
+         
+         EdgeNid(chkPoly)          = LoopNodes(i+1)
+         ra_cornerAngle(chkPoly,1) = ANGLE
+         ra_cornerAngle(chkPoly,2) = LoopNodes(i+1)
+$      end if   
+   end for
+ 
+
+$mth_sort_column(ra_cornerAngle,1,FALSE)
+
+   if ( chkPoly > 4 ) then                                 
+      mth_sort_column(ra_cornerAngle,1,FALSE)              
+      sys_allocate_array(ia_cornerID,1,4)                  
+                                                           
+      for ( i=1 TO 4 )                                     
+         ia_cornerID(i) = ra_cornerAngle(i,2)              
+      end for                                              
+                                                           
+      for( i=1 TO chkPoly )                                
+         ra_cornerAngle(i,3)=0                             
+      end for                                              
+                                                           
+      for ( i=1 TO 4 )                                     
+         k=mth_array_search(EdgeNid,ia_cornerID(i),l_dummy)
+         ra_cornerAngle(i,3)=k                             
+      end for                                              
+                                                           
+      mth_sort_column(ra_cornerAngle,3,FALSE)              
+    
+      chkPoly =4    
+      for ( i=1 TO chkPoly )
+         ra_cornerAngle(i,1) = mth_acosd(ra_cornerAngle(i,1))
+         EdgeNid(i)= ra_cornerAngle(i,2)	
+      end for	   
+      
+      	                                    
+$   DUMP EdgeNid	
+                                
+   else  
+   
+      for ( i=1 TO chkPoly )
+         ra_cornerAngle(i,1)=mth_acosd(ra_cornerAngle(i,1))
+      end for	
+      sys_allocate_array(ia_cornerID,1,chkPoly)                  
+
+      for ( i=1 TO chkPoly )                                     
+         ia_cornerID(i) = ra_cornerAngle(i,2)          
+      end for                                              
+                                                           
+      for( i=1 TO chkPoly )                                
+         ra_cornerAngle(i,3)=0                             
+      end for                                              
+
+      for ( i=1 TO chkPoly )                                     
+         k=mth_array_search(EdgeNid,ia_cornerID(i),l_dummy)
+         ra_cornerAngle(i,3)=k                             
+      end for          
+
+   end if                                                  
+  	  
+$dump chkPoly, ra_cornerAngle     	 
+
+$ set SPAN INFOs. r_sapn ; span is longer than space
+
+$   if ( chkPoly < 5 ) then
+      
+    if ( chkPoly >3 ) then                                                                     
+       mth_sort_column(ra_cornerAngle,1,FALSE)                                                 
+       if ( (ra_cornerAngle(4,1) < 11.5) ) then                   /* 11.5 degree tolerance */            
+         ra_cornerAngle(4,3)=5                                                                 
+         chkPoly=3                                                                             
+         mth_sort_column(ra_cornerAngle,3,FALSE)                                               
+         for( i=1 TO 3)                                                                           
+           EdgeNid(i)= ra_cornerAngle(i,2)                                                              
+         end for                                                                                        
+       end if                                                                                           
+    end if		                                                                           
+
+    sys_allocate_array( EdgeCrd,1,4,1,3)                                                       
+    sys_allocate_array( r_span,1,chkPoly,1,3)                                                  
+                                                                                               
+    for(i=1 TO chkPoly)                                                                        
+       db_get_node(EdgeNid(i),EdgeCrd(i,1:3))                                                  
+    end for                                                                                    
+                                                                                             
+    for( i=1 TO (chkPoly-1) )                                                                  
+       UTL_getNodeDist( EdgeCrd(i,1:3),EdgeCrd(i+1,1:3),r_span(i,1) )                          
+       r_span(i,2) = EdgeNid(i)                                                                
+       r_span(i,3) = EdgeNid(i+1)  /* edge node ID */                                          
+    end for	                                                                                   
+       UTL_getNodeDist( EdgeCrd(chkPoly,1:3),EdgeCrd(1,1:3),r_span(chkPoly,1) )                
+       r_span(chkPoly,2) = EdgeNid(chkPoly)                                                    
+       r_span(i,3) = EdgeNid(1)                                                                
+   
+$   end if
+
+   
+$  find SPAN, SPACE(a,b) 
+   mth_sort_column(r_span,1,FALSE)  /* r_span(1,1) is SPAN */
+   UTL_getElemArea(elmList, elmArea )
+   r_space =  elmArea/r_span(1,1)
+   
+   status = UTL_getNormVect(EdgeNid(1:3), ra_normVect)  /* panel normal */
+   if( status == -1 ) then 
+     ui_write("Panel "//str_from_integer(i_CntPanel)//"Checking Error : "//elmList)
+     gm_hilight_string(elmList,3)
+     return 0	
+   end if
+	
+   
+   db_get_node(r_span(1,2),EdgeCrd(1,1:3))
+   db_get_node(r_span(1,3),EdgeCrd(2,1:3))
+   		
+   for ( i=1 TO 3 )
+      ra_spanVect(i) = EdgeCrd(2,i)-EdgeCrd(1,i) /* span vector */
+      ia_chkVect(i)  = ra_normVect(i)            /* convert panel normal into integer */
+   end for
+
+   
+   if ( (abs(ia_chkVect(1)) ==1) && ia_chkVect(2)==0 && ia_chkVect(3)==0 ) then
+      ra_prjCrd(1) = 0
+      ra_prjCrd(2) = 1
+      ra_prjCrd(3) = 0    /* SECT PART*/
+      ra_PanelInfo(4) =2
+      
+   else if ( (abs(ia_chkVect(2)) ==1) && ia_chkVect(1)==0 && ia_chkVect(3)==0 ) then
+      ra_prjCrd(1) = 1    /* ELEV PART */
+      ra_prjCrd(2) = 0
+      ra_prjCrd(3) = 0  
+      ra_PanelInfo(4) =1 
+   else if ( (abs(ia_chkVect(3)) ==1) && ia_chkVect(1)==0 && ia_chkVect(2)==0 ) then
+      ra_prjCrd(1) = 1    /* DECK PART */
+      ra_prjCrd(2) = 0
+      ra_prjCrd(3) = 0  
+      ra_PanelInfo(4) =1
+   else    
+      ra_prjCrd(1) = 1    /* slanted deck, hopper.top */
+      ra_prjCrd(2) = 0
+      ra_prjCrd(3) = 0  
+      ra_PanelInfo(4) =1
+   end if
+   
+   xfem_vector.cross_product( ra_spanVect, ra_normVect, ra_spaceVect )
+ 
+   
+   r_mag = mth_vec_length( ra_spaceVect )
+   for ( i=1 TO 3 )
+      ra_spaceVect(i) = ra_spaceVect(i) /r_mag *r_space
+      EdgeCrd(3,i)    = EdgeCrd(2,i) + ra_spaceVect(i)
+      EdgeCrd(4,i)    = EdgeCrd(1,i) + ra_spaceVect(i)
+   end for 	
+
+
+$ draw panel
+  	  integer pid
+	  pid = UTL_drawRect(elmList, EdgeCrd)
+
+$$$$$$$ new   ra_PanelInfo(5:7) added $$$$$ 
+   for( i= 1 TO 3 )
+      ra_PanelInfo(i+4) = (EdgeCrd(1,i) + EdgeCrd(2,i) +EdgeCrd(3,i)+EdgeCrd(4,i))/4
+   end for
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$   
+   
+   
+   ra_PanelInfo(1) =   r_span(1,1)
+   ra_PanelInfo(2) =   r_space
+   ra_PanelInfo(3) =   mth_acosd( UTL_getAngles (ra_prjCrd, ra_spanVect) )
+
+    
+$ quick workaround
+   if ( ra_PanelInfo(4) == 3  ) then                            /* deck */
+      if( (ra_spanVect(1)*ra_spanVect(2)) <0 ) then 
+         if (ra_PanelInfo(3) >90 ) then ra_PanelInfo(3)=180-ra_PanelInfo(3)
+         ra_PanelInfo(3)=ra_PanelInfo(3)*-1
+      else
+         if (ra_PanelInfo(3) >90 ) then ra_PanelInfo(3)=180-ra_PanelInfo(3)
+      end if
+      ra_PanelInfo(4) = 1	
+   else if(  ra_PanelInfo(4) == 1 ) then                        /* elev */
+      if( (ra_spanVect(1)*ra_spanVect(3)) <0 ) then 
+        if (ra_PanelInfo(3) >90 ) then ra_PanelInfo(3)=180-ra_PanelInfo(3)
+         ra_PanelInfo(3)=ra_PanelInfo(3)*-1
+      else
+        if (ra_PanelInfo(3) >90 ) then ra_PanelInfo(3)=180-ra_PanelInfo(3)
+      end if
+      	
+   else if(  ra_PanelInfo(4) == 2 ) then                        /* sect */                                                   
+      if( (ra_spanVect(2)*ra_spanVect(3)) <0 ) then 
+        if (ra_PanelInfo(3) >90 ) then ra_PanelInfo(3)=180-ra_PanelInfo(3)
+         ra_PanelInfo(3)=ra_PanelInfo(3)*-1
+      else
+        if (ra_PanelInfo(3) >90 ) then ra_PanelInfo(3)=180-ra_PanelInfo(3)
+      end if	   	
+   end if
+
+                                                                                             
+ $   DUMP ra_normVect  , LoopNodes , r_span, ra_spaceVect
+	return pid
+end function
+ 

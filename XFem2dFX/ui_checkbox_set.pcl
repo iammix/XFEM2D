@@ -1,0 +1,51 @@
+#include "appforms.p"
+#include "lpenums.i"
+
+function ui_checkbox_set(parent, child, callbacks, Y_LOC, labels, cols)
+widget parent, child()
+string callbacks[](), labels[]()
+real Y_LOC
+integer cols
+real w_label
+
+	widget frame_id
+	frame_id = ui_frame_create(parent,"", @
+								 0.0, @
+								 Y_LOC, @
+								 FORM_WID_SML, @
+								 0.0, @
+								 "")
+	integer nchild					
+    	nchild = sys_array_hbound( child, 1 )
+     
+	REAL Y_LOCF, XLOC
+	Y_LOCF += FRAME_T_MARGIN
+
+	integer i
+	real hsp
+	
+	integer idx = 0
+	while(idx <= nchild)
+		XLOC = FORM_L_MARGIN
+		for(i=1 to cols)
+			idx += 1
+			if(idx > nchild) then break
+		   	child(idx) = ui_toggle_create ( frame_id,         @
+	                                        callbacks(idx),      @
+	                                        XLOC,  @
+	                                        Y_LOCF,           @
+	                                        labels(idx))
+			                                   
+			ui_wid_get(child(idx), "WIDTH", hsp)
+			XLOC += hsp + QTR_SPACE
+		end for
+		Y_LOCF += TOGGLE_HGT + TOGGLE_Y_OFFSET
+     end while
+    	
+    	ui_wid_set(frame_id, "HEIGHT", Y_LOCF)
+
+    	Y_LOC += Y_LOCF + INTER_WIDGET_SPACE
+
+return frame_id
+end function
+

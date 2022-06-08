@@ -1,0 +1,129 @@
+ /*$$   ANALYSIS -  Select an Output File Name   */
+ /* 
+  *  Purpose:
+  *     Create the Analysis Select File Form for use by the Analysis
+  *     Import Model and the Analysis Import Results Forms for the
+  *     Miracle analysis code. 
+  *
+  *  Input:
+  *     <none>
+  *
+  *  Output:
+  *     <none>
+  *
+  */
+
+#include "appforms.p"
+#include "uiforms.p"
+
+CLASS ModelChkSelectFile
+
+   CLASSWIDE WIDGET selfile_form, res_frame_id, res_file_id
+ 
+   CLASSWIDE REAL file_height, form_height
+
+   
+
+
+   FUNCTION init()
+
+      REAL file_width
+
+/*
+ *  Define the heights for the file selection form
+ */
+
+      file_height = FILE_7L_HGT
+      form_height = FORM_2H_MARGIN + FRAME_2EDGE + file_height
+
+      file_width = FORM_WID_MED - FORM_2H_MARGIN - FRAME_2EDGE
+
+
+
+      /*
+       *  Create the Selected Analysis File Form
+       */
+
+      selfile_form = ui_form_create(                      @
+                /*callback  */      "",                   @
+                /*    x     */     FORM_X_LOC_LRG_NX2_SML,@
+                /*    y     */     FORM_Y_LOC,            @
+                /* position */     "UL",                  @
+                /*  width   */     FORM_WID_MED,          @
+                /*  height  */     form_height,           @
+                /*  label   */     "Select File",         @
+                /* iconname */     "" )
+
+      /*
+       *  Create the file widget
+       */
+
+      res_frame_id = ui_frame_create(                       @
+                    /* Parent     */  selfile_form,         @
+                    /* callback   */  "",                   @
+                    /*   x        */  FORM_L_MARGIN,        @
+                    /*   y        */  FORM_T_MARGIN,        @
+                    /* width      */  file_width,           @
+                    /* height     */  file_height,          @
+                    /* title      */    "")
+
+      
+      res_file_id = ui_file_create(                         @
+                  /*      parent     */  res_frame_id,      @
+                  /*     callback    */  "select_file",     @
+                  /*        x        */  0.0,               @
+                  /*        y        */  0.0,               @
+                  /*      width      */  file_width,        @
+                  /*     num_rows    */  7,                 @
+                  /*   filter_label  */  "Filter",          @
+                  /*   filter_mask   */  "*.bdf",            @
+                  /*    dirs_label   */  "Directories",     @
+                  /*   files_label   */  "Available Files", @
+                  /* selection_label */  "Selected Results File",@
+                  /*    selection    */  "",                @
+                  /*     ok_label    */  "Apply",           @
+                  /*   filter_label  */  "Filter",          @
+                  /*   cancel_label  */  "Cancel"           )
+
+   END FUNCTION   /* init */
+ 
+   FUNCTION display
+
+      IF( db_is_open() != TRUE ) THEN
+      user_message( "ERROR", 100000, "manager POOH", "DB is not opend. Please check it and try again. from POOH :-)" )
+      RETURN FALSE
+      END IF
+      
+      ui_form_display( "ModelChkSelectFile" ) 
+      ui_wid_save("ModelChkSelectFile")
+
+   END FUNCTION   /* display */
+
+
+   FUNCTION select_file( file_name, mode)
+
+      STRING file_name[], mode[]
+
+      /*
+       *  Need to set the value of classwide variable
+       *  res_file_name so that get_res_file_name() works.
+       */
+
+      
+      IF (mode == "OPEN" ) THEN
+
+         SH_Model_Check.set_NastranFile(file_name)
+         
+      ELSE
+     
+         ui_wid_restore("ModelChkSelectFile")
+
+      END IF
+
+         ui_form_hide("ModelChkSelectFile")
+         ui_form_delete("ModelChkSelectFile")
+         
+    END FUNCTION   /* select_file */
+
+
+END CLASS   /* select_file */

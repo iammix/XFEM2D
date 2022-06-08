@@ -1,0 +1,32 @@
+   FUNCTION ui_loadcases_list(wListBox)
+
+   Widget wListBox
+   string sv_Loadcases_Name[80](virtual)
+
+    db_get_all_load_case_names()
+
+    integer status
+    integer cnt = 0
+
+    sys_allocate_array(sv_Loadcases_Name, 1, 1)
+
+    while( status == 0 )
+
+        cnt += 1
+        sys_reallocate_array(sv_Loadcases_Name, 1, cnt)
+        status = db_get_next_load_case_name(sv_Loadcases_Name(cnt))
+
+        if(status != 0) then
+            cnt -= 1
+        end if
+    end while
+
+    if(cnt == 0) then
+       return -1
+    end if
+
+	ui_listbox_items_delete(wListBox)
+	ui_listbox_items_create(wListBox,sv_Loadcases_Name,sv_Loadcases_Name,cnt,"")
+
+	return sv_Loadcases_Name
+END FUNCTION

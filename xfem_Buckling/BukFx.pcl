@@ -1,0 +1,141 @@
+#include "lpenums.i"
+#define CLASSNAME BukFx
+#define PI 3.14159265358979
+
+$ StartClass BucklingFunction
+CLASS CLASSNAME
+
+	$ Start
+	FUNCTION get_pnl_thk(s_Elems)
+
+	string s_Elems[]
+	
+		integer nElem, status
+		nElem=fem_u_count_id_list( LP_SUBLIST_ELEMENT, 	@
+								 s_Elems, 		@
+								 FALSE, 			@
+								 status)
+									
+		if(nElem==0) then
+			list_error_msg(48000004,2,"")
+			return 48000004
+	   	end if	   
+	
+		integer ia_Elem(virtual)
+		sys_allocate_array(ia_Elem, 1, nElem)
+
+		fem_u_get_id_list( 	LP_SUBLIST_ELEMENT, 	@
+					   	s_Elems, 				@
+					   	nElem, 				@
+					   	TRUE, 				@
+					   	ia_Elem)
+							
+		integer ia_RegID(virtual)
+		sys_allocate_array(ia_RegID, 1, nElem)
+		
+		db_get_region_for_elements(nElem,ia_Elem,ia_RegID)	
+	     
+$		real rv_Area, cnt
+$		fem_geom_face_area (s_Elems,rv_Area, cnt)
+	    
+		integer mat_id, data_type, c_id, n_id, f_id, i_val
+		real ra_vaL(3)
+		string s_val[15]
+ 
+		integer idx
+		real r_Area
+		real sumThkArea = 0
+		real sumArea = 0
+		
+		for(idx = 1 to nElem)
+			db_get_prop_value(                                 @
+			       /* region ID        */  ia_RegID(idx),                  @
+			       /* word of interest */  36,                       @
+			       /* material ID      */  mat_id,              @
+			       /* data type        */  data_type,                @
+			       /* INTEGER value    */  i_val,                @
+			       /* REAL array       */  ra_val,               @
+			       /* char STRING      */  s_val,             @
+			       /* coord ID         */  c_id,              @
+			       /* node ID          */  n_id,               @
+			       /* field ID         */  f_id)
+			
+			lbc_get_shell_area(ia_Elem(idx), r_Area)
+			sumThkArea += ra_val(1)*r_Area
+			sumArea += r_Area 
+		end for
+
+		real mthk
+		mthk = sumThkArea/sumArea
+		
+		return mthk 
+	END FUNCTION
+	$ End
+
+FUNCTION get_pnl_yield(s_Elems)
+string s_Elems[]
+
+	integer nElem, status
+    
+	nElem=fem_u_count_id_list( LP_SUBLIST_ELEMENT, 	@
+							 s_Elems, 		@
+							 FALSE, 			@
+							 status)
+			
+	if(nElem==0) then
+		list_error_msg(48000004,2,"")
+		return 48000004
+	end if	   
+
+	integer ia_Elem(virtual)
+	sys_allocate_array(ia_Elem, 1, nElem)
+
+	fem_u_get_id_list( 	LP_SUBLIST_ELEMENT, 	@
+					s_Elems, 				@
+					nElem, 				@
+					TRUE, 				@
+					ia_Elem)    
+
+    real ReH, sum_ReHArea, r_Area, sum_Area
+    integer i_count
+    
+    sum_ReHArea = 0.
+    sum_Area = 0.
+
+	integer idx
+	string MatName[31]	
+    	for(idx=1 to nElem)
+    
+	        MatName = xfem_get_mat_name_ass_elem(ia_Elem(idx))
+			
+	        if(str_index(MatName, "MILD" ) != 0) then
+	            	ReH = 235.
+		   else if(str_index(MatName, "24" ) != 0) then
+				ReH = 235	            
+	        else if(str_index(MatName, "32" ) != 0) then
+	            	ReH = 315.
+	        else if(str_index(MatName, "36" ) != 0) then
+	            	ReH = 355.
+	        else if(str_index(MatName, "40" ) != 0) then
+	            	ReH = 392.
+	        else
+	            	ReH = 235.
+	        end if
+
+	        lbc_get_shell_area(ia_Elem(idx), r_Area)
+
+	        sum_ReHArea += ReH*r_Area
+  	        
+	        sum_Area += r_Area
+
+    		end for
+
+    		real mReH 
+    
+    		mReH = sum_ReHArea/sum_Area
+
+    		return mReH
+    		
+	END FUNCTION
+	
+END CLASS

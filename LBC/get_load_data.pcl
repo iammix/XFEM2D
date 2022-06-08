@@ -1,0 +1,290 @@
+#include "appforms.p"
+
+CLASS GET_GROUP_LOAD_DATA
+
+/* Classwide Variables */
+   CLASSWIDE WIDGET form_id, listbox_GroupName, btn_apply, btn_cancel, listbox_LoadCases
+
+   FUNCTION init()
+      REAL yloc_main
+
+      form_id=ui_form_create(                  @
+      /* callback */         "",               @
+      /*     x    */         FORM_X_LOC_SML,   @
+      /*     y    */         FORM_Y_LOC,       @
+      /* position */         "UL",             @
+      /*   width  */         FORM_WID_SML,     @
+      /*  height  */         FORM_HGT_TALL,    @
+      /*   label  */         "Image_capture",  @
+      /*  unused  */         "")
+
+      yloc_main = FORM_T_MARGIN
+
+      listbox_LoadCases=ui_listbox_create(                  @
+      /*     parent     */                form_id,          @
+      /*    callback    */                "",               @
+      /*        x       */                FORM_L_MARGIN,    @
+      /*        y       */                yloc_main,        @
+      /*      width     */                LBOX_WID_SINGLE,  @
+      /*    num_rows    */                5,               @
+      /*      label     */                "Result Cases",     @
+      /* selection_type */                "SINGLE",       @
+      /*      sort      */                TRUE)
+
+      yloc_main += LBOX_5L_HGT_LABOVE           + @
+                   INTER_WIDGET_SPACE
+
+      listbox_GroupName=ui_listbox_create(                  @
+      /*     parent     */                form_id,          @
+      /*    callback    */                "",               @
+      /*        x       */                FORM_L_MARGIN,    @
+      /*        y       */                yloc_main,        @
+      /*      width     */                LBOX_WID_SINGLE,  @
+      /*    num_rows    */                20,               @
+      /*      label     */                "Group Name",     @
+      /* selection_type */                "EXTEND",       @
+      /*      sort      */                TRUE)
+
+      yloc_main += LBOX_5L_HGT_LABOVE           + @
+                   (20-5)*LBOX_HGT_LABOVE_INCR  + @
+                   INTER_WIDGET_SPACE
+
+      btn_apply=ui_button_create(                     @
+      /*   parent  */            form_id,             @
+      /*  callback */            "cb_Apply",          @
+      /*     x     */            BUTTON_FULL_X_LOC1,  @
+      /*     y     */            yloc_main,           @
+      /*   width   */            BUTTON_WID_FULL,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Apply",             @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+
+      yloc_main += BUTTON_DEFAULT_HGT  + @
+                   INTER_WIDGET_SPACE
+
+      btn_cancel=ui_button_create(                     @
+      /*   parent  */             form_id,             @
+      /*  callback */             "cb_Cancel",         @
+      /*     x     */             BUTTON_FULL_X_LOC1,  @
+      /*     y     */             yloc_main,           @
+      /*   width   */             BUTTON_WID_FULL,     @
+      /*   height  */             BUTTON_DEFAULT_HGT,  @
+      /*   label   */             "Cancel",            @
+      /*    TRUE   */             TRUE,                @
+      /* highlight */             FALSE)
+
+      yloc_main += BUTTON_DEFAULT_HGT  + @
+                   INTER_WIDGET_SPACE
+
+      ui_wid_set(form_id,"HEIGHT",yloc_main)
+
+   END FUNCTION /* init */
+
+   FUNCTION display()
+
+      ui_form_display("Image_Capture")
+
+      udf_load_result_cases(listbox_LoadCases)
+      udf_load_group_list(listbox_GroupName)
+
+   END FUNCTION /* display */
+
+   FUNCTION cb_Apply()
+    integer ngrp
+	string group_name[125](virtual)
+
+	string LoadCases[125]
+	ui_wid_get(listbox_LoadCases,"value",LoadCases)
+
+	string result_case[125](1), sub_case[125](1)
+	result_case(1) = str_token(LoadCases,",",1)
+	sub_case(1) = str_token(LoadCases,",",2)
+
+	ui_wid_get(listbox_GroupName,"nselected",ngrp)
+
+	sys_allocate_array(group_name, 1, ngrp)
+
+	ui_wid_get(listbox_GroupName,"value",group_name)
+
+	integer idx
+
+	string image_name[125]
+
+	for(idx=1 to ngrp)
+
+        GET_GROUP_LOAD_DATA.get_load_data(LoadCases, group_name(idx))
+
+	end for
+
+	sys_free_array(group_name)
+
+   END FUNCTION
+
+function get_load_data(load_case_name, group_name)
+
+string load_case_name[], group_names[]
+
+integer idx, group_id, nElem, ia_ElemId(virtual)
+string s_ElemIds[virtual]
+
+db_get_group_id(group_names, group_id)
+db_count_elems_in_group ( group_id, nElem)
+
+if(nElem == 0) then return
+
+sys_allocate_array(ia_ElemId, 1,nElem)
+db_get_elem_ids_in_group ( nElem, group_id, ia_ElemId )
+app_int_array_to_vstring("Element", nElem, ia_ElemId, s_ElemIds)
+
+integer nload
+
+db_count_lbc_by_load_case( load_case_name, nload)
+
+integer load_ids(virtual), load_priorities(virtual)
+real load_scale_factors(virtual)
+
+sys_allocate_array(load_ids, 1, nload)
+sys_allocate_array(load_scale_factors, 1, nload)
+sys_allocate_array(load_priorities, 1, nload)
+
+integer lc_type, load_case_id
+real lc_scale_factor, eval_pnt
+string lc_description[128], dynamic_case_name[31]
+
+db_get_load_case2(load_case_name, load_case_id, lc_scale_factor, lc_type,	@
+				  lc_description,nloads, load_ids, load_scale_factors,		@
+				  load_priorities, dynamic_case_name, eval_pnt)
+
+
+integer load_type, app_type, elem_dim, coord_id, dynamic_flag
+string load_name[64]
+
+for(idx = 1 to nload)
+	db_get_lbc(load_ids(idx), load_name, load_type, app_type, elem_dim, coord_id, dynamic_flag)
+
+    switch(load_type)
+        case(8) /* Pressure */
+            GET_GROUP_LOAD_DATA.get_pressure_summary(load_ids(idx), nElem, ia_ElemId)
+        default
+            return -1
+    end switch
+end for
+
+end function
+
+$!! input f:/seaflight/pcl/load/get_pressure_summary.pcl
+$ get_pressure_summary(9,1,[-8800.], [5], [800.])
+
+function get_pressure_summary(load_id, nElem, ia_ElemId)
+integer load_id, nElem, ia_ElemId()
+
+logical confirm
+integer warning_message
+real gtol
+
+	pref_global_get(confirm, warning_message, gtol)
+
+integer fid
+	text_open("pressure_summary.dat", "NOW",0,0,fid)
+
+db_get_all_fem_ss_by_id(load_id)
+
+integer iv_entity_id(virtual)
+real rv_entity_vector(virtual)
+real rv_lbc_vector(virtual)
+real rv_entity_center(virtual)
+real rv_mag(virtual)
+real rv_entity_area(virtual)
+
+sys_allocate_array(iv_entity_id, 1, 1)
+sys_allocate_array(rv_entity_vector, 1, 1, 1, 3)
+sys_allocate_array(rv_lbc_vector, 1, 1, 1, 3)
+sys_allocate_array(rv_entity_center, 1, 1, 1, 3)
+sys_allocate_array(rv_mag, 1, 1)
+sys_allocate_array(rv_entity_area, 1, 1)
+
+integer cnt
+
+cnt = 0
+
+while( status == 0 )
+	cnt += 1
+	sys_reallocate_array(iv_entity_id, 1, cnt)
+	sys_reallocate_array(rv_entity_vector, 1, cnt, 1, 3)
+	sys_reallocate_array(rv_lbc_vector, 1, cnt, 1, 3)
+	sys_reallocate_array(rv_entity_center, 1, cnt, 1, 3)
+	sys_reallocate_array(rv_mag, 1, cnt)
+	sys_reallocate_array(rv_entity_area, 1, cnt)
+
+    integer load_var_id, i_entity_type, sub_entity_id, i_node_position, i_region_type
+    real r_load_value, r_scale_factor
+
+	status = db_get_next_fem_ss_by_id(load_var_id, i_entity_type, iv_entity_id(cnt), sub_entity_id,		@
+									  r_load_value, r_scale_factor, i_node_position, i_region_type)
+
+	if(status != 0) then
+		cnt -= 1
+		continue
+	end if
+
+	lbc_get_shell_normal(iv_entity_id(cnt), rv_lbc_vector(cnt,1:3))
+	lbc_get_shell_centroid(iv_entity_id(cnt), rv_entity_center(cnt,1:3))
+	lbc_get_shell_area(iv_entity_id(cnt), rv_entity_area(cnt))
+
+	r_mag(cnt) = r_load_value*rv_entity_area(cnt)*r_scale_factor
+	rv_enttity_vector(cnt,1) = rv_lbc_vector(cnt,1)*r_mag(cnt)
+	rv_enttity_vector(cnt,2) = rv_lbc_vector(cnt,2)*r_mag(cnt)
+	rv_enttity_vector(cnt,3) = rv_lbc_vector(cnt,3)*r_mag(cnt)
+
+end while
+
+integer nEntity
+
+nEntity = cnt
+
+integer idx, idz
+logical lv_EntChk(virtual)
+
+sys_allocate_array(lv_EntChk, 1, nEntity)
+
+for(idx = 1 to nEntity)
+    for(idz = 1 to nElem)
+        if(iv_Entity_Id(idx) == ia_ElemId(idz)) then
+            lv_EntChk(idx) = TRUE
+        end if
+    end for
+end for
+
+real r_load_pnt = [0. ,0. ,0.]
+real r_load_sum = [0. ,0. ,0.]
+real r_sum_mnt = [0. ,0. ,0.]
+
+for(idx=1 to nEntity)
+    if(lv_EntChk == TRUE) then
+        r_load_sum(1) += r_ent_vec(j,1)
+        r_load_sum(2) += r_ent_vec(j,2)
+        r_load_sum(3) += r_ent_vec(j,3)
+
+        r_mag_sum += r_mag(j)
+
+	   r_sum_mnt(1) += r_ent_cen(j,1)*r_ent_vec(j,1)
+	   r_sum_mnt(2) += r_ent_cen(j,2)*r_ent_vec(j,2)
+	   r_sum_mnt(3) += r_ent_cen(j,3)*r_ent_vec(j,3)
+    end if
+end for
+
+	r_load_pnt(1) = r_sum_mnt(1)/r_load_sum(1)
+	r_load_pnt(2) = r_sum_mnt(2)/r_load_sum(2)
+	r_load_pnt(3) = r_sum_mnt(3)/r_load_sum(3)
+
+	r_data(1:3) = r_load_pnt(1:3)
+	r_data(4:6) = r_load_sum(1:3)
+
+	text_write(fid,"%I5%%3F15%   %3F15%", i,r_data,s_data)
+
+text_close(fid,"")
+
+end function
+
+END CLASS

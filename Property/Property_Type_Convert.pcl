@@ -1,0 +1,318 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME PROPERTY_TYPE_CONVERT
+#define CLASS_STR "PROPERTY_TYPE_CONVERT"
+
+CLASS CLASSNAME
+
+/* Classwide Variables */
+   CLASSWIDE WIDGET form_id, btn_Apply, btn_Exit
+   classwide widget opt_Object
+
+   FUNCTION init()
+      REAL YLOC = 0
+
+      form_id=ui_form_create(                         @
+      /* callback */         "",                      @
+      /*     x    */         FORM_X_LOC_SML,          @
+      /*     y    */         FORM_Y_LOC,              @
+      /* position */         "UL",                    @
+      /*   width  */         FORM_L_MARGIN + FORM_WID_SML + FORM_R_MARGIN,            @
+      /*  height  */         FORM_HGT_TALL,           @
+      /*   label  */         "PROPERTY TYPE CONVERT",  @
+      /*  unused  */         "")
+
+      YLOC = FORM_T_MARGIN
+      
+      opt_Object = ui_optionmenu_create(                @
+      /*    parent    */              form_id,        @
+      /*   callback   */              "",             @
+      /*       x      */              AOM_MENU_X_LOC,  @
+      /*       y      */              YLOC,      @
+      /* label_length */              AOM_MENU_LABEL_LEN,             @
+      /*     label    */              "CONVERT :",     @
+      /*  label_above */              FALSE)
+
+      ui_item_create(opt_Object,"BEAMTOBAR","From BEAM to BAR",true)
+      ui_item_create(opt_Object,"MEMBTOSHELL","From MEMBRANE to SHELL",true)
+	      
+      YLOC += OPT_MENU_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+
+      btn_Apply=ui_button_create(                     @
+            /*   parent  */            form_id,             @
+            /*  callback */            "cb_apply",                  @
+            /*     x     */            BUTTON_HALF_X_LOC1,  @
+            /*     y     */            YLOC,           @
+            /*   width   */            BUTTON_WID_FULL,     @
+            /*   height  */            BUTTON_DEFAULT_HGT,  @
+            /*   label   */            "Apply",             @
+            /*    TRUE   */            TRUE,                @
+            /* highlight */            FALSE)
+      
+       YLOC += BUTTON_DEFAULT_HGT  + @
+                         INTER_WIDGET_SPACE
+      
+       btn_Exit=ui_button_create(                     @
+            /*   parent  */            form_id,             @
+            /*  callback */            "cb_exit",           @
+            /*     x     */            BUTTON_FULL_X_LOC1,  @
+            /*     y     */            YLOC,           @
+            /*   width   */            BUTTON_WID_FULL,     @
+            /*   height  */            BUTTON_DEFAULT_HGT,  @
+            /*   label   */            "Exit",              @
+            /*    TRUE   */            TRUE,                @
+            /* highlight */            FALSE)
+      
+            YLOC += BUTTON_DEFAULT_HGT  + @
+                         INTER_WIDGET_SPACE
+      
+            ui_wid_set(form_id,"HEIGHT",YLOC)
+                
+   END FUNCTION /* init */
+
+   $ 
+   FUNCTION display()
+
+      ui_form_display(CLASS_STR)
+
+   END FUNCTION /* display */
+$ 
+FUNCTION cb_apply()
+
+uil_primary_file.db_save()
+
+string object[virtual]
+ui_wid_get_vstring(opt_Object, "VALUE", object)
+
+IF(object == "BEAMTOBAR") THEN
+
+	CLASSNAME.BEAM_TO_BAR()
+	
+	RETURN 0
+ELSE IF(object == "MEMBTOSHELL") THEN
+
+	CLASSNAME.MEMBRANE_TO_SHELL()
+	
+	RETURN 0
+END IF
+
+END FUNCTION
+/* ============================================================================================== */
+FUNCTION cb_exit()
+
+	ui_form_hide(CLASS_STR)
+	ui_form_delete(CLASS_STR)
+
+END FUNCTION
+/* ============================================================================================== */
+
+function BEAM_TO_BAR()
+	integer num_regions
+	integer status
+	
+	status = db_count_region_ids(num_regions)
+	
+	integer region_ids(virtual)
+	string region_names[63](virtual)
+	
+	status = SYS_ALLOCATE_ARRAY(region_ids,1,num_regions)
+	status = SYS_ALLOCATE_ARRAY(region_names,1,num_regions)
+	
+	status = db_get_region_ids_and_names(num_regions,region_ids,region_names)
+	
+	integer idx
+	integer num_elem
+	integer elem_ids(virtual)
+	string s_elem_ids[virtual], prop_set_name[63], s_val[63]
+	integer elem_type_id, dof_set_flag, condense_flag, geom_flag, form_flag, lam_flag
+	integer layer_count, material_id, material_lin, material_dir
+	integer word_id, prop_dat_type, i_val, coord_id, node_id, field_id
+	integer property_ids(9), property_types(9)
+	string property_data[63](9), mat_name[64], shape_name[15], section_name[63]
+	real r_val(3), off_vct1(3), off_vct2(3), ori_vct(3)
+	integer nrec, rec
+	
+	for(idx=1 to num_regions) doloop
+		status = db_count_elements_in_region(region_ids(idx),num_elem)
+		dump status
+		if(status != 0) then CONTINUE doloop
+
+/*
+		IF (status != 0) THEN 
+			mstat = msg_to_form(status,3,0,0.0,0,"")
+			IF (mstat == 1) THEN CONTINUE doloop
+		END IF
+*/    
+		status = sys_allocate_array(elem_ids,1, num_elem)
+		
+		status = db_get_elements_in_region(num_elem,region_ids(idx),elem_ids)
+$		dump region_names(idx)
+		app_int_array_to_vstring("Element", num_elem, elem_ids, s_elem_ids)
+
+		db_get_region_definition (	region_ids(idx),		@
+									prop_set_name,		@
+									elem_type_id,		@
+									dof_set_flag,		@
+									condense_flag,		@
+									geom_flag,  		@
+									form_flag,		@
+									lam_flag,			@
+									layer_count,		@
+									material_id,		@
+									material_lin,		@
+									material_dir )
+									
+		if(elem_type_id == 11 && geom_flag == 36) then
+			
+			LIST(word_id = 6, 13, 39, 4042, 4043)
+				db_get_prop_value ( region_ids(idx),	@
+									word_id,		@
+									material_id,		@
+									prop_dat_type,		@
+									i_val,			@
+									r_val,			@
+									s_val,			@
+									coord_id,			@
+									node_id,			@
+									field_id)
+			switch(word_id)
+               	case(6)
+                    	ori_vct = r_val
+                	case(13)
+                    	db_get_material_name_from_id(material_id, mat_name)
+                	case(39)
+                    	db_get_beam_section( i_val, shape_name, section_name, nrec, rec)
+                    case(4042)
+               		off_vct1 = r_val
+               	case(4043)
+               		off_vct2 = r_val
+             	end switch
+             
+		 END LIST					
+				
+			geom_flag = 2
+			
+			property_data(1) = section_name
+     		property_data(2) = "m:" // mat_name
+			property_data(3) = xfem_str_from_vector(ori_vct)
+     		property_data(4) = xfem_str_from_vector(off_vct1)
+     		property_data(5) = xfem_str_from_vector(off_vct2)
+		     property_data(7) = "Analysis"
+		     property_data(8) = "Analysis"
+		     property_data(9) = "Analysis"
+
+     		property_ids = [39, 13, 6, 4042, 4043, 4061, 8200, 8201, 8202]
+     		property_types = [11, 5, 2, 2, 2, 6, 4, 4, 4]
+     
+			status = elementprops_modify(prop_set_name, prop_set_name, elem_type_id, geom_flag, condense_flag,form_flag, lam_flag, dof_set_flag, property_ids, property_types, property_data, s_elem_ids)
+			
+			if(status == 0) then
+				dump prop_set_name // " was converted to bar property"
+			else
+				dump status
+			end if
+			
+		end if
+	end for
+
+END FUNCTION
+
+FUNCTION MEMBRANE_TO_SHELL()
+	integer num_regions
+	integer status
+	
+	status = db_count_region_ids(num_regions)
+	
+	integer region_ids(virtual)
+	string region_names[63](virtual)
+	
+	status = SYS_ALLOCATE_ARRAY(region_ids,1,num_regions)
+	status = SYS_ALLOCATE_ARRAY(region_names,1,num_regions)
+	
+	status = db_get_region_ids_and_names(num_regions,region_ids,region_names)
+	
+	integer idx, idz
+	integer num_elem
+	integer elem_ids(virtual)
+	string s_elem_ids[virtual], prop_set_name[63], s_val[63]
+	integer elem_type_id, dof_set_flag, condense_flag, geom_flag, form_flag, lam_flag
+	integer layer_count, material_id, material_lin, material_dir
+	integer nword, word_id(virtual), prop_dat_type, i_val, coord_id, node_id, field_id
+	integer property_ids(virtual), property_types(virtual)
+	string property_data[63](virtual)
+	real r_val(3)
+	
+	for(idx=1 to num_regions) doloop
+		status = db_count_elements_in_region(region_ids(idx),num_elem)
+		dump status
+		if(status != 0) then CONTINUE doloop
+
+/*
+		IF (status != 0) THEN 
+			mstat = msg_to_form(status,3,0,0.0,0,"")
+			IF (mstat == 1) THEN CONTINUE doloop
+		END IF
+*/    
+		status = sys_allocate_array(elem_ids,1, num_elem)
+		
+		status = db_get_elements_in_region(num_elem,region_ids(idx),elem_ids)
+$		dump region_names(idx)
+		app_int_array_to_vstring("Element", num_elem, elem_ids, s_elem_ids)
+
+		db_get_region_definition (	region_ids(idx),		@
+									prop_set_name,		@
+									elem_type_id,		@
+									dof_set_flag,		@
+									condense_flag,		@
+									geom_flag,  		@
+									form_flag,		@
+									lam_flag,			@
+									layer_count,		@
+									material_id,		@
+									material_lin,		@
+									material_dir )
+									
+		if(elem_type_id == 57) then
+			db_count_props ( region_ids(idx), nword)
+			sys_allocate_array(word_id, 1, nword)
+			sys_allocate_array(property_ids, 1, nword)
+			sys_allocate_array(property_types, 1, nword)
+			sys_allocate_array(property_data, 1, nword)
+			
+			db_get_props_by_region( nword, region_ids(idx), word_id )
+			
+			for(idz = 1 to nword)
+				db_get_prop_value ( region_ids(idx),	@
+									word_id(idz),		@
+									material_id,		@
+									prop_dat_type,		@
+									i_val,			@
+									r_val,			@
+									s_val,			@
+									coord_id,			@
+									node_id,			@
+									field_id)
+								
+				property_ids(idz) = word_id(idz)
+				property_types(idz) = prop_dat_type
+				property_data(idz) =  word_data(property_types(idz), material_id, i_val, r_val, s_val, coord_id, node_id, field_id)
+			end for
+			
+			elem_type_id = 51
+			condense_flag = 35
+			
+			status = elementprops_modify(prop_set_name, prop_set_name, elem_type_id, geom_flag, condense_flag,form_flag, lam_flag, dof_set_flag, property_ids, property_types, property_data, s_elem_ids)
+			
+			if(status == 0) then
+				dump region_names(idx)// " was converted to shell property"
+			else
+				dump status
+			end if
+			
+		end if
+	end for
+
+END FUNCTION
+
+END CLASS
+

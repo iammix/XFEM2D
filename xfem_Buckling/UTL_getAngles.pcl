@@ -1,0 +1,23 @@
+FUNCTION UTL_getAngles(Vector1, Vector2)
+	    REAL    Vector1(), Vector2()
+	    REAL    retAngles=0.0
+	    REAL    Num=0.0, Dividor=0.0
+
+	    Dividor = mth_sqrt( Vector1(1) ** 2 + Vector1(2) ** 2 + Vector1(3) ** 2 ) @
+		    * mth_sqrt( Vector2(1) ** 2 + Vector2(2) ** 2 + Vector2(3) ** 2 )
+
+	    Num = Vector1(1)*Vector2(1) + Vector1(2)*Vector2(2) + Vector1(3)*Vector2(3)
+
+	    retAngles = Num / Dividor
+
+	    IF (retAngles > 1.0) THEN
+		retAngles = 0.9999
+	    ELSE IF (retAngles < -1.0) THEN
+		retAngles = -0.9999
+	    END IF
+
+$ retAngles shuld be PLUS ; 0< angle <90
+
+$	    RETURN  mth_acosd((retAngles))
+	    RETURN  ((retAngles))
+END FUNCTION

@@ -1,0 +1,517 @@
+#include "appforms.p"
+#include "lpenums.p"
+#define CLASSNAME PROP_TREE2
+#define CLASS_STR "PROP_TREE2"
+#define Property_LENGTH 31
+#define VIEWPORT_LENGTH 31
+#define NAME_LENGTH 32
+#define MY_APPLICATION  "PCL: Quick Count(Property)"
+
+CLASS CLASSNAME
+
+/* Classwide Variables */
+   CLASSWIDE WIDGET form_id, tree_id, dummy_lbox
+   CLASSWIDE WIDGET switch_Display, txt_PropInfo
+   CLASSWIDE WIDGET sep_00, sep_01, sep_02
+   CLASSWIDE INTEGER Property_item_id
+   CLASSWIDE LOGICAL tree_created
+   CLASSWIDE REAL x_tree, y_tree, tree_width, tree_height
+
+   FUNCTION init()
+
+      REAL yloc_main, xloc_main, frame_width, yloc
+
+      form_id =ui_form_create(                            @
+      /* callback */         "",                         @
+      /*     x    */         FORM_X_LOC_SML_CEN_AB_COM,  @
+      /*     y    */         FORM_Y_LOC_QTR_CEN,         @
+      /* position */         "UL",                       @
+      /*   width  */         FORM_WID_SML,               @
+      /*  height  */         FORM_HGT_TALL,              @
+      /*   label  */         "Property Tree v1.2",         @
+      /*  unused  */         "")
+
+      yloc_main = FORM_T_MARGIN
+	  xloc_main = FORM_L_MARGIN
+	  frame_width = FORM_WID_SML - FORM_L_MARGIN - FORM_R_MARGIN
+
+		/* */
+	   dummy_lbox = ui_listbox_create(form_id, "", xloc_main, yloc_main, frame_width, 5, "Hidden Sort", "EXTEND", TRUE)
+	   ui_wid_set(dummy_lbox, "DISPLAY", FALSE)
+	   /* */
+
+	   
+	  switch_Display=ui_switch_create(                @
+      /*   parent   */           form_id,       @
+      /*  callback  */           "cb_switch_display", @
+      /*      x     */           FORM_L_MARGIN,  @
+      /*      y     */           yloc_main,  @
+      /*  num_cols  */           3,              @
+      /*    label   */           "",  @
+      /* always_one */           TRUE)
+
+		ui_item_create(	switch_Display, "PLOT_ERASE", "Plot/Erase", FALSE)
+		ui_item_create(	switch_Display, "HIGHLIGHT",  "Highlight ", FALSE)
+		ui_item_create(	switch_Display, "NONE",       "None      ", FALSE)
+
+		ui_wid_set(switch_Display, "VALUE", "PLOT_ERASE")
+
+	  yloc_main += SWITCH_1R_HGT_NO_LABEL  + @
+                       FORM_B_MARGIN
+				
+      sep_00=ui_separator_create(               @
+      /*   parent   */           form_id,       @
+      /*    name    */           "",            @
+      /*      x     */           0.0,           @
+      /*      y     */           yloc_main,     @
+      /*   length   */           FORM_WID_SML,  @
+      /* horizontal */           TRUE)
+
+      yloc_main += 5*PIXEL_HGT             + @
+                   INTER_WIDGET_SPACE      
+	   
+	   x_tree      = xloc_main
+	   y_tree      = yloc_main
+	   tree_width  = FORM_WID_SML
+$	   tree_height = FORM_HGT_5_8THS
+	   tree_height = FORM_HGT_HALF/2
+
+	   yloc_main = yloc_main + tree_height + INTER_WIDGET_SPACE
+	
+	ui_wid_set(form_id,"HEIGHT",yloc_main)
+	
+	END FUNCTION /* init */
+
+FUNCTION cb_switch_display(sel_item, s_value)
+STRING	sel_item[], s_value[]
+
+IF(sel_item == "NONE" && s_value == "ON") THEN
+	gm_visibility_all(TRUE)
+	gm_hilight_clear()
+END IF
+END FUNCTION
+
+$ 
+FUNCTION create_tree()
+
+   integer i
+   
+   if (tree_created) then ui_wid_delete(tree_id)
+   
+	  tree_id = ui_tree_create(								@
+								form_id,					@
+								"cb_tree",					@
+								x_tree,				@
+								y_tree,				@
+								tree_width, @
+								tree_height,	@
+								"p3db Property Tree",			@
+								"EXTEND",					@
+								0)
+		
+		ui_wid_set(tree_id, "DISPLAY", TRUE)
+
+   tree_created = TRUE
+  
+end function /* create_tree */
+
+$ 
+FUNCTION cb_tree(wid, event, callData, userData)
+widget  wid, callData
+string  event[], userData[]
+string item_label[32](virtual)
+integer itemCount, itemIds(virtual), i
+logical status
+
+		if(event != "SELCHANGED") then return
+
+		if(ui_treeitem_is_selected(wid, Property_item_id) == TRUE) then
+			ui_tree_select_item(wid, Property_item_id, FALSE)
+			return
+		end if
+
+		status = ui_tree_get_selection( wid, itemIds, itemCount)
+
+		sys_allocate_array(item_label, 1, itemCount)
+		
+		for(i=1 to itemCount)
+			ui_treeitem_get_label(wid, itemIds(i), item_label(i) )
+		end for
+
+		CLASSNAME.SelectProperty(itemCount, item_label)
+		
+		sys_free_array(item_label)
+
+end function /* cb_tree */
+		
+	
+$ 
+function add_tree_item(parent, item_label, image)
+
+	   integer parent
+	   integer image
+	   integer item
+	   
+	   string  item_label[]
+	   
+	   item = ui_tree_add_item(tree_id, parent, -1, item_label, image, image)
+	   
+	   return (item)
+
+end function /* add_tree_item */
+
+
+$ 
+function update()
+
+  integer status
+   integer num_rgns, rgn_type_ids(virtual), num_elms_per_rgn(virtual)
+   
+   logical props_by_type = TRUE
+   
+   string  rgn_names[NAME_LENGTH](virtual)
+   		
+		CLASSNAME.create_tree()
+	   
+		ui_wid_set(tree_id, "DISPLAY", FALSE)
+
+	        status = CLASSNAME.get_prop_sets(props_by_type, num_rgns, rgn_names, rgn_type_ids, num_elms_per_rgn)
+			
+		if (status != 0) then return (status)
+
+		CLASSNAME.add_prop_sets(props_by_type, num_rgns, rgn_names, rgn_type_ids, num_elms_per_rgn)
+    
+		ui_wid_set(tree_id, "DISPLAY", TRUE)
+
+end function /* update */
+
+$ 
+function get_prop_sets(props_by_type, num_rgns, rgn_names, rgn_type_ids, num_elms_per_rgn)
+
+   integer i, status
+   integer num_rgns, rgn_type_ids(), num_elms_per_rgn()
+   integer rgn_ids(virtual)
+   
+   logical props_by_type
+
+   string  rgn_names[]()
+
+   
+   status = db_count_region_ids(num_rgns)
+   if (status != 0) then
+      msg_to_form(status, 4, appcode(status), 0, 0., ""); return (status)
+   end if
+   
+   if (num_rgns == 0) then return (0)
+   
+   sys_allocate_array(rgn_ids,   1, num_rgns)
+   sys_allocate_array(rgn_names, 1, num_rgns)
+   
+   status = db_get_region_ids_and_names(num_rgns, rgn_ids, rgn_names)
+   if (status != 0) then
+      msg_to_form(status, 4, appcode(status), 0, 0., ""); return (status)
+   end if
+
+   CLASSNAME.sort_names2(num_rgns, rgn_names, rgn_ids)
+
+   sys_allocate_array(num_elms_per_rgn, 1, num_rgns)
+   sys_allocate_array(rgn_type_ids,     1, num_rgns)
+   
+   user_message("Info", 0, MY_APPLICATION, "Processing "//str_from_integer(num_rgns)//" property sets ...")
+   
+   for (i = 1 to num_rgns)
+      if (!em_proceed_quick()) then return (-1)
+      
+      status = db_count_elements_in_region(rgn_ids(i), num_elms_per_rgn(i))
+      /* if (status != 0) then
+         msg_to_form(status, 4, appcode(status), 0, 0., ""); return (status)
+      end if */
+   
+      if (props_by_type) then
+         status = CLASSNAME.get_prop_set_type(rgn_ids(i), rgn_type_ids(i))
+         if (status != 0) then return (status)
+      end if
+   end for
+   
+   return (0)
+   
+end function /* get_prop_sets */
+
+
+$ 
+function get_prop_set_type(rgn_id, rgn_type_id)
+
+   integer status
+   integer rgn_id, rgn_type_id
+   integer idum
+   
+   string  name[NAME_LENGTH]
+   
+   
+   status = db_get_region_definition(rgn_id, name, rgn_type_id, idum, idum, idum, idum, idum, idum, idum, idum, idum)
+   if (status != 0) then
+      msg_to_form(status, 4, appcode(status), 0, 0., "")
+   end if
+   
+   return (status)
+
+end function /* get_prop_set_type */
+
+$ 
+function add_prop_sets(props_by_type, num_rgns, rgn_names, rgn_type_ids, num_elms_per_rgn)
+
+   integer i, p
+   integer num_rgns, rgn_type_ids(), num_elms_per_rgn()
+   integer main_item
+   integer num_types, type_ids(virtual)
+   integer num_sets_per_type(virtual)
+   integer type_items(virtual)
+   
+   logical props_by_type
+   
+   string  rgn_names[]()
+   string  type_names[NAME_LENGTH](virtual)
+
+
+$   main_item = CLASSNAME.add_tree_item(0, "Property Sets", num_rgns)
+   main_item = CLASSNAME.add_tree_item(0, "Property Sets", 0)
+   
+   if (num_rgns == 0) then return
+   
+   if (!props_by_type) then return
+   
+   CLASSNAME.get_prop_set_types(num_types, type_ids, type_names)
+   
+   sys_allocate_array(num_sets_per_type, 1, num_types)
+   for (i = 1 to num_types)
+      num_sets_per_type(i) = 0
+   end for
+
+   for (i = 1 to num_rgns)
+      p = mth_array_search(type_ids, rgn_type_ids(i), FALSE)
+      if (p != 0) then
+         num_sets_per_type(p) += 1
+      end if
+   end for
+
+   sys_allocate_array(type_items, 1, num_types)
+   for (i = 1 to num_types)
+      if (num_sets_per_type(i) > 0) then
+         type_items(i) = CLASSNAME.add_tree_item(main_item, type_names(i), num_sets_per_type(i))
+      end if
+   end for
+
+   for (i = 1 to num_rgns)
+      p = mth_array_search(type_ids, rgn_type_ids(i), FALSE)
+      if (p != 0) then
+         CLASSNAME.add_tree_item(type_items(p), rgn_names(i), -1)
+      end if
+   end for
+
+end function /* add_prop_sets */
+
+
+$ 
+function get_prop_set_types(num_types, type_ids, type_names)
+
+   integer status
+   integer num_types, type_ids()
+   integer acode_id, atype_id
+   integer max_ent_types(4), max_types
+   integer num_types_found
+   
+   string  type_names[]()
+   
+   
+   CLASSNAME.get_acode_data(acode_id, atype_id)
+   
+   db_count_elem_type(acode_id, atype_id, max_ent_types)
+   
+   max_types = max_ent_types(1) + max_ent_types(2) + max_ent_types(3) + max_ent_types(4)
+   
+   sys_allocate_array(type_ids,   1, max_types)
+   sys_allocate_array(type_names, 1, max_types)
+   
+   status = db_get_analysis_elements(acode_id, atype_id, max_types, num_types_found, type_ids, type_names)
+   
+   num_types = num_types_found
+   if (num_types > 0) then
+      sys_reallocate_array(type_ids,   1, num_types)
+      sys_reallocate_array(type_names, 1, num_types)
+   end if
+   
+   return (0)
+
+end function /* get_prop_set_types */
+	
+$ 
+function sort_names(num_names, names)
+
+   integer num_names
+   
+   string  names[]()
+   
+   
+   ui_listbox_items_delete(dummy_lbox)
+   
+   if (num_names == 0) then return
+   
+   ui_listbox_items_create(dummy_lbox, names, names, num_names, WIDGET_NULL)
+   
+   ui_wid_get(dummy_lbox, "VALUE", names)
+
+	return names
+
+end function /* sort_names */
+
+$ 
+function sort_names2(num_names, names, ids)
+
+   integer i
+   integer num_names, ids()
+   
+   string  names[]()
+   string  new_names[65](virtual)
+   
+   
+   if (num_names == 0) then return
+   
+   sys_allocate_array(new_names, 1, num_names)
+
+   for (i = 1 to num_names)
+	  new_names(i) = names(i)//","//str_from_integer(ids(i))
+   end for
+
+   CLASSNAME.sort_names(num_names, new_names)
+   
+   for (i = 1 to num_names)
+	  names(i) = str_token(new_names(i), ",", 1)
+	  ids(i)   = str_to_integer(str_token(new_names(i), ",", 2))
+   end for
+
+end function /* sort_names2 */
+
+$ 
+function get_acode_data(acode_id, atype_id)
+
+   integer status
+   integer acode_id, atype_id
+   
+   string  acode[NAME_LENGTH], atype[NAME_LENGTH]
+   
+   status = db_get_default_anal_code(acode)
+   status = db_get_anal_code_id(acode, acode_id)
+   status = db_get_default_anal_type(atype)
+   status = db_get_anal_type_id(atype, atype_id)
+
+end function /* get_acode_data */
+
+$
+FUNCTION SelectProperty(nselect, sel_item)
+	integer nselect, nprop, prop_id(virtual), i, reg_id(VIRTUAL), elem_id(virtual), nelem
+	string sel_item[](), prop_name[80](virtual), elem_list[virtual], DisplayOption[15], reg_name[80]
+	string Text_Content[500], c_val[100], word_name[100], prop_dat[100]
+	integer gen_elem_type, dof_set_flag, con_flag, geom_flag
+	integer  form_flag, lam_flag, layer_count, mat_id, mat_lin, mat_dir, status
+	integer nword, word_id(virtual),prop_dat_type, i_val, coord_id, node_id, field_id
+	real r_val(3)
+
+	db_count_region_ids(nprop)
+
+	sys_allocate_array(prop_id,1, nprop)
+	sys_allocate_array(prop_name, 1, nprop)
+
+	db_get_region_ids_and_names(nprop, prop_id, prop_name)
+
+	INTEGER j
+
+	sys_allocate_array(reg_id, 1, nselect)
+	FOR(i=1 TO nselect)
+		FOR(j=1 TO nprop)
+			IF(sel_item(i)== prop_name(j)) THEN
+					reg_id(i) = prop_id(j)
+			END IF
+		END FOR
+	END FOR
+	
+
+
+	
+	/* status = db_count_elements_in_region(reg_id, nelem)
+	IF(status != 0) THEN 
+		gm_visibility_all(TRUE)
+		gm_hilight_clear()
+		return
+	END IF
+*/
+
+ui_wid_get(switch_Display, "VALUE", DisplayOption)
+
+	SWITCH(DisplayOption)
+		CASE("PLOT_ERASE")
+			gm_visibility_all(FALSE)
+		CASE("HIGHLIGHT")
+			gm_hilight_clear()
+	END SWITCH
+
+FOR(i=1 TO nselect)
+	status = db_count_elements_in_region(reg_id(i), nelem)
+ 	sys_allocate_array(elem_id, 1, nelem)
+	db_get_elements_in_region(nelem, reg_id(i), elem_id) 
+	app_int_array_to_vstring("Element", nelem, elem_id, elem_list)
+	IF(DisplayOption == "PLOT_ERASE") THEN
+			gm_visibility_widget(elem_list, TRUE )
+	ELSE IF(DisplayOption == "HIGHLIGHT") THEN
+			gm_hilight_clear()
+			gm_hilight_string(elem_list, 1)
+	END IF
+END FOR
+		
+	db_get_region_definition( reg_id(nselect), reg_name, gen_elem_type, dof_set_flag, con_flag, @
+					  geom_flag, form_flag, lam_flag, layer_count, mat_id, mat_lin, mat_dir) 
+ 
+	db_count_props ( reg_id(nselect), nword)
+	sys_allocate_array(word_id, 1, nword)
+	db_get_props_by_region (nword, reg_id(nselect), word_id)
+
+	Text_Content = ""
+	FOR(i=1 TO nword)
+		db_get_prop_value ( reg_id(nselect),			@
+					word_id(i),		@
+					mat_id,			@
+					prop_dat_type,		@
+					i_val,			@
+					r_val,			@
+					c_val,			@
+					coord_id,			@
+					node_id,			@
+					field_id) 
+		
+		word_name = xfem_get_word_name_from_id(word_id(i))
+		prop_dat = xfem_word_dat(prop_dat_type,		@
+												mat_id,			@
+												i_val,			@
+												r_val,			@
+												c_val,			@
+												coord_id,			@
+												node_id,			@
+												field_id)
+
+$		Text_Content = Text_Content // word_name //" : "// prop_dat
+$		if(word_id(i) == 1 || word_id(i) == 13 || word_id(i) == 17 || word_id(i) == 18 || word_id(i) == 19 || word_id(i) = 36) then
+			Text_Content = str_from_integer(word_id(i)) // word_name //" : "// prop_dat
+			dump Text_Content
+$		end if
+	END FOR
+
+$ dump Text_Content
+$	ui_wid_set(txt_PropInfo,"VALUE", Text_Content)
+	
+	sys_free_array(prop_name)
+	sys_free_array(prop_id)
+ 	sys_free_array(elem_id)
+	sys_free_array(word_id)
+
+   END FUNCTION
+
+END CLASS

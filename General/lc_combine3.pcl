@@ -1,0 +1,302 @@
+stringer LCC[63](7), SCC[63](7), LC1[63](2), SC1[63](2), LC2[63](7), SC2[63](7)
+stringer SubLC[63](1), SubSC[63](1)
+
+LC1(1) = "LC_HOG"
+LC1(2) = "LC_SAG"
+SC1(1) = "A5:Static Subcase"
+SC1(2) = "A5:Static Subcase"
+
+LC2(1) = "LC1"
+LC2(2) = "LC2"
+LC2(3) = "LC3"
+LC2(4) = "LC4"
+LC2(5) = "LC5"
+LC2(6) = "LC7"
+LC2(7) = "LC8"
+
+SC2(1) = "A6:Static Subcase"
+SC2(2) = "A6:Static Subcase"
+SC2(3) = "A6:Static Subcase"
+SC2(4) = "A6:Static Subcase"
+SC2(5) = "A6:Static Subcase"
+SC2(6) = "A6:Static Subcase"
+SC2(7) = "A6:Static Subcase"
+
+LCC(1,1) = "LC1H"
+LCC(1,2) = "LC2H"
+LCC(1,3) = "LC3H"
+LCC(1,4) = "LC4H"
+LCC(1,5) = "LC5H"
+LCC(1,6) = "LC6H"
+LCC(1,7) = "LC8H"
+
+LCC(2,1) = "LC1S"
+LCC(2,2) = "LC2S"
+LCC(2,3) = "LC3S"
+LCC(2,4) = "LC4S"
+LCC(2,5) = "LC5S"
+LCC(2,6) = "LC6S"
+LCC(2,7) = "LC8S"
+
+SCC(1,1) = "Combine"
+SCC(1,2) = "Combine"
+SCC(1,3) = "Combine"
+SCC(1,4) = "Combine"
+SCC(1,5) = "Combine"
+SCC(1,6) = "Combine"
+SCC(1,7) = "Combine"
+
+SCC(2,1) = "Combine"
+SCC(2,2) = "Combine"
+SCC(2,3) = "Combine"
+SCC(2,4) = "Combine"
+SCC(2,5) = "Combine"
+SCC(2,6) = "Combine"
+SCC(2,7) = "Combine"
+
+integer idx, idz
+
+FOR(idx = 1 to 2)
+	FOR(idz=1 to 7)
+		res_db_create_loadcase_c( LCC(idx, idz), 1, "Assign Results To A Load Case",  @
+		res_create_demo_lcid )
+		INTEGER res_create_demo_scid
+	    	INTEGER res_create_demo_rcid
+	    	res_db_create_subcase_c( 13, SCC(idx, idz), res_create_demo_scid,  @
+	    	res_create_demo_rcid )
+	    
+	    SubLC(1) = LC2(idz)
+	    SubSC(1) = SC2(idz)
+	    
+	    res_data_load_dbresult( 0, "Element", "Tensor", LC1(idx), SC1(idx), @
+	     "Bar Stresses", "Axial", "At Center", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Tensor", 1, SubLC(1), SubSC @
+	    , ["Bar Stresses"], ["Axial"], ["At Center", "At Center"] )
+	    res_data_list_sum( 0, "Element", "Tensor", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Tensor", LCC(idx, idz), SCC(idx, idz), "At Center",  @
+	    "Bar Stresses", "Axial" )
+	    
+	    res_data_load_dbresult( 0, "Element", "Tensor", LC1(idx), SC1(idx), @
+	     "Bar Stresses", "Bending", "At Point C", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Tensor", 1, SubLC, SubSC @
+	    , ["Bar Stresses"], ["Bending"], ["At Point C", "At Point C"] )
+	    res_data_list_sum( 0, "Element", "Tensor", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Tensor", LCC(idx, idz), SCC(idx, idz), "At Point C",  @
+	    "Bar Stresses", "Bending" )
+	    
+	    res_data_load_dbresult( 0, "Element", "Tensor", LC1(idx), SC1(idx), @
+	     "Bar Stresses", "Bending", "At Point D", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Tensor", 1, SubLC, SubSC @
+	    , ["Bar Stresses"], ["Bending"], ["At Point D", "At Point D"] )
+	    res_data_list_sum( 0, "Element", "Tensor", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Tensor", LCC(idx, idz), SCC(idx, idz), "At Point D",  @
+	    "Bar Stresses", "Bending" )
+	     
+	    res_data_load_dbresult( 0, "Element", "Tensor", LC1(idx), SC1(idx), @
+	     "Bar Stresses", "Bending", "At Point E", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Tensor", 1, SubLC, SubSC @
+	    , ["Bar Stresses"], ["Bending"], ["At Point E", "At Point E"] )
+	    res_data_list_sum( 0, "Element", "Tensor", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Tensor", LCC(idx, idz), SCC(idx, idz), "At Point E",  @
+	    "Bar Stresses", "Bending" )
+	     
+	    res_data_load_dbresult( 0, "Element", "Tensor", LC1(idx), SC1(idx), @
+	     "Bar Stresses", "Bending", "At Point F", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Tensor", 1, SubLC, SubSC @
+	    , ["Bar Stresses"], ["Bending"], ["At Point F", "At Point F"] )
+	    res_data_list_sum( 0, "Element", "Tensor", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Tensor", LCC(idx, idz), SCC(idx, idz), "At Point F",  @
+	    "Bar Stresses", "Bending" )
+	     
+	    res_data_load_dbresult( 0, "Element", "Scalar", LC1(idx), SC1(idx), @
+	     "Bar Stresses", "Maximum Combined", "At Center", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Scalar", 1, SubLC, SubSC @
+	    , ["Bar Stresses"], ["Maximum Combined"], ["At Center", "At Center"] )
+	    res_data_list_sum( 0, "Element", "Scalar", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Scalar", LCC(idx, idz), SCC(idx, idz), "At Center",  @
+	    "Bar Stresses", "Maximum Combined" )
+	    
+	    res_data_load_dbresult( 0, "Element", "Scalar", LC1(idx), SC1(idx), @
+	     "Bar Stresses", "Minimum Combined", "At Center", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Scalar", 1, SubLC, SubSC @
+	    , ["Bar Stresses"], ["Minimum Combined"], ["At Center", "At Center"] )
+	    res_data_list_sum( 0, "Element", "Scalar", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Scalar", LCC(idx, idz), SCC(idx, idz), "At Center",  @
+	    "Bar Stresses", "Minimum Combined" )
+	    
+	    res_data_load_dbresult( 0, "Element", "Tensor", LC1(idx), SC1(idx), @
+	     "Beam Stresses", "Combined", "At Point C", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Tensor", 1, SubLC, SubSC @
+	    , ["Beam Stresses"], ["Combined"], ["At Point C", "At Point C"] )
+	    res_data_list_sum( 0, "Element", "Tensor", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Tensor", LCC(idx, idz), SCC(idx, idz), "At Point C",  @
+	    "Beam Stresses", "Combined" )
+	     
+	    res_data_load_dbresult( 0, "Element", "Tensor", LC1(idx), SC1(idx), @
+	     "Beam Stresses", "Combined", "At Point D", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Tensor", 1, SubLC, SubSC @
+	    , ["Beam Stresses"], ["Combined"], ["At Point D", "At Point D"] )
+	    res_data_list_sum( 0, "Element", "Tensor", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Tensor", LCC(idx, idz), SCC(idx, idz), "At Point D",  @
+	    "Beam Stresses", "Combined" )
+	     
+	    res_data_load_dbresult( 0, "Element", "Tensor", LC1(idx), SC1(idx), @
+	     "Beam Stresses", "Combined", "At Point E", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Tensor", 1, SubLC, SubSC @
+	    , ["Beam Stresses"], ["Combined"], ["At Point E", "At Point E"] )
+	    res_data_list_sum( 0, "Element", "Tensor", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Tensor", LCC(idx, idz), SCC(idx, idz), "At Point E",  @
+	    "Beam Stresses", "Combined" )
+	    
+	    res_data_load_dbresult( 0, "Element", "Tensor", LC1(idx), SC1(idx), @
+	     "Beam Stresses", "Combined", "At Point F", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Tensor", 1, SubLC, SubSC @
+	    , ["Beam Stresses"], ["Combined"], ["At Point F", "At Point F"] )
+	    res_data_list_sum( 0, "Element", "Tensor", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Tensor", LCC(idx, idz), SCC(idx, idz), "At Point F",  @
+	    "Beam Stresses", "Combined" )
+	    
+	    res_data_load_dbresult( 0, "Element", "Scalar", LC1(idx), SC1(idx), @
+	     "Beam Stresses", "Maximum Combined", "At Center", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Scalar", 1, SubLC, SubSC @
+	    , ["Beam Stresses"], ["Maximum Combined"], ["At Center", "At Center"] )
+	    res_data_list_sum( 0, "Element", "Scalar", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Scalar", LCC(idx, idz), SCC(idx, idz), "At Center",  @
+	    "Beam Stresses", "Maximum Combined" )
+	    
+	    res_data_load_dbresult( 0, "Element", "Scalar", LC1(idx), SC1(idx), @
+	     "Beam Stresses", "Minimum Combined", "At Center", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Scalar", 1, SubLC, SubSC @
+	    , ["Beam Stresses"], ["Minimum Combined"], ["At Center", "At Center"] )
+	    res_data_list_sum( 0, "Element", "Scalar", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Scalar", LCC(idx, idz), SCC(idx, idz), "At Center",  @
+	    "Beam Stresses", "Minimum Combined" )
+	    
+	    res_data_load_dbresult( 0, "Nodal", "Vector", LC1(idx), SC1(idx),  @
+	    "Constraint Forces", "Rotational", "(NON-LAYERED)", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Nodal", "Vector", 1, SubLC, SubSC,  @
+	    ["Constraint Forces"], ["Rotational"], ["(NON-LAYERED)", "(NON-LAYERED)"] )
+	    res_data_list_sum( 0, "Nodal", "Vector", 2, [1., 1.] )
+	    res_data_save( 0, "Nodal", "Vector", LCC(idx, idz), SCC(idx, idz), "(NON-LAYERED)",  @
+	    "Constraint Forces", "Rotational" )
+	    
+	    res_data_load_dbresult( 0, "Nodal", "Vector", LC1(idx), SC1(idx),  @
+	    "Constraint Forces", "Translational", "(NON-LAYERED)", "", "", "", "", "", "", @
+	     0. )
+	    res_data_dbres_list( 0, "Nodal", "Vector", 1, SubLC, SubSC,  @
+	    ["Constraint Forces"], ["Translational"], ["(NON-LAYERED)", "(NON-LAYERED)"] )
+	    res_data_list_sum( 0, "Nodal", "Vector", 2, [1., 1.] )
+	    res_data_save( 0, "Nodal", "Vector", LCC(idx, idz), SCC(idx, idz), "(NON-LAYERED)",  @
+	    "Constraint Forces", "Translational" )
+	     
+	    res_data_load_dbresult( 0, "Nodal", "Vector", LC1(idx), SC1(idx),  @
+	    "Displacements", "Rotational", "(NON-LAYERED)", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Nodal", "Vector", 1, SubLC, SubSC,  @
+	    ["Displacements"], ["Rotational"], ["(NON-LAYERED)", "(NON-LAYERED)"] )
+	    res_data_list_sum( 0, "Nodal", "Vector", 2, [1., 1.] )
+	    res_data_save( 0, "Nodal", "Vector", LCC(idx, idz), SCC(idx, idz), "(NON-LAYERED)",  @
+	    "Displacements", "Rotational" )
+	     
+	    res_data_load_dbresult( 0, "Nodal", "Vector", LC1(idx), SC1(idx),  @
+	    "Displacements", "Translational", "(NON-LAYERED)", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Nodal", "Vector", 1, SubLC, SubSC,  @
+	    ["Displacements"], ["Translational"], ["(NON-LAYERED)", "(NON-LAYERED)"] )
+	    res_data_list_sum( 0, "Nodal", "Vector", 2, [1., 1.] )
+	    res_data_save( 0, "Nodal", "Vector", LCC(idx, idz), SCC(idx, idz), "(NON-LAYERED)",  @
+	    "Displacements", "Translational" )
+	     
+	    res_data_load_dbresult( 0, "Element", "Scalar", LC1(idx), SC1(idx), @
+	     "Principal Stress Direction", "Zero Shear Angle", "At Z1", "", "", "", "", "" @
+	    , "", 0. )
+	    res_data_dbres_list( 0, "Element", "Scalar", 1, SubLC, SubSC @
+	    , ["Principal Stress Direction"], ["Zero Shear Angle"], ["At Z1", "At Z1"] )
+	    res_data_list_sum( 0, "Element", "Scalar", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Scalar", LCC(idx, idz), SCC(idx, idz), "At Z1",  @
+	    "Principal Stress Direction", "Zero Shear Angle" )
+	    
+	    res_data_load_dbresult( 0, "Element", "Scalar", LC1(idx), SC1(idx), @
+	     "Principal Stress Direction", "Zero Shear Angle", "At Z2", "", "", "", "", "" @
+	    , "", 0. )
+	    res_data_dbres_list( 0, "Element", "Scalar", 1, SubLC, SubSC @
+	    , ["Principal Stress Direction"], ["Zero Shear Angle"], ["At Z2", "At Z2"] )
+	    res_data_list_sum( 0, "Element", "Scalar", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Scalar", LCC(idx, idz), SCC(idx, idz), "At Z2",  @
+	    "Principal Stress Direction", "Zero Shear Angle" )
+	    
+	    res_data_load_dbresult( 0, "Element", "Scalar", LC1(idx), SC1(idx), @
+	     "Stress Invariants", "Major Principal", "At Z1", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Scalar", 1, SubLC, SubSC @
+	    , ["Stress Invariants"], ["Major Principal"], ["At Z1", "At Z1"] )
+	    res_data_list_sum( 0, "Element", "Scalar", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Scalar", LCC(idx, idz), SCC(idx, idz), "At Z1",  @
+	    "Stress Invariants", "Major Principal" )
+	    
+	    res_data_load_dbresult( 0, "Element", "Scalar", LC1(idx), SC1(idx), @
+	     "Stress Invariants", "Major Principal", "At Z2", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Scalar", 1, SubLC, SubSC @
+	    , ["Stress Invariants"], ["Major Principal"], ["At Z2", "At Z2"] )
+	    res_data_list_sum( 0, "Element", "Scalar", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Scalar", LCC(idx, idz), SCC(idx, idz), "At Z2",  @
+	    "Stress Invariants", "Major Principal" )
+	    
+	    res_data_load_dbresult( 0, "Element", "Scalar", LC1(idx), SC1(idx), @
+	     "Stress Invariants", "Minor Principal", "At Z1", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Scalar", 1, SubLC, SubSC @
+	    , ["Stress Invariants"], ["Minor Principal"], ["At Z1", "At Z1"] )
+	    res_data_list_sum( 0, "Element", "Scalar", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Scalar", LCC(idx, idz), SCC(idx, idz), "At Z1",  @
+	    "Stress Invariants", "Minor Principal" )
+	    
+	    res_data_load_dbresult( 0, "Element", "Scalar", LC1(idx), SC1(idx), @
+	     "Stress Invariants", "Minor Principal", "At Z2", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Scalar", 1, SubLC, SubSC @
+	    , ["Stress Invariants"], ["Minor Principal"], ["At Z2", "At Z2"] )
+	    res_data_list_sum( 0, "Element", "Scalar", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Scalar", LCC(idx, idz), SCC(idx, idz), "At Z2",  @
+	    "Stress Invariants", "Minor Principal" )
+	    
+	    res_data_load_dbresult( 0, "Element", "Scalar", LC1(idx), SC1(idx), @
+	     "Stress Invariants", "Von Mises", "At Z1", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Scalar", 1, SubLC, SubSC @
+	    , ["Stress Invariants"], ["Von Mises"], ["At Z1", "At Z1"] )
+	    res_data_list_sum( 0, "Element", "Scalar", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Scalar", LCC(idx, idz), SCC(idx, idz), "At Z1",  @
+	    "Stress Invariants", "Von Mises" )
+	    
+	    res_data_load_dbresult( 0, "Element", "Scalar", LC1(idx), SC1(idx), @
+	     "Stress Invariants", "Von Mises", "At Z2", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Scalar", 1, SubLC, SubSC @
+	    , ["Stress Invariants"], ["Von Mises"], ["At Z2", "At Z2"] )
+	    res_data_list_sum( 0, "Element", "Scalar", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Scalar", LCC(idx, idz), SCC(idx, idz), "At Z2",  @
+	    "Stress Invariants", "Von Mises" )
+	    
+	    res_data_load_dbresult( 0, "Element", "Tensor", LC1(idx), SC1(idx), @
+	     "Stress Tensor", "", "At Z1", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Tensor", 1, SubLC, SubSC @
+	    , ["Stress Tensor"], [""], ["At Z1", "At Z1"] )
+	    res_data_list_sum( 0, "Element", "Tensor", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Tensor", LCC(idx, idz), SCC(idx, idz), "At Z1",  @
+	    "Stress Tensor", "" )
+	    
+	    res_data_load_dbresult( 0, "Element", "Tensor", LC1(idx), SC1(idx), @
+	     "Stress Tensor", "", "At Z2", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Tensor", 1, SubLC, SubSC @
+	    , ["Stress Tensor"], [""], ["At Z2", "At Z2"] )
+	    res_data_list_sum( 0, "Element", "Tensor", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Tensor", LCC(idx, idz), SCC(idx, idz), "At Z2",  @
+	    "Stress Tensor", "" )
+	    
+	    res_data_load_dbresult( 0, "Element", "Tensor", LC1(idx), SC1(idx), @
+	     "Stress Tensor", "", "At Center", "", "", "", "", "", "", 0. )
+	    res_data_dbres_list( 0, "Element", "Tensor", 1, SubLC, SubSC @
+	    , ["Stress Tensor"], [""], ["At Center", "At Center"] )
+	    res_data_list_sum( 0, "Element", "Tensor", 2, [1., 1.] )
+	    res_data_save( 0, "Element", "Tensor", LCC(idx, idz), SCC(idx, idz), "At Center",  @
+	    "Stress Tensor", "" )
+	    
+	    db_post_results_load(  )
+	    db_drop_res_index(  )
+	END FOR
+END FOR
+$ =====================================================================================

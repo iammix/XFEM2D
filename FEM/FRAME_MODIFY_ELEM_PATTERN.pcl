@@ -1,0 +1,337 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME FRAME_MODIFY_ELEM_PATTERN
+#define CLASS_STR "FRAME_MODIFY_ELEM_PATTERN"
+
+class CLASSNAME
+
+classwide widget switch_pattern, sframe_06, wa_sdbox_06(3), nelem_dbox_id
+
+function UI_FRAME_MODIFY_ELEM_PATTERN(form_id, Y_LOC)
+widget form_id
+real Y_LOC
+
+      widget frame_wid
+      
+      frame_wid=ui_frame_create(                   @
+      /* parent */             form_id,           @
+      /*  name  */             "",                @
+      /*    x   */             0.0,  @
+      /*    y   */             Y_LOC,         @
+      /*  width */             FORM_WID_SML,  @
+      /* height */             0.0,               @
+      /*  label */             "Pattern Split")
+    
+     REAL Y_LOCF = 0
+	Y_LOCF += LABEL_HGT + FORM_T_MARGIN
+
+     widget patt6, patt8, patt13, patt15, patt16, patt17
+     switch_pattern = ui_switch_create( frame_wid, "cb_pattern", FRAME_L_MARGIN*5, Y_LOCF, 4, "", TRUE)
+          ui_itemicon_create(switch_pattern, "quad_pattern1", "split_quad_pattern_1.bmp", TRUE, 0)
+          ui_itemicon_create(switch_pattern, "quad_pattern2", "split_quad_pattern_2.bmp", FALSE, 0)
+$         ui_itemicon_create(switch_pattern, "quad_pattern31", "split_quad_pattern_31.bmp", FALSE, 0)
+$         ui_itemicon_create(switch_pattern, "quad_pattern32", "split_quad_pattern_32.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "quad_pattern41", "split_quad_pattern_41.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "quad_pattern42", "split_quad_pattern_42.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "quad_pattern43", "split_quad_pattern_43.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "quad_pattern44", "split_quad_pattern_44.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "quad_pattern5", "split_quad_pattern_5.bmp", FALSE, 0)
+          patt6 =ui_itemicon_create(switch_pattern, "quad_pattern6", "split_quad_pattern_6.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "quad_pattern7", "split_quad_pattern_7.bmp", FALSE, 0)
+          patt8 = ui_itemicon_create(switch_pattern, "quad_pattern8", "split_quad_pattern_8.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "quad_pattern9", "split_quad_pattern_9.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "quad_pattern91", "split_quad_pattern_91.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "quad_pattern10", "split_quad_pattern_10.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "quad_pattern11", "split_quad_pattern_11.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "quad_pattern12", "split_quad_pattern_12.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "quad_pattern121", "split_quad_pattern_121.bmp", FALSE, 0)
+          patt13 = ui_itemicon_create(switch_pattern, "quad_pattern13", "split_quad_pattern_13.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "quad_pattern14", "split_quad_pattern_14.bmp", FALSE, 0)
+          patt15 = ui_itemicon_create(switch_pattern, "quad_pattern15", "split_quad_pattern_15.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "quad_pattern16", "split-quad-3plane.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "quad_pattern17", "split-quad-3plane.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "tria_pattern1", "split_tria_pattern_1.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "tria_pattern2", "split_tria_pattern_2.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "tria_pattern3", "split_tria_pattern_3.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "tria_pattern4", "split_tria_pattern_4.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "tria_pattern5", "split_tria_pattern_5.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "tria_pattern6", "split_tria_pattern_6.bmp", FALSE, 0)
+          ui_itemicon_create(switch_pattern, "tria_pattern7", "split_tria_pattern_7.bmp", FALSE, 0)
+
+$ui_wid_set(patt6, "ENABLE", FALSE)
+$ui_wid_set(patt8, "ENABLE", FALSE)
+$ui_wid_set(patt13, "ENABLE", FALSE)
+$ui_wid_set(patt15, "ENABLE", FALSE)
+$ui_wid_set(patt16, "ENABLE", FALSE)
+$ui_wid_set(patt17, "ENABLE", FALSE)
+
+$     ui_wid_set(frame_pattern, "HEIGHT", 5)
+
+     Y_LOCF += 4.2 + INTER_WIDGET_SPACE + FORM_T_MARGIN
+
+     nelem_dbox_id = ui_databox_create (frame_wid, "", FRAME_L_MARGIN, Y_LOCF, 0, DBOX_WID_SINGLE, "Number of Element", 3, TRUE, "INTEGER", 1)
+
+     Y_LOCF += DBOX_HGT_LABOVE + INTER_WIDGET_SPACE
+
+     string sa_dtype[16](3) = ["ELEM2D", "ELEMEDGE", "ELEMEDGE"]
+	string sa_label[16](3) = ["Element", "Element Edge", "Element Edge"]
+	string sa_callback[32](3) = ["","",""] 
+	
+	sframe_06 = ui_select_frame_set(				@
+	/* parent widget id(input) 	*/	frame_wid,		@
+	/*	select frame callback	*/	CLASS_STR // ".Apply_Click",	@	
+	/* 	select frame label		*/	"Autoexec",	@
+	/*		x				*/	FORM_L_MARGIN,	@	
+	/*		y				*/	Y_LOCF, 		@
+	/*	select databax array	*/	wa_sdbox_06,	@
+	/* 	data type	array		*/	sa_dtype,		@
+	/* 	select databox label array	*/ 	sa_label,	@
+	/*	select databox collback array	*/ 	sa_callback, @
+	/*	label avove logical	*/			TRUE)     
+	
+     Y_LOCF += LABEL_HGT + INTER_WIDGET_SPACE
+
+	ui_wid_set(frame_wid, "HEIGHT", Y_LOCF)
+     
+     Y_LOC += Y_LOCF + INTER_WIDGET_SPACE
+     
+	ui_wid_set(nElem_dbox_id, "ENABLE", FALSE)
+     ui_wid_set(wa_sdbox_06(2), "DATATYPE", "ELEDGE")
+     ui_wid_set(wa_sdbox_06(3), "VISIBLE", FALSE)
+
+$     ui_wid_set(sdbox_id_option1, "SINGLESELECT", TRUE)
+$     ui_wid_set(sdbox_id_option2, "SINGLESELECT", TRUE)
+return frame_wid
+end function
+
+function Apply_Click()
+     uil_primary_file.db_save()
+     $ get global tolerance
+     logical l_conf
+     integer i_warn
+     real r_tol
+
+     pref_global_get(l_conf, i_warn, r_tol)
+
+     string s_item[virtual], s_Elems[virtual], s_option1[virtual], s_option2[virtual]
+
+     ui_wid_get_vstring(switch_pattern, "VALUE", s_item)
+     ui_wid_get_vstring(wa_sdbox_06(1), "VALUE", s_Elems)
+     ui_wid_get_vstring(wa_sdbox_06(2), "VALUE", s_option1)
+     ui_wid_get_vstring(wa_sdbox_06(3), "VALUE", s_option2)
+
+     integer num_nodes_created
+     integer num_elems_created
+     integer num_nodes_deleted
+     integer num_elems_deleted
+
+     string s_nodes_created[virtual]
+     string s_elems_created[virtual]
+     string s_nodes_deleted[virtual]
+     string s_elems_deleted[virtual]
+
+     integer fem_create_mesh_mom_num_elems, fem_create_mesh_mom_num_nodes
+     string fem_create_mesh_m_elems_created[virtual], fem_create_mesh_m_nodes_created[virtual]
+
+     real r_smesh
+     integer i_nmesh, i_opt1, i_opt2
+     string s_opt[virtual]
+
+     switch(s_item)
+          case("quad_pattern1");
+               fem_mod_quad_split( "2_quad", "Manual", s_Elems, "", s_option1, num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted,s_nodes_created,s_elems_created,s_nodes_deleted, s_elems_deleted )
+          case("quad_pattern2");
+               fem_mod_quad_split( "4_quad", "Auto", s_Elems, "", "", num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+$          case("quad_pattern31");
+$               ui_wid_get(nelem_dbox_id, "VALUE", i_nmesh)
+$               fem_mod_quad_split_nm( "nm_quad", "Manual", s_Elems, s_option1, i_nmesh, 1, num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+$          case("quad_pattern32");
+
+          case("quad_pattern41");
+               ui_wid_get(nelem_dbox_id, "VALUE", i_nmesh)
+               Pattern_Split.split_quad_nmesh(s_Elems, i_nmesh)
+
+          case("quad_pattern42")
+               ui_wid_get(nelem_dbox_id, "VALUE", r_smesh)
+               Pattern_Split.split_quad_size_mesh(s_Elems, r_smesh)
+          case("quad_pattern43");
+               ui_wid_get_vstring(nelem_dbox_id, "VALUE", s_opt)
+               Pattern_Split.split_quad_nm_mesh(s_Elems, s_opt, s_option1)
+          case("quad_pattern44");
+               ui_wid_get_vstring(nelem_dbox_id, "VALUE", s_opt)
+               Pattern_Split.split_quad_s1s2_mesh(s_Elems, s_opt, s_option1)
+
+          case("quad_pattern5");
+               Pattern_Split.split_quad_quad3(s_Elems, s_option1)
+               $ fem_mod_quad_split( "3_quad", "Auto", s_Elems, s_option1, "", num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+          case("quad_pattern6");
+
+          case("quad_pattern7");
+               Pattern_Split.split_quad_4_quad_y(s_Elems, s_option1)
+               $ au_break_quad_split.break_quad_4_quad_b( s_Elems, "Split on selected edge", s_option1, TRUE, TRUE, FALSE )
+          case("quad_pattern8");
+          case("quad_pattern9");
+               au_break_quad_split.break_quad_to_quad_tria( s_Elems, s_option1, s_option2, TRUE, TRUE, FALSE )
+
+          case("quad_pattern91");
+               au_break_quad_split.break_quad_to_quad_tria_b( s_Elems, s_option1, "Leave As Is", r_tol, "Tria at selected node", s_option2, TRUE, TRUE, FALSE )
+
+          case("quad_pattern10");
+               fem_mod_quad_split( "2_tria", "Manual", s_Elems, s_option1, "", num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+          case("quad_pattern11");
+               fem_mod_quad_split( "4_tria", "Auto", s_Elems, "", "", num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+          case("quad_pattern12");
+               Pattern_Split.split_quad_tria3(s_Elems, s_option1)
+
+          case("quad_pattern121");
+               au_break_quad_split.break_quad_node_edge( s_Elems, "Leave As Is", r_tol, s_option1, TRUE, TRUE, FALSE )
+
+          case("quad_pattern13");
+               $ CLASSNAME.break_quad_quad_tria2(s_Elems, s_option1)
+               Pattern_Split.break_quad_quad_tria22(s_Elems, s_option1)
+          case("quad_pattern14");
+
+               Pattern_Split.split_quad_2quad_tria(s_Elems, s_option1)
+
+          case("quad_pattern15");
+               Pattern_Split.break_quad_quad2_tria(s_Elems, s_option1)
+
+          case("quad_pattern16");
+
+
+          case("quad_pattern17");
+          case("tria_pattern1");
+               fem_mod_tria_split( "2_tria", "Manual", s_Elems, s_option1, num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+          case("tria_pattern2");
+               fem_mod_tria_split( "3_tria", "Auto", s_Elems, s_option1, num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+          case("tria_pattern3");
+               fem_mod_tria_split( "4_tria", "Auto", s_Elems, s_option1, num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+          case("tria_pattern4");
+               fem_mod_tria_split( "3_quad", "Auto", s_Elems, s_option1, num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+          case("tria_pattern5");
+               fem_mod_tria_split( "Mixed", "Manual", s_Elems, s_option1, num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+          case("tria_pattern6");
+               au_break_tria_split.break_tria_node_edge( s_Elems, "Leave As Is", r_tol, s_option1, TRUE, TRUE, FALSE )
+          case("tria_pattern7");
+               au_break_tria_split.break_tria_node_face(s_Elems, r_tol, s_option1, TRUE, TRUE, FALSE )
+     end switch
+repaint_graphics()
+end function
+
+function cb_pattern(s_item, s_event)
+string s_item[], s_event[]
+
+     dump s_item
+     dump s_event
+
+if(s_event == "OFF")then
+     switch(s_item)
+          case("quad_pattern11");
+               ui_wid_set(wa_sdbox_06(2), "ENABLE", TRUE)
+          default
+               ui_wid_set(nElem_dbox_id, "ENABLE", FALSE)
+               ui_wid_set(wa_sdbox_06(2), "LABEL", "Element Edge List")
+               ui_wid_set(wa_sdbox_06(2), "DATATYPE", "ELEDGE")
+               ui_wid_set(wa_sdbox_06(2), "VISIBLE", TRUE)
+               ui_wid_set(wa_sdbox_06(3), "VISIBLE", FALSE)
+     end switch
+end if
+
+if(s_event == "ON")then
+     switch(s_item)
+          case("quad_pattern2");
+               ui_wid_set(wa_sdbox_06(2), "VISIBLE", FALSE)
+$          case("quad_pattern31");
+$               ui_wid_set(nElem_dbox_id, "ENABLE", TRUE)
+$          case("quad_pattern32");
+$               ui_wid_set(nElem_dbox_id, "ENABLE", TRUE)
+$               ui_wid_set(nElem_dbox_id, "LABEL", "Mesh Size")
+          case("quad_pattern41");
+               ui_wid_set(nelem_dbox_id, "ENABLE", TRUE)
+               ui_wid_set(nelem_dbox_id, "VALUE", 3)
+               ui_wid_set(nelem_dbox_id, "DATATYPE", "INTEGER")
+               ui_wid_set(nElem_dbox_id, "LABEL", "Number of Element")
+               ui_wid_set(wa_sdbox_06(2), "VISIBLE", FALSE)
+          case("quad_pattern42");
+               ui_wid_set(nElem_dbox_id, "ENABLE", TRUE)
+               ui_wid_set(nElem_dbox_id, "LABEL", "Mesh Size")
+               ui_wid_set(wa_sdbox_06(2), "VISIBLE", FALSE)
+          case("quad_pattern43");
+               ui_wid_set(nelem_dbox_id, "ENABLE", TRUE)
+               ui_wid_set(nelem_dbox_id, "DATATYPE", "STRING")
+               ui_wid_set(nelem_dbox_id, "VALUE", "3,3")
+               ui_wid_set(nElem_dbox_id, "LABEL", "Number of Element(M,N)")
+               ui_wid_set(wa_sdbox_06(2), "LABEL", "Element Edge List(M)")
+          case("quad_pattern44");
+               ui_wid_set(nElem_dbox_id, "ENABLE", TRUE)
+               ui_wid_set(nElem_dbox_id, "LABEL", "Mesh Size(S1,S2)")
+               ui_wid_set(nElem_dbox_id, "VISIBLE", TRUE)
+               ui_wid_set(nelem_dbox_id, "VALUE", "100,100")
+               ui_wid_set(wa_sdbox_06(2), "LABEL", "Element Edge List(S1)")
+          case("quad_pattern5");
+               ui_wid_set(wa_sdbox_06(2), "LABEL", "Node List")
+               ui_wid_set(wa_sdbox_06(2), "DATATYPE", "NODE")
+          case("quad_pattern6");
+               ui_wid_set(wa_sdbox_06(2), "LABEL", "Node List")
+               ui_wid_set(wa_sdbox_06(2), "DATATYPE", "NODE")
+          case("quad_pattern9");
+               ui_wid_set(wa_sdbox_06(3), "VISIBLE", TRUE)
+               ui_wid_set(wa_sdbox_06(3), "LABEL", "Node List")
+               ui_wid_set(wa_sdbox_06(3), "DATATYPE", "NODE")
+          case("quad_pattern91");
+               ui_wid_set(wa_sdbox_06(2), "VISIBLE", TRUE)
+               ui_wid_set(wa_sdbox_06(2), "LABEL", "Node List")
+               ui_wid_set(wa_sdbox_06(2), "DATATYPE", "NODE")
+               ui_wid_set(wa_sdbox_06(3), "VISIBLE", TRUE)
+               ui_wid_set(wa_sdbox_06(3), "LABEL", "Node List")
+               ui_wid_set(wa_sdbox_06(3), "DATATYPE", "NODE")
+          case("quad_pattern10");
+               ui_wid_set(wa_sdbox_06(2), "DATATYPE", "NODE")
+               ui_wid_set(wa_sdbox_06(2), "LABEL", "Node List")
+          case("quad_pattern11");
+               ui_wid_set(wa_sdbox_06(2), "VISIBLE", FALSE)
+               ui_wid_set(wa_sdbox_06(3), "VISIBLE", FALSE)
+          case("quad_pattern12");
+               ui_wid_set(wa_sdbox_06(2), "VISIBLE", TRUE)
+          case("quad_pattern121");
+               ui_wid_set(wa_sdbox_06(2), "VISIBLE", TRUE)
+               ui_wid_set(wa_sdbox_06(2), "LABEL", "Node List")
+               ui_wid_set(wa_sdbox_06(2), "DATATYPE", "NODE")
+          case("quad_pattern16");
+               ui_wid_set(nElem_dbox_id, "LABEL", "Number of Element(M,N)")
+               ui_wid_set(nElem_dbox_id, "ENABLE", TRUE)
+               ui_wid_set(wa_sdbox_06(2), "LABEL", "Element Edge List(M)")
+          case("quad_pattern17");
+               ui_wid_set(nElem_dbox_id, "LABEL", "Mesh Size(S1,S2)")
+               ui_wid_set(nElem_dbox_id, "VISIBLE", TRUE)
+               ui_wid_set(wa_sdbox_06(2), "LABEL", "Element Edge List(S1)")
+          case("tria_pattern1");
+               ui_wid_set(wa_sdbox_06(2), "LABEL", "Node List")
+               ui_wid_set(wa_sdbox_06(2), "DATATYPE", "NODE")
+          case("tria_pattern2");
+               ui_wid_set(wa_sdbox_06(2), "VISIBLE", FALSE)
+               ui_wid_set(wa_sdbox_06(3), "VISIBLE", FALSE)
+          case("tria_pattern3");
+               ui_wid_set(wa_sdbox_06(2), "VISIBLE", FALSE)
+               ui_wid_set(wa_sdbox_06(3), "VISIBLE", FALSE)
+          case("tria_pattern4");
+               ui_wid_set(wa_sdbox_06(2), "VISIBLE", FALSE)
+               ui_wid_set(wa_sdbox_06(3), "VISIBLE", FALSE)
+          case("tria_pattern5");
+               ui_wid_set(wa_sdbox_06(2), "DATATYPE", "NODE")
+               ui_wid_set(wa_sdbox_06(2), "LABEL", "Node List")
+          case("tria_pattern6");
+               ui_wid_set(wa_sdbox_06(2), "DATATYPE", "NODE")
+               ui_wid_set(wa_sdbox_06(2), "LABEL", "Node List")
+          case("tria_pattern7");
+               ui_wid_set(wa_sdbox_06(2), "DATATYPE", "NODE")
+               ui_wid_set(wa_sdbox_06(2), "LABEL", "Node List")
+          default;
+               ui_wid_set(nElem_dbox_id, "ENABLE", FALSE)
+               ui_wid_set(wa_sdbox_06(2), "LABEL", "Element Edge List")
+               ui_wid_set(wa_sdbox_06(2), "DATATYPE", "ELEDGE")
+               ui_wid_set(wa_sdbox_06(3), "VISIBLE", FALSE)
+     end switch
+end if
+end function
+end class

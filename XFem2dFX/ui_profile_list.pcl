@@ -1,0 +1,25 @@
+FUNCTION ui_profile_list(wListBox)
+	 widget wListBox
+     INTEGER sec_id, nrec, bytes_per_rec
+     STRING	shape_name[31]
+     STRING  section_name[31](virtual)
+     INTEGER status, cnt
+
+     ui_listbox_items_delete(wListBox)
+
+     status = db_get_all_beam_section_ids()
+
+    cnt = 0
+    sys_allocate_array(section_name, 1, 1)
+    WHILE ((status = db_get_next_beam_section_id(sec_id)) == 0 )
+        cnt += 1
+     	sys_reallocate_array(section_name, 1, cnt)
+
+        status = db_get_beam_section( sec_id, shape_name, section_name(cnt), nrec, bytes_per_rec)
+    END WHILE
+
+    ui_listbox_items_create(wListBox,section_name,section_name,cnt,"")
+
+	return section_name
+
+END FUNCTION

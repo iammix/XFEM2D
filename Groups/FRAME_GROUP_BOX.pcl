@@ -1,0 +1,252 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME FRAME_GROUP_BOX
+#define CLASS_STR "FRAME_GROUP_BOX"
+#define UI_INIT UI_FRAME_GROUP_BOX
+
+CLASS CLASSNAME
+    classwide widget dbox_GroupName, select_frame_id, wa_select_dbox(6)
+
+    function UI_INIT(parent_id, y_loc)
+        widget parent_id
+        real y_loc
+
+        widget frame_wid
+        
+        frame_wid=ui_frame_create(                   @
+        /* parent */             parent_id,           @
+        /*  name  */             "",                @
+        /*    x   */             FRAME_X_LOC_COL1,  @
+        /*    y   */             y_loc,         @
+        /*  width */             FRAME_L_MARGIN + FRAME_WID_SINGLE + FRAME_R_MARGIN,  @
+        /* height */             0.0,               @
+        /*  label */             "Tank Search")
+
+        REAL Y_LOCF = 0
+ 	
+		Y_LOCF = FRAME_T_MARGIN
+
+        dbox_GroupName = ui_databox_create(                         @
+            /*    parent    */                  frame_wid,               @
+            /*   callback   */                  "",                     @
+            /*       x      */                  FRAME_L_MARGIN,         @
+            /*       y      */                  Y_LOCF,                  @
+            /* label_length */                  DBOX_WID_SINGLE,     @
+            /*  box_length  */                  DBOX_WID_SINGLE,      @
+            /*     label    */                  "Group Name :",         @
+            /*     value    */                  "",                     @
+            /*  label_above */                  TRUE,                  @
+            /*   datatype   */                  "STRING",               @
+            /*   num_vals   */                  1)
+
+        Y_LOCF += DBOX_HGT_LABOVE + INTER_WIDGET_SPACE
+
+      select_frame_id = ui_selectframe_create(						@
+      /*  parent  */                       frame_wid,                	@
+      /* callback */                       "",	@
+      /*     x    */                       FORM_L_MARGIN,          	@
+      /*     y    */                       Y_LOCF,                   	@
+      /*   width  */                       SFRAME_WID_SINGLE,      	@
+      /*  height  */                       SFRAME_1SDB_HGT_LABOVE, 	@
+      /*   label  */                       	"Autoexec",		@
+      /*  recycle */                       TRUE)
+    
+      
+      
+      REAL SDBOX_INTER_WIDGET = 0
+            
+      SDBOX_INTER_WIDGET += INTER_WIDGET_SPACE
+      
+      string sa_sdbox_label[15](6) = ["Start X :", "Start Y :", "Start Z :", "End X :", "End Y :", "End Z :" ]      
+      string sa_sdbox_cb[63](6) = ["StartX_cb", "StartY_cb", "StartZ_cb", "EndX_cb", "EndY_cb", "EndZ_cb" ]
+      
+      real incr_box
+      incr_box = SDBOX_Y_NO_LABOVE_INCR
+           
+      integer idx
+      for(idx =1 to 6)
+
+            wa_select_dbox(idx) = ui_selectdatabox_create(                       @
+           /*    parent    */                    select_frame_id,          @
+           /*   callback   */                    sa_sdbox_cb(idx),        @
+           /*       x      */                    SFRAME_L_MARGIN,       @
+           /*       y      */                    SDBOX_INTER_WIDGET ,  @
+           /* label_length */                    SDBOX_LABEL_LEN_SINGLE,                   @
+           /*  box_length  */                    SDBOX_WID_SINGLE / 2,      @
+           /*     label    */                    sa_sdbox_label(idx),           @
+           /*     value    */                    "",                    @
+           /*  label_above */                    FALSE,           @
+           /*   datatype   */                    "NODE",             @
+           /*    prompt    */                    sa_sdbox_label(idx))
+
+            SDBOX_INTER_WIDGET += incr_box
+
+      end for
+                  
+            SDBOX_INTER_WIDGET += INTER_WIDGET_SPACE
+            ui_wid_set(select_frame_id, "HEIGHT", SDBOX_INTER_WIDGET)
+                   
+        Y_LOCF += SDBOX_INTER_WIDGET+INTER_WIDGET_SPACE
+
+        ui_wid_set(frame_wid, "HEIGHT", Y_LOCF)
+
+        y_loc += Y_LOCF + INTER_WIDGET_SPACE
+
+        return frame_wid
+    end function
+
+    function Apply_Click()
+        
+    end function
+    
+    Function StartX_cb(EVENT)
+        string EVENT[]
+
+        integer status
+        real ra_xyz(3)
+        status = CLASSNAME.NodeXYZ( wa_select_dbox(1), ra_xyz)
+
+        if(status != 0) then return status
+
+        integer i
+        for(i=1 to 3)
+            ui_wid_set(wa_select_dbox(i), "VALUE", str_from_real(ra_xyz(i)))
+        end for
+
+        ui_set_focus(wa_select_dbox(4))
+
+    End Function
+
+    Function StartY_cb(EVENT)
+        string EVENT[]
+
+        integer status
+        real ra_xyz(3)
+
+        status = CLASSNAME.NodeXYZ( wa_select_dbox(2), ra_xyz)
+
+        if(status != 0) then return status
+
+        ui_wid_set(wa_select_dbox(2), "VALUE", str_from_real(ra_xyz(2)))
+
+    End Function
+
+    Function StartZ_cb(EVENT)
+        string EVENT[]
+
+        integer status
+        real ra_xyz(3)
+
+        status = CLASSNAME.NodeXYZ( wa_select_dbox(3), ra_xyz)
+
+        if(status != 0) then return status
+
+        ui_wid_set(wa_select_dbox(3), "VALUE", str_from_real(ra_xyz(3)))
+
+    End Function
+
+    Function EndX_cb(EVENT)
+        string EVENT[]
+
+        integer status
+        real ra_xyz(3)
+
+        status = CLASSNAME.NodeXYZ( wa_select_dbox(4), ra_xyz)
+
+        if(status != 0) then return status
+
+        integer i
+        for(i=4 to 6)
+            ui_wid_set(wa_select_dbox(i), "VALUE", str_from_real(ra_xyz(i-3)))
+        end for
+
+        ui_set_focus(dbox_GroupName)
+
+    End Function
+
+    Function EndY_cb(EVENT)
+        string EVENT[]
+
+        integer status
+        real ra_xyz(3)
+
+        status = CLASSNAME.NodeXYZ(wa_select_dbox(5), ra_xyz)
+
+        if(status != 0) then return status
+
+        ui_wid_set(wa_select_dbox(5), "VALUE", str_from_real(ra_xyz(2)))
+
+    End Function
+
+    Function EndZ_cb(EVENT)
+        string EVENT[]
+
+        integer status
+        real ra_xyz(3)
+
+        status = CLASSNAME.NodeXYZ( wa_select_dbox(6), ra_xyz)
+
+        if(status != 0) then return status
+
+        ui_wid_set(wa_select_dbox(6), "VALUE", str_from_real(ra_xyz(3)))
+
+    End Function   
+    
+    Function NodeXYZ(w_sdbox, ra_xyz)
+        widget w_sdbox
+        real ra_xyz()
+
+        string vs_nodeId[virtual]
+
+        ui_wid_get_vstring(w_sdbox, "VALUE", vs_nodeId)
+
+        integer nnode, status
+        nnode = fem_u_count_id_list( LP_SUBLIST_NODE, vs_nodeId, FALSE, status)
+
+        if(status != 0) then return status
+
+        integer nodeId(1)
+
+        fem_u_get_id_list(LP_SUBLIST_NODE, vs_nodeId, 1, TRUE, nodeId)
+
+        $ nnode = fem_u_count_id_list(LP_SUBLIST_NODE, vs_nodeId, FALSE, status)
+
+        db_get_node(nodeId(1), ra_xyz)
+
+        return status
+     End Function
+     
+    Function Apply_Click()
+    
+    string Grp_Name[virtual]
+    
+    ui_wid_get_vstring(dbox_GroupName, "value", Grp_Name)
+
+    string s_corner[virtual]
+    real corner1(3), corner2(3)
+
+    ui_wid_get_vstring(wa_select_dbox(1), "value", s_corner)
+    corner1(1) = str_to_real(s_corner)
+
+    ui_wid_get_vstring(wa_select_dbox(2), "value", s_corner)
+    corner1(2) = str_to_real(s_corner)
+
+    ui_wid_get_vstring(wa_select_dbox(3), "value", s_corner)
+    corner1(3) = str_to_real(s_corner)
+
+    ui_wid_get_vstring(wa_select_dbox(4), "value", s_corner)
+    corner2(1) = str_to_real(s_corner)
+
+    ui_wid_get_vstring(wa_select_dbox(5), "value", s_corner)
+    corner2(2) = str_to_real(s_corner)
+
+    ui_wid_get_vstring(wa_select_dbox(6), "value", s_corner)
+    corner2(3) = str_to_real(s_corner)
+
+
+    if(Grp_Name == "") then Grp_Name = "default_group"
+    
+    GrpFx.group_add_elem_in_box(Grp_Name, corner1, corner2)
+
+    end Function 
+END CLASS

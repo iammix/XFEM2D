@@ -1,0 +1,75 @@
+#include "lpenums.p"
+
+FUNCTION xfem_get_thickness(s_Elems, nElem)
+string s_Elems[]
+integer nElem
+REAL     thk
+integer idx, i, j
+
+REAL     thick_sum = 0.
+INTEGER  gener_elem_type, dof_set_flag, condense_flag
+INTEGER  geom_flag, form_flag, lam_flag, layer_count
+INTEGER  mat_id, material_lin, material_dir
+STRING   prop_name[32]
+REAL     real_array(3)
+INTEGER  data_type, material_id
+INTEGER  int_value, coord_value, node_value, field_value
+STRING   string_value[31]
+
+$ SYS_ALLOCATE_ARRAY( thickness, 1, elem_count )
+integer rids(virtual)
+integer status
+nElem = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_Elems, TRUE, status)
+SYS_ALLOCATE_ARRAY( rids, 1, nElem )
+
+integer ia_ElemID(virtual)
+SYS_ALLOCATE_ARRAY( ia_ElemID, 1, nElem )
+fem_u_get_id_list(LP_SUBLIST_ELEMENT, s_Elems, nElem, TRUE, ia_ElemID)
+db_get_region_for_elements( nElem, ia_ElemID, rids)
+
+integer cnt
+real r_area(virtual), area_sum
+fem_geom_face_area(s_Elems , r_area, cnt)
+
+FOR ( idx = 1 TO nElem )
+
+      db_get_region_definition(                          @
+       /* region ID        */  rids(idx),                  @
+       /* set name         */  prop_name,                    @
+       /* element type ID  */  gener_elem_type,          @
+       /* dof set flag     */  dof_set_flag,             @
+       /* condense flag    */  condense_flag,            @
+       /* geom flag        */  geom_flag,                @
+       /* form flag        */  form_flag,                @
+       /* lam_flag         */  lam_flag,                 @
+       /* layer count      */  layer_count,              @
+       /* material id      */  mat_id,                   @
+       /* material linear  */  material_lin,             @
+       /* material direct  */  material_dir)
+
+      db_get_prop_value(                                 @
+       /* region ID        */  rids(i),                  @
+       /* word of interest */  36,                       @
+       /* material ID      */  material_id,              @
+       /* data type        */  data_type,                @
+       /* INTEGER value    */  int_value,                @
+       /* REAL array       */  real_array,               @
+       /* char STRING      */  string_value,             @
+       /* coord ID         */  coord_value,              @
+       /* node ID          */  node_value,               @
+       /* field ID         */  field_value)
+
+      
+	  $thickness(i) = real_array(1)
+      thick_sum += real_array(1)*r_area(idx)
+	  area_sum += r_area(idx)
+
+ END FOR
+
+ thk = thick_sum / area_sum
+
+ SYS_FREE_ARRAY( rids )
+
+ RETURN thk
+
+END FUNCTION

@@ -1,0 +1,128 @@
+CLASS xfem_vector
+FUNCTION cross_product( vct1, vct2, vct )
+ 
+REAL vct1(), vct2(), vct()
+ 
+vct(1) = vct1(2)*vct2(3) - vct1(3)*vct2(2)
+vct(2) = vct1(3)*vct2(1) - vct1(1)*vct2(3)
+vct(3) = vct1(1)*vct2(2) - vct1(2)*vct2(1)
+ 
+END FUNCTION
+
+FUNCTION scalar_product(vct1, vct2)
+REAL vct1(), vct2(), vct(3), vct_mag
+
+vct(1) = mth_pow(vct2(1) - vct1(1),2)
+vct(2) = mth_pow(vct2(2) - vct1(2),2)
+vct(3) = mth_pow(vct2(3) - vct1(3),2)
+
+vct_mag = mth_sqrt(vct(1) + vct(2) +  vct(3))
+
+return vct_mag
+
+end FUNCTION
+
+FUNCTION Normal( xyzs, nvct )
+ 
+  REAL xyzs(), mag, nvct()
+  REAL vct1(3), vct2(3), vct(3)
+ 
+  vct1(1) = xyzs(2, 1) - xyzs(1, 1)
+  vct1(2) = xyzs(2, 2) - xyzs(1, 2)
+  vct1(3) = xyzs(2, 3) - xyzs(1, 3)
+      
+  vct2(1) = xyzs(3, 1) - xyzs(2, 1)
+  vct2(2) = xyzs(3, 2) - xyzs(2, 2)
+  vct2(3) = xyzs(3, 3) - xyzs(2, 3)
+ 
+  xfem_vector.cross_product( vct2, vct1, vct )
+      
+  mag =mth_sqrt( vct(1)*vct(1) + vct(2)*vct(2) + vct(3)*vct(3) )
+                
+  nvct(1) = vct(1)/mag
+  nvct(2) = vct(2)/mag
+  nvct(3) = vct(3)/mag
+                               
+ END FUNCTION
+ 
+ /*******************************************************************************
+ *
+ *   FUNCTION unit(start_xyz, end_xyz, uvct )
+ *
+ *   Purpose :
+ *             get unit vector from two points
+ *   Input   :
+ *             REAL  array    start_xyz(3)
+ *             REAL  array    end_xyz(3)
+ *
+ *   Output  :
+ *             REAL array   unit_vector(3)
+ *   Return  :    <none>
+ *
+ *******************************************************************************/
+FUNCTION unit(start_xyz, end_xyz, uvct )
+  REAL start_xyz(),end_xyz(), mag, uvct()
+  REAL vct1(3)
+ 
+  vct1(1) = end_xyz(1) - start_xyz(1)
+  vct1(2) = end_xyz(2) - start_xyz(2)
+  vct1(3) = end_xyz(3) - start_xyz(3)
+      
+  mag =mth_sqrt(  vct1(1)*vct1(1) + vct1(2)*vct1(2) + vct1(3)*vct1(3) )
+                
+               uvct(1) = vct1(1)/mag
+               uvct(2) = vct1(2)/mag
+               uvct(3) = vct1(3)/mag
+                               
+ END FUNCTION
+ 
+ /*******************************************************************************
+ *
+ *   FUNCTION unit2(vct1, uvct )
+ *
+ *   Purpose :
+ *             get unit vector from one vector
+ *   Input   :
+ *             REAL  array    vector(3)
+ *   Output  :
+ *             REAL array   unit_vector(3)
+ *   Return  :    <none>
+ *
+ *******************************************************************************/
+ FUNCTION unit2(vct1, uvct )
+  real uvct()
+  real vct1(), mag
+ 
+  mag =mth_sqrt(vct1(1)*vct1(1) + vct1(2)*vct1(2) + vct1(3)*vct1(3))
+                
+               uvct(1) = vct1(1)/mag
+               uvct(2) = vct1(2)/mag
+               uvct(3) = vct1(3)/mag
+                               
+ END FUNCTION
+ 
+ FUNCTION angle_2v(Vector1, Vector2)
+     REAL    Vector1(), Vector2()
+     REAL    retAngles
+     REAL    Num, Dividor
+	 
+$	 Num=0.0
+$	 Dividor=0.0
+$    retAngles=0.0
+    
+	 Dividor = mth_sqrt( Vector1(1) ** 2 + Vector1(2) ** 2 + Vector1(3) ** 2 ) @
+      * mth_sqrt( Vector2(1) ** 2 + Vector2(2) ** 2 + Vector2(3) ** 2 )
+ 
+     Num = Vector1(1)*Vector2(1) + Vector1(2)*Vector2(2) + Vector1(3)*Vector2(3)
+ 
+     retAngles = Num / Dividor
+ 
+     IF (retAngles > 1.0) THEN
+		retAngles = 0.9999
+     ELSE IF (retAngles < -1.0) THEN
+		retAngles = -0.9999
+     END IF
+ 
+     RETURN  mth_acosd(retAngles)
+END FUNCTION
+END CLASS

@@ -1,0 +1,157 @@
+function res_test(elem_list)
+STRING elem_list[]
+$# Purpose : This file provides an example of a call to the
+$# function res_utl_create_elem_result()
+$#
+$# This session file creates new result case and
+$# writes to the database. After that the new result
+$# case can be displayed in the viewport.
+$#
+$# Before running this session file run spool.ses and
+$# create result file spool.op2 as per the instructions
+$# given in it. Import this result file spool.op2 into
+$# spool.db.
+$#
+$# This file can be run by starting a session of
+$# Patran, and running this session file through
+$# the "File","Session","Play" pulldown menus
+$# on the menu bar.
+$#$#
+$# The function res_utl_create_elem_result()
+$# has the following arguments:
+$#
+$# res_utl_create_elem_result( resultids, @
+$# primary_title, @
+$# secondary_title, @
+$# nids, @
+$# ids, @
+$# cidlist, @
+$# datatype, @
+$# location, @
+$# nresults, @
+$# results)
+$#
+$#
+$#---------------------------------------------------------------------
+$# Variable Decleration
+INTEGER resultids(5)
+STRING primary_title[80]
+STRING secondary_title[80]
+INTEGER nids
+INTEGER ids(virtual)
+STRING cidlist[12]
+INTEGER datatype
+STRING location[12]
+INTEGER nresults(VIRTUAL)
+REAL results(VIRTUAL)
+STRING derivation[12]
+INTEGER resloc, cnt
+INTEGER min_loc(12), max_loc(12)
+INTEGER nrc, lcids(virtual), subids(virtual)
+INTEGER nres, primary_id(virtual), secondary_id(virtual)
+INTEGER nsub(virtual), nsub1
+INTEGER result_ids(4), nlayers, layerids(VIRTUAL)
+STRING layerlabels[80](VIRTUAL)
+INTEGER i_return_value
+$#---------------------------------------------------------------------
+$# Opening the file spool.db
+$uil_file_open.go( "./spool.db")
+$#---------------------------------------------------------------------
+$# Clear any previous results from the memory
+res_utl_clear_result()
+$#---------------------------------------------------------------------
+$# Gets the loadcases associated with the results
+res_utl_get_loadcases(nrc, lcids, nsub)
+dump nrc, lcids, nsub
+$#---------------------------------------------------------------------
+$# Gets the subcases
+res_utl_get_subcases(lcids(1), nsub1, subids)
+dump lcids(1), nsub1, subids
+$#---------------------------------------------------------------------
+$# Gets the result ids
+res_utl_get_result_ids ( nrc, lcids, @
+subids, nres, @
+primary_id, secondary_id)
+dump nres, primary_id, secondary_id
+dump nrc
+dump lcids
+dump subids
+$#---------------------------------------------------------------------
+$# Gets the layer positions associated with the results
+result_ids(1) = lcids(1)
+result_ids(2) = subids(1)
+result_ids(3) = primary_id(2)
+result_ids(4) = secondary_id(2)
+res_utl_get_result_layers( result_ids, nlayers, @
+layerids, layerlabels)
+dump nlayers
+dump layerids
+dump layerlabels
+$#---------------------------------------------------------------------
+$# Extracts result data for 10 elements (Elm 1:10) from the database
+resultids(1) = lcids(1)
+resultids(2) = subids(1)
+resultids(3) = primary_id(2)
+resultids(4) = secondary_id(2)
+resultids(5) = layerids(1)
+derivation = "MAG"
+location = "N[odal"
+cidlist = ""
+res_utl_extract_elem_results ( resultids, @
+elem_list, @
+derivation, @
+location, @
+cidlist, @
+datatype, @
+resloc, @
+cnt, @
+ids, @
+nresults, @
+results, @
+min_loc, @
+max_loc )
+$#---------------------------------------------------------------------
+$# Dump all extracted results as a output
+dump datatype
+dump resloc
+dump cnt
+dump ids
+dump nresults
+dump results
+dump min_loc
+dump max_loc
+$#---------------------------------------------------------------------
+$# Argument Initialization
+resultids(1) = lcids(1)
+resultids(2) = subids(1)
+resultids(3) = 0
+resultids(4) = 0
+resultids(5) = layerids(1)
+primary_title = "NEW RESULT CASE"
+secondary_title = "Displacement"
+nids = nres
+location = "N[odal"
+cidlist = ""
+$#---------------------------------------------------------------------
+$# Created new result case in the database as a
+$# "NEW RESULT CASE" (Primary load case title) and
+$# "DISPLACEMENT" (Secondary load case title)
+i_return_value = res_utl_create_elem_result( resultids, @
+primary_title, @
+secondary_title, @
+nids, @
+ids, @
+cidlist, @
+datatype, @
+location, @
+nresults, @
+results )
+$#---------------------------------------------------------------------
+$# Dump the return value of the function and output of the used function.
+$# The resultids(3) and resultids(4) are created newly.
+dump i_return_value
+dump resultids
+$#---------------------------------------------------------------------
+$# Closing the patran environment.
+$#-------------
+end function

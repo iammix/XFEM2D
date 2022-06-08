@@ -1,0 +1,20 @@
+FUNCTION ui_group_list(wListBox)
+		widget wListBox
+		integer num_groups, group_ids(virtual), i
+    	string groups[31](virtual), s_group_ids[5](virtual)
+    	
+    	ideasFx_get_groups(num_groups, groups, group_ids)
+    	
+    	if (num_groups == 0) then return (-1)
+    		
+    	sys_allocate_array(s_group_ids, 1, num_groups)
+    	
+    	for(i=1 to num_groups)
+    		s_group_ids(i) = str_from_integer(group_ids(i))
+    	end for
+    	
+		ui_listbox_items_delete(wListBox)	
+		ui_listbox_items_create(wListBox,s_group_ids,groups,num_groups,"")
+		
+		return groups
+END FUNCTION

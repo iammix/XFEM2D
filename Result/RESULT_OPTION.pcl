@@ -1,0 +1,648 @@
+#include "appforms.p"
+#define CLASSNAME RESULT_OPTION
+#define CLASS_STR "RESULT_OPTION"
+
+CLASS CLASSNAME
+
+    /* Classwide Variables */
+    CLASSWIDE WIDGET form_id
+    CLASSWIDE WIDGET btnSave, btnExit, switch_01, item_id(5), dbox_FringeOption(12)
+    CLASSWIDE WIDGET dbox_view_size_X, dbox_view_size_Y, dbox_CoordTransf
+    CLASSWIDE WIDGET switch_quantity, quantity_item_id(9), dbox_ResultOption(3)
+    CLASSWIDE STRING Result_Name[7]
+    
+    classwide real viewport_size(2)
+    classwide string coord_tf[12]
+    classwide string result_quantity[12]
+    classwide string result_layer[12]
+    classwide string ResultOption[32](3)
+    classwide string FringeOption[32](12)
+    
+FUNCTION init()
+
+    REAL X_LOC, Y_LOC
+
+      form_id=ui_modalform_create(                     @
+      /* form name */        Result_Name,                  @
+      /*     x    */         FORM_X_LOC_SML,      @
+      /*     y    */         FORM_Y_LOC,          @
+      /* position */         "UL",                @
+      /*   width  */         FORM_WID_LRG,        @
+      /*  height  */         0,       @
+      /*   unused  */         "",  @
+      /*  option  */         0)
+
+        X_LOC = INTER_WIDGET_SPACE
+        Y_LOC = FORM_T_MARGIN
+      CLASSNAME.ui_frame_viewport_size(X_LOC, Y_LOC)
+        Y_LOC += INTER_WIDGET_SPACE
+      CLASSNAME.UI_FRAME_RESULT_COORDINATE(X_LOC, Y_LOC)
+        Y_LOC += INTER_WIDGET_SPACE
+      CLASSNAME.ui_frame_result_quantity(X_LOC, Y_LOC)
+   
+        X_LOC += FORM_WID_SML + INTER_WIDGET_SPACE
+        Y_LOC = FORM_T_MARGIN
+      CLASSNAME.ui_frame_layer(X_LOC, Y_LOC)
+
+        Y_LOC += INTER_WIDGET_SPACE
+      CLASSNAME.UI_FRAME_RESULT_SET(X_LOC, Y_LOC)
+      
+        X_LOC += FORM_WID_SML + INTER_WIDGET_SPACE        
+        Y_LOC = FORM_T_MARGIN
+      CLASSNAME.ui_frame_fringe_set(X_LOC, Y_LOC)
+      
+        Y_LOC += INTER_WIDGET_SPACE
+                                    
+      btnSave =ui_button_create(                     @
+      /*   parent  */           form_id,             @
+      /*  callback */           "cb_Save",                  @
+      /*     x     */           X_LOC + INTER_WIDGET_SPACE,  @
+      /*     y     */           Y_LOC ,           @
+      /*   width   */           BUTTON_WID_HALF,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Save",             @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           FALSE)
+
+      btnExit = ui_button_create(                     @
+      /*   parent  */            form_id,             @
+      /*  callback */            "cb_Exit",         @
+      /*     x     */            X_LOC + INTER_WIDGET_SPACE + BUTTON_WID_HALF + INTER_WIDGET_SPACE,  @
+      /*     y     */            Y_LOC,           @
+      /*   width   */            BUTTON_WID_HALF,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Exit",            @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+
+      X_LOC += FORM_WID_SML + INTER_WIDGET_SPACE
+      
+      Y_LOC += BUTTON_DEFAULT_HGT  + @
+                   INTER_WIDGET_SPACE
+
+      ui_wid_set(form_id,"HEIGHT",Y_LOC)
+      ui_wid_set(form_id,"WIDTH",X_LOC)
+    
+
+END FUNCTION
+
+FUNCTION UI_FRAME_VIEWPORT_SIZE(X_LOC, Y_LOC)
+real X_LOC, Y_LOC
+
+widget frame_id
+
+    
+     frame_id = ui_frame_create(                       @
+                    /* Parent     */  form_id,         @
+                    /* callback   */  "",                   @
+                    /*   x        */  X_LOC,  @
+                    /*   y        */  Y_LOC,        @
+                    /* width      */  FORM_WID_SML,           @
+                    /* height     */  0,          @
+                    /* title      */  "VIEWPORT SIZE :")
+      
+
+      dbox_view_size_X = ui_databox_create(                 @
+      /*    parent    */              frame_id,  @
+      /*   callback   */              "",                   @
+      /*       x      */              FRAME_L_MARGIN,       @
+      /*       y      */              FRAME_T_MARGIN,           @
+      /* label_length */              0.0,                  @
+      /*  box_length  */              1,    @
+      /*     label    */              "X :",                @
+      /*     value    */              16.5,                 @
+      /*  label_above */              FALSE,                @
+      /*   datatype   */              "REAL",               @
+      /*   num_vals   */              1)
+
+      dbox_view_size_Y=ui_databox_create(                   @
+      /*    parent    */            frame_id,    @
+      /*   callback   */            "",                     @
+      /*       x      */            FRAME_L_MARGIN + 1 + INTER_GROUP_SPACE,     @
+      /*       y      */            FRAME_T_MARGIN,             @
+      /* label_length */            0.0,                    @
+      /*  box_length  */            1,      @
+      /*     label    */            "Y :",                  @
+      /*     value    */            10.0,                    @
+      /*  label_above */            FALSE,                  @
+      /*   datatype   */            "REAL",                 @
+      /*   num_vals   */            1)
+
+        Y_LOC = FORM_T_MARGIN + DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE       
+
+        ui_wid_set(frame_id, "HEIGHT", Y_LOC)
+        
+END FUNCTION
+
+FUNCTION UI_FRAME_RESULT_COORDINATE(X_LOC, Y_LOC)
+REAL X_LOC, Y_LOC
+WIDGET frame_id
+
+    frame_id = ui_frame_create(                         @
+                    /* Parent     */  form_id,          @
+                    /* callback   */  "",               @
+                    /*   x        */  X_LOC,            @
+                    /*   y        */  Y_LOC,            @
+                    /* width      */  FORM_WID_SML,     @
+                    /* height     */  0,                @
+                    /* title      */    "COORDINATE TRANSFORMATION :")
+
+     dbox_CoordTransf = ui_databox_create(                    @
+      /*    parent    */              frame_id,             @
+      /*   callback   */              "",                   @
+      /*       x      */              FRAME_L_MARGIN,       @
+      /*       y      */              FRAME_T_MARGIN,       @
+      /* label_length */              0.0,                  @
+      /*  box_length  */              1.5,                    @
+      /*     label    */              "Coordinate Frame :", @
+      /*     value    */              "Coord 0",            @
+      /*  label_above */              FALSE,                @
+      /*   datatype   */              "STRING",             @
+      /*   num_vals   */              1)
+
+        real height
+        height = FORM_T_MARGIN + DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE                          
+     
+        ui_wid_set(frame_id, "HEIGHT", height)
+        
+        Y_LOC += height
+        
+END FUNCTION
+
+FUNCTION UI_FRAME_RESULT_QUANTITY(X_LOC, Y_LOC)
+real X_LOC, Y_LOC
+widget frame_id
+      
+    X_LOC += FORM_L_MARGIN
+    frame_id = ui_frame_create(                       @
+                    /* Parent     */  form_id,         @
+                    /* callback   */  "",                   @
+                    /*   x        */  X_LOC,        @
+                    /*   y        */  Y_LOC,        @
+                    /* width      */  FORM_WID_SML,           @
+                    /* height     */  0,          @
+                    /* title      */    "QUANTITY :")
+      
+    string items[7](9) = ["VONM", "MAJOR", "MINOR", "XX", "YY", "ZZ", "XY", "YZ", "ZX"]
+
+   
+    integer idx
+        
+    switch_quantity = ui_switch_create(                @
+              /*   parent   */           frame_id,       @
+              /*  callback  */           "",   @
+              /*      x     */           FRAME_L_MARGIN,  @
+              /*      y     */           FORM_T_MARGIN + LABEL_HGT,  @
+              /*  num_cols  */           1,              @
+              /*    label   */           "",     @
+              /* always_one */           FALSE)
+    
+    for(idx=1 to 9)
+          quantity_item_id(idx) = ui_item_create(            @
+            /*   parent   */       switch_quantity,  @
+            /*    name    */       items(idx),      @
+            /*    label   */       items(idx),      @
+            /* toggleable */       TRUE)
+    end for
+        
+    real Height
+    Height += SWITCH_3R_HGT_NO_LABEL*3 + FRAME_B_MARGIN*2 + INTER_WIDGET_SPACE
+   
+    ui_wid_set(frame_id, "HEIGHT", Height)
+
+    Y_LOC += Height
+  
+END FUNCTION
+
+FUNCTION UI_FRAME_LAYER(X_LOC, Y_LOC)
+real X_LOC, Y_LOC
+widget frame_id
+
+    Y_LOC += FORM_T_MARGIN
+    frame_id = ui_frame_create(                       @
+                    /* Parent     */  form_id,         @
+                    /* callback   */  "",                   @
+                    /*   x        */  X_LOC, @
+                    /*   y        */  Y_LOC,        @
+                    /* width      */  FORM_WID_SML,           @
+                    /* height     */  0,          @
+                    /* title      */  "POSITION :")
+      
+    string items[10](5) = ["Average", "Maximum", "At Z1", "At Z2", "NON LAYER"]
+        
+    switch_01=ui_switch_create(                @
+      /*   parent   */           frame_id,       @
+      /*  callback  */           "",   @
+      /*      x     */           FRAME_L_MARGIN,  @
+      /*      y     */           FORM_T_MARGIN + LABEL_HGT,  @
+      /*  num_cols  */           1,              @
+      /*    label   */           "",     @
+      /* always_one */           FALSE)
+    
+    integer idx
+    for(idx = 1 to 5)
+      item_id(idx)=ui_item_create(            @
+      /*   parent   */       switch_01,  @
+      /*    name    */       items(idx),      @
+      /*    label   */       items(idx),      @
+      /* toggleable */       TRUE)
+    end for
+
+    real Height
+    Height = FRAME_T_MARGIN + SWITCH_3R_HGT_NO_LABEL + SWITCH_2R_HGT_NO_LABEL + FRAME_B_MARGIN + INTER_WIDGET_SPACE
+    
+    ui_wid_set(frame_id, "HEIGHT", Height)
+    
+    Y_LOC += HEIGHT
+    
+END FUNCTION
+
+FUNCTION UI_FRAME_RESULT_SET(X_LOC, Y_LOC)
+real X_LOC, Y_LOC
+
+widget frame_id
+
+    Y_LOC += INTER_WIDGET_SPACE
+
+    frame_id = ui_frame_create(                       @
+                    /* Parent     */  form_id,         @
+                    /* callback   */  "",                   @
+                    /*   x        */  X_LOC,  @
+                    /*   y        */  Y_LOC,        @
+                    /* width      */  FORM_WID_SML,           @
+                    /* height     */  0,          @
+                    /* title      */  "RESULT OPTION :")
+      
+    string labels[16](3) = ["Average Domain", "Average Method", "Extrapolation"]
+    string callbacks[32](3) = ["cb_Average_Domain", "cb_Average_Method", "cb_Extrapolation"]
+        
+    integer idx
+    real Height
+    Height = FRAME_T_MARGIN
+      for(idx = 1 to 3)
+
+           dbox_ResultOption(idx) =ui_databox_create(                   @
+            /*    parent    */          frame_id,          @
+            /*   callback   */          callbacks(idx),                @
+            /*       x      */          FORM_L_MARGIN ,     @
+            /*       y      */          height,     @
+            /* label_length */          DBOX_WID_SINGLE/2 , @
+            /*  box_length  */          DBOX_WID_SINGLE/2,   @
+            /*     label    */          labels(idx),  @
+            /*     value    */          "",                @
+            /*  label_above */          FALSE,              @
+            /*   datatype   */          "STRING",          @
+            /*   num_vals   */          1)
+
+      Height += DBOX_HGT_NO_LABOVE  + @
+                            INTER_WIDGET_SPACE
+
+      end for
+    
+    Height += FRAME_B_MARGIN + INTER_WIDGET_SPACE
+    
+    ui_wid_set(frame_id, "HEIGHT", Height)
+
+    Y_LOC += Height
+    
+END FUNCTION
+
+FUNCTION UI_FRAME_FRINGE_SET(X_LOC, Y_LOC)
+real X_LOC, Y_LOC
+
+widget frame_id
+
+    Y_LOC += INTER_WIDGET_SPACE
+
+    frame_id = ui_frame_create(                        @
+                    /* Parent     */  form_id,         @
+                    /* callback   */  "",              @
+                    /*   x        */  X_LOC,           @
+                    /*   y        */  Y_LOC,           @
+                    /* width      */  FORM_WID_SML,    @
+                    /* height     */  0,               @
+                    /* title      */  "FRINGE OPTION :")
+      
+    string labels[16](12) = ["Range", "RangeOverwrite", "FringeStyle", "Shading", "ElemEdge", @
+                             "Shrink", "TitleDisplay", "MinMaxDisplay", "ValueDisplay", @
+                             "Filter",  "ScaleFactor", "LabelStyle"]
+                                
+    string callbacks[31](12) = ["", "cb_RangeOverwrite", "cb_FringeStyle", "cb_Shade" @
+                                "cb_ElemEdge","","cb_TitleDisplay","cb_MinMax", @
+                                "cb_Value", "cb_Filter","","cb_LabelStyle"]                                
+    integer idx
+
+    REAL Height
+    Height = FRAME_T_MARGIN
+      for(idx = 1 to 12)
+
+           dbox_FringeOption(idx) = ui_databox_create(                   @
+            /*    parent    */          frame_id,          @
+            /*   callback   */          callbacks(idx),                @
+            /*       x      */          FORM_L_MARGIN ,     @
+            /*       y      */          Height,     @
+            /* label_length */          DBOX_WID_SINGLE/2 , @
+            /*  box_length  */          DBOX_WID_SINGLE/2,   @
+            /*     label    */          labels(idx),  @
+            /*     value    */          "",                @
+            /*  label_above */          FALSE,              @
+            /*   datatype   */          "STRING",          @
+            /*   num_vals   */          1)
+
+            Height += DBOX_HGT_NO_LABOVE  + @
+                            INTER_WIDGET_SPACE
+
+      end for
+    
+    Height += FRAME_B_MARGIN + INTER_WIDGET_SPACE
+    
+    ui_wid_set(frame_id, "HEIGHT", Height)
+
+    Y_LOC += Height
+    
+END FUNCTION
+
+FUNCTION display()
+
+	ui_form_display(CLASS_STR)
+    CLASSNAME.ResultOption_Open()
+    
+END FUNCTION /* display */
+
+FUNCTION cb_Exit()
+
+        ui_wid_save(CLASS_STR)
+        ui_form_hide(CLASS_STR)
+
+
+END FUNCTION
+
+FUNCTION cb_Save()
+
+global string IDEASX_HOME[64]
+
+integer f_id
+string fname[64]
+
+    fname = IDEASX_HOME // "ResultOption.INI"
+
+    text_open( fname,"ow", 0,0, f_id)
+
+	ui_wid_get(dbox_view_size_X, "VALUE", viewport_size(1))
+    ui_wid_get(dbox_view_size_Y, "VALUE", viewport_size(2))
+    
+    text_write_string(f_id, "Viewport Size :")
+    text_write(f_id, "%2F6%", 0, viewport_size, "")
+
+    text_write_string(f_id, "Coordinate Transformation :")    
+    
+    ui_wid_get(dbox_CoordTransf, "VALUE", coord_tf)
+    text_write_string(f_id, coord_tf)
+    
+    text_write_string(f_id, "Quantity :")    
+    
+    ui_wid_get(switch_quantity, "VALUE", result_quantity)
+    text_write_string(f_id, result_quantity)
+    
+    text_write_string(f_id, "Position :")
+
+    ui_wid_get(switch_01, "VALUE", result_layer)
+    text_write_string(f_id, result_layer)
+    
+    text_write_string(f_id, "Result Option :")
+    
+    integer idx
+
+    for(idx= 1 to 3)
+        ui_wid_get(dbox_ResultOption(idx), "VALUE",ResultOption(idx))
+        text_write_string(f_id, ResultOption(idx))
+    end for 
+
+    text_write_string(f_id, "Fringe Option :")
+    string FringeOptionLabel[15]    
+    for(idx = 1 to 12)
+
+        ui_wid_get(dbox_FringeOption(idx), "LABEL",FringeOptionLabel)
+        ui_wid_get(dbox_FringeOption(idx), "VALUE",FringeOption(idx))
+        
+        FringeOption(idx) = FringeOptionLabel //":"// FringeOption(idx) 
+        text_write_string(f_id, FringeOption(idx))
+
+	end for
+
+    text_close(f_id, "")
+
+    sys_class_set("RESULT_REPORT_TOOLS", "r_viewport_size",viewport_size)
+    sys_class_set("RESULT_REPORT_TOOLS", "s_COORDTF", coord_tf)
+    sys_class_set("RESULT_REPORT_TOOLS", "s_result_quantity", result_quantity)
+    sys_class_set("RESULT_REPORT_TOOLS", "s_result_layer", result_layer)
+    sys_class_set("RESULT_REPORT_TOOLS", "s_ResultOption", ResultOption)    
+    sys_class_set("RESULT_REPORT_TOOLS", "s_FringeOption",FringeOption)
+
+END FUNCTION
+
+FUNCTION ResultOption_Open()
+integer idx
+
+    viewport_size = sys_class_get("RESULT_REPORT_TOOLS", "r_viewport_size")
+    ui_wid_set(dbox_view_size_X, "VALUE", viewport_size(1))
+    ui_wid_set(dbox_view_size_Y, "VALUE", viewport_size(2))
+    
+    coord_tf = sys_class_get("RESULT_REPORT_TOOLS", "s_COORDTF")     
+    ui_wid_set(dbox_CoordTransf, "VALUE", coord_tf)
+
+    result_quantity = sys_class_get("RESULT_REPORT_TOOLS", "s_result_quantity")
+    ui_wid_set(switch_quantity, "VALUE", result_quantity)
+ 
+    result_layer = sys_class_get("RESULT_REPORT_TOOLS", "s_result_layer")
+    ui_wid_set(switch_01, "VALUE", result_layer)
+    
+    ResultOption = sys_class_get("RESULT_REPORT_TOOLS", "s_ResultOption")    
+    for(idx = 1 to 3)
+        ui_wid_set(dbox_ResultOption(idx), "VALUE", ResultOption(idx))
+	end for
+
+    FringeOption = sys_class_get("RESULT_REPORT_TOOLS", "s_FringeOption")
+
+    for(idx = 1 to 12)
+        ui_wid_set(dbox_FringeOption(idx), "VALUE", str_token(FringeOption(idx),":",2))
+	  end for
+
+END FUNCTION
+
+FUNCTION cb_Range(ACTION)
+string ACTION[]
+string s_label[12]
+
+IF(ACTION == "GAIN")THEN
+    ui_exec_function("OptionItemList", "init")
+    ui_exec_function("OptionItemList", "display")
+    string sv_ItemList[32](1) = ["Fri_default_Fringe"]
+    sys_class_set("OptionItemList", "wdbox_option", dbox_FringeOption(1))
+    OptionItemList.option_items("Range", sv_ItemList, 1)
+        
+END IF
+
+END FUNCTION
+
+FUNCTION cb_FringeStyle(ACTION)
+string ACTION[]
+widget w_OptionList
+string s_label[12]
+
+IF(ACTION == "GAIN")THEN
+    ui_exec_function("OptionItemList", "init")
+    ui_exec_function("OptionItemList", "display")
+    string sv_ItemList[32](4) = ["Discrete/Smooth","Continuous", "ElemFill", "Discrete/Flat"]
+    sys_class_set("OptionItemList", "wdbox_option", dbox_FringeOption(3))
+    OptionItemList.option_items("Fringe Style", sv_ItemList, 4)
+        
+END IF
+
+END FUNCTION
+
+FUNCTION cb_ElemEdge(ACTION)
+string ACTION[]
+
+IF(ACTION == "GAIN")THEN
+    ui_exec_function("OptionItemElemEdge", "init")
+    ui_exec_function("OptionItemElemEdge", "display")
+    sys_class_set("OptionItemElemEdge", "wdbox_option", dbox_FringeOption(5))
+        
+END IF
+
+END FUNCTION
+
+FUNCTION cb_Shade(ACTION)
+string ACTION[]
+widget w_OptionList
+string s_label[12]
+
+IF(ACTION == "GAIN")THEN
+    ui_exec_function("OptionItemList", "init")
+    ui_exec_function("OptionItemList", "display")
+    string sv_ItemList[32](3) = ["None","Shaded", "Transparent"]
+    sys_class_set("OptionItemList", "wdbox_option", dbox_FringeOption(4))
+    OptionItemList.option_items("Shading", sv_ItemList, 3)
+        
+END IF
+
+END FUNCTION
+
+FUNCTION cb_Filter(ACTION)
+string ACTION[]
+widget w_OptionList
+string s_label[12]
+
+IF(ACTION == "GAIN")THEN
+    ui_exec_function("OptionItemFilter", "init")
+    ui_exec_function("OptionItemFilter", "display")
+    string sv_ItemList[32](1) = ["None"]
+    sys_class_set("OptionItemFilter", "wdbox_option", dbox_FringeOption(10))
+    
+    $ OptionItemList.option_items("Filter", sv_ItemList, 1)
+        
+END IF
+
+END FUNCTION
+
+FUNCTION cb_LabelStyle(ACTION)
+string ACTION[]
+string s_label[12]
+
+IF(ACTION == "GAIN")THEN
+    ui_exec_function("OptionItemLabelStyle", "init")
+    ui_exec_function("OptionItemLabelStyle", "display")
+$    string sv_ItemList[32](5) = ["ShapeFunc","Average", "Centroid", "Min", "Max"]
+    sys_class_set("OptionItemLabelStyle", "wdbox_option", dbox_FringeOption(12))
+
+END IF
+
+END FUNCTION
+
+
+FUNCTION cb_Average_Domain(ACTION)
+string ACTION[]
+string s_label[12]
+
+IF(ACTION == "GAIN")THEN
+    ui_exec_function("OptionItemList", "init")
+    ui_exec_function("OptionItemList", "display")
+    string sv_ItemList[32](6) = ["All", "Material", "Property", "Target", "EType", "Element"]
+    sys_class_set("OptionItemList", "wdbox_option", dbox_ResultOption(1))
+    OptionItemList.option_items("Extrapolation", sv_ItemList, 6)
+END IF
+END FUNCTION
+
+FUNCTION cb_Average_Method(ACTION)
+string ACTION[]
+string s_label[12]
+
+IF(ACTION == "GAIN")THEN
+    ui_exec_function("OptionItemList", "init")
+    ui_exec_function("OptionItemList", "display")
+    string sv_ItemList[32](4) = ["DeriveAverage","AverageDerive", "Difference", "Sum"]
+    sys_class_set("OptionItemList", "wdbox_option", dbox_ResultOption(2))
+    OptionItemList.option_items("Extrapolation", sv_ItemList, 4)
+END IF
+END FUNCTION
+
+FUNCTION cb_Extrapolation(ACTION)
+string ACTION[]
+string s_label[12]
+
+IF(ACTION == "GAIN")THEN
+    ui_exec_function("OptionItemList", "init")
+    ui_exec_function("OptionItemList", "display")
+    string sv_ItemList[32](5) = ["ShapeFunc","Average", "Centroid", "Min", "Max"]
+    sys_class_set("OptionItemList", "wdbox_option", dbox_ResultOption(3))
+    OptionItemList.option_items("Extrapolation", sv_ItemList, 5)
+END IF
+END FUNCTION
+
+function cb_RangeOverwrite(ACTION)
+string ACTION[]
+
+IF(ACTION == "GAIN")THEN
+    ui_exec_function("OptionOnOff", "init")
+    ui_exec_function("OptionOnOff", "display")
+    sys_class_set("OptionOnOff", "wdbox_option", dbox_FringeOption(2))
+END IF
+
+end function
+
+
+function cb_TitleDisplay(ACTION)
+string ACTION[]
+
+IF(ACTION == "GAIN")THEN
+    ui_exec_function("OptionOnOff", "init")
+    ui_exec_function("OptionOnOff", "display")
+    sys_class_set("OptionOnOff", "wdbox_option", dbox_FringeOption(7))
+END IF
+
+end function
+
+function cb_MinMax(ACTION)
+string ACTION[]
+
+IF(ACTION == "GAIN")THEN
+    ui_exec_function("OptionOnOff", "init")
+    ui_exec_function("OptionOnOff", "display")
+    sys_class_set("OptionOnOff", "wdbox_option", dbox_FringeOption(8))
+END IF
+
+end function
+
+function cb_Value(ACTION)
+string ACTION[]
+
+IF(ACTION == "GAIN")THEN
+    ui_exec_function("OptionOnOff", "init")
+    ui_exec_function("OptionOnOff", "display")
+    sys_class_set("OptionOnOff", "wdbox_option", dbox_FringeOption(9))
+END IF
+
+end function
+
+END CLASS

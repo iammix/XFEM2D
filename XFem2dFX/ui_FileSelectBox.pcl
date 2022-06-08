@@ -1,0 +1,139 @@
+ /*$$   ANALYSIS -  Select an Output File Name   */
+ /* 
+  *  Purpose:
+  *     Create the Analysis Select File Form for use by the Analysis
+  *     Import Model and the Analysis Import Results Forms for the
+  *     Miracle analysis code. 
+  *
+  *  Input:
+  *     <none>
+  *
+  *  Output:
+  *     <none>
+  *
+  */
+
+#include "appforms.p"
+#include "lpenums.i"
+#include "uiforms.p"
+#define CLASSNAME ui_FileSelectBox
+#define CLASS_STR "ui_FileSelectBox"
+
+CLASS CLASSNAME
+
+   CLASSWIDE WIDGET selfile_form, res_frame_id, res_file_id
+ 
+   CLASSWIDE REAL file_height, form_height
+
+   CLASSWIDE WIDGET set_file_dbox
+
+
+   FUNCTION init()
+
+      REAL file_width
+
+/*
+ *  Define the heights for the file selection form
+ */
+
+      file_height = FILE_7L_HGT
+      form_height = FORM_2H_MARGIN + FRAME_2EDGE + file_height
+
+      file_width = FORM_WID_MED - FORM_2H_MARGIN - FRAME_2EDGE
+
+
+
+      /*
+       *  Create the Selected Analysis File Form
+       */
+
+      selfile_form = ui_form_create(                      @
+                /*callback  */      "",                   @
+                /*    x     */     FORM_X_LOC_LRG_NX2_SML,@
+                /*    y     */     FORM_Y_LOC,            @
+                /* position */     "UL",                  @
+                /*  width   */     FORM_WID_MED,          @
+                /*  height  */     form_height,           @
+                /*  label   */     "Select File",         @
+                /* iconname */     "" )
+
+      /*
+       *  Create the file widget
+       */
+
+      res_frame_id = ui_frame_create(                       @
+                    /* Parent     */  selfile_form,         @
+                    /* callback   */  "",                   @
+                    /*   x        */  FORM_L_MARGIN,        @
+                    /*   y        */  FORM_T_MARGIN,        @
+                    /* width      */  file_width,           @
+                    /* height     */  file_height,          @
+                    /* title      */    "")
+
+      
+      res_file_id = ui_file_create(                         @
+                  /*      parent     */  res_frame_id,      @
+                  /*     callback    */  "select_file",     @
+                  /*        x        */  0.0,               @
+                  /*        y        */  0.0,               @
+                  /*      width      */  file_width,        @
+                  /*     num_rows    */  7,                 @
+                  /*   filter_label  */  "Filter",          @
+                  /*   filter_mask   */  "*.*",             @
+                  /*    dirs_label   */  "Directories",     @
+                  /*   files_label   */  "Available Files", @
+                  /* selection_label */  "Selected Results File",@
+                  /*    selection    */  "",                @
+                  /*     ok_label    */  "Apply",           @
+                  /*   filter_label  */  "Filter",          @
+                  /*   cancel_label  */  "Cancel"           )
+
+   END FUNCTION   /* init */
+ 
+   FUNCTION display(wdbox, filter_mask)
+        widget wdbox
+        string filter_mask[]
+
+      IF( db_is_open() != TRUE ) THEN
+      user_message( "ERROR", 100000, "manager POOH", "DB is not opend. Please check it and try again. from POOH :-)" )
+      RETURN FALSE
+      END IF
+      set_file_dbox = wdbox
+      ui_form_display( CLASS_STR )
+      ui_wid_set(res_file_id, "FILTER", filter_mask)
+      ui_wid_save(CLASS_STR)
+
+
+   END FUNCTION   /* display */
+
+
+   FUNCTION select_file( file_name, mode)
+
+      STRING file_name[], mode[]
+
+      /*
+       *  Need to set the value of classwide variable
+       *  res_file_name so that get_res_file_name() works.
+       */
+
+      
+      IF (mode == "OPEN" ) THEN
+
+         CLASSNAME.set_data(file_name)
+
+      END IF
+
+         ui_form_hide(CLASS_STR)
+         ui_form_delete(CLASS_STR)
+
+    END FUNCTION   /* select_file */
+
+    FUNCTION set_data( fname )
+
+      string fname[]
+
+      ui_wid_set(set_file_dbox, "VALUE", fname)
+
+    END FUNCTION
+
+END CLASS   /* select_file */

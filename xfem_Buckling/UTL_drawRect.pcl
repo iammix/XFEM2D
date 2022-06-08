@@ -1,0 +1,38 @@
+#include "lpenums.p"
+#define CLASSNAME         UTL_markID
+
+/*
+  panel_line      segID : 1
+  panelID_text    segUD : 2
+  thickness_text  segID : 3
+  plus_marker      segID : 4
+  square_marker   segID : 5
+ 
+*/
+
+FUNCTION UTL_drawRect(s_Elems, ra_corner)
+   string s_Elems[]
+   real ra_corner()
+
+   string point1_list[virtual]
+   string point2_list[virtual]
+   string point3_list[virtual]
+   string point4_list[virtual]
+
+   point1_list = list_in_bracket_from_xyz("[ ]", ra_corner(1,1:3))
+   point2_list = list_in_bracket_from_xyz("[ ]", ra_corner(2,1:3))
+   point3_list = list_in_bracket_from_xyz("[ ]", ra_corner(3,1:3))
+   point4_list = list_in_bracket_from_xyz("[ ]", ra_corner(4,1:3))
+
+   string sgm_create_surface_created_ids[VIRTUAL]
+   
+   sgm_const_surface_vertex( "#", point1_list, point2_list, point3_list, point4_list, sgm_create_surface_created_ids )
+   dump s_Elems
+   dump sgm_create_surface_created_ids
+   sgm_assoc_element_surface_v1( s_Elems, sgm_create_surface_created_ids, 17 )
+   integer surface_id(1)
+	fem_u_get_id_list(LP_SUBLIST_SURFACE, sgm_create_surface_created_ids, 1, TRUE, surface_id)
+	/* LOGICAL domesg If TRUE, issue a message if error condition occurs. */
+	 
+   return surface_id(1)
+END FUNCTION

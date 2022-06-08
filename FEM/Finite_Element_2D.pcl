@@ -1,0 +1,474 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME Finite_Element_2D
+#define CLASS_STR "Finite_Element_2D"
+#define MY_APP "Finite Element 2D"
+
+class CLASSNAME
+
+classwide widget form_id, opt_Action, opt_Object, opt_Method, btn_Apply, btn_Exit
+classwide widget frame_01, frame_02, frame_03, frame_04, frame_05, frame_06, frame_07, frame_08
+classwide widget frame_09, frame_10, frame_11, frame_12, frame_13, frame_14
+classwide real y_loc01, y_loc02, y_loc03, y_loc04, y_loc05, y_loc06, y_loc07, y_loc08, y_loc09
+classwide real y_loc10, y_loc11, y_loc12, y_loc13, y_loc14
+
+function init()
+    real yloc = 0
+
+	form_id = ui_form_create(CLASS_STR,       @
+          /* x location */  FORM_X_LOC ,     @
+          /* y location */  FORM_Y_LOC,"ul", @
+          /* width      */  FORM_WID_SML,    @
+          /* height     */  FORM_HGT_TALL,   @
+          /* label      */  MY_APP,       @
+                            "")
+
+	opt_Action = ui_optionmenu_create(  form_id,            @
+                                        "cb_Action",        @
+                                        AOM_MENU_X_LOC,     @
+                                        ACTION_MENU_Y_LOC,  @
+                                        AOM_MENU_LABEL_LEN, @
+                                        "ACTION",           @
+                                        FALSE )
+
+	ui_item_create(opt_Action, "CREATE", "Create", TRUE)
+	ui_item_create(opt_Action, "MODIFY", "Modify", TRUE)
+	ui_item_create(opt_Action, "MOVE", "Move", TRUE)
+	ui_item_create(opt_Action, "COPY", "Copy", TRUE)
+	ui_item_create(opt_Action, "DELETE", "Delete", TRUE)
+
+	opt_Object = ui_optionmenu_create(  form_id,                @
+                                        "cb_Object",            @
+                                        AOM_MENU_X_LOC,         @
+                                        OBJECT_MENU_Y_LOC,      @
+                                        AOM_MENU_LABEL_LEN,     @
+                                        "OBJECT",               @
+                                        FALSE )
+
+    opt_Method = ui_optionmenu_create(  form_id,                @
+                                        "cb_Method",            @
+                                        AOM_MENU_X_LOC,         @
+                                        METHOD_MENU_Y_LOC,      @
+                                        AOM_MENU_LABEL_LEN,     @
+                                        "METHOD",               @
+                                        FALSE )
+
+    ui_separator_create (  form_id, "",           @
+                            0.0,                   @
+                            AOM_SEPARATOR_Y_LOC,   @
+                            FORM_WID_SML,          @
+                            TRUE )
+
+    yloc += AOM_SEPARATOR_Y_LOC + INTER_WIDGET_SPACE
+
+	y_loc01 = yloc
+	frame_01 = FRAME_CREATE_ELEM_EDIT.UI_FRAME_CREATE_ELEM_EDIT(form_id, y_loc01)
+	
+	y_loc02 = yloc
+	frame_02 = FRAME_CREATE_ELEM_ELEMEDGE.UI_FRAME_CREATE_ELEM_ELEMEDGE(form_id, y_loc02)
+	
+	y_loc03 = yloc
+	frame_03 = FRAME_CREATE_ELEM_BEAMTOSHL.UI_FRAME_CREATE_ELEM_BEAMTOSHL(form_id, y_loc03)
+	
+	y_loc04 = yloc
+	frame_04 = FRAME_DELETE_FEM.UI_FRAME_DELETE_FEM(form_id, y_loc04)
+	
+	y_loc05 = yloc
+	frame_05 = FRAME_MODIFY_ELEM_CONNECT.UI_FRAME_MODIFY_ELEM_CONNECT(form_id, y_loc05)
+     
+	y_loc06 = yloc
+     frame_06 = FRAME_MODIFY_ELEM_LINESPLIT.UI_FRAME_MODIFY_ELEM_LINESPLIT(form_id, y_loc06)
+     
+	y_loc07 = yloc
+	frame_07 = FRAME_MOVE_COPY_NODES.UI_FRAME_MOVE_COPY_NODES(form_id, y_loc07)
+	
+	y_loc08 = yloc
+	frame_08 = FRAME_MODIFY_ELEM_PATTERN.UI_FRAME_MODIFY_ELEM_PATTERN(form_id, y_loc08)
+
+	y_loc09 = yloc
+	frame_09 = FRAME_CREATE_MESH_SURFACE.UI_FRAME_CREATE_MESH_SURFACE(form_id, y_loc09)
+
+	y_loc10 = yloc
+	frame_10 = FRAME_CREATE_MPC_RBE2.UI_FRAME_CREATE_MPC_RBE2(form_id, y_loc10)
+     
+    y_loc11 = yloc
+     frame_11 = FRAME_MODIFY_NODE_MOVE.UI_FRAME_MODIFY_NODE_MOVE(form_id, y_loc11)
+
+	y_loc12 = yloc
+		frame_12 = FRAME_MOVE_COPY_ELEM_MIRROR.UI_FRAME_MOVE_COPY_ELEM_MIRROR(form_id, y_loc12)
+
+	y_loc13 = yloc
+		frame_13 = FRAME_MOVE_COPY_ELEM_TRANS.UI_FRAME_MOVE_COPY_ELEM_TRANS(form_id, y_loc13)
+	
+	y_loc14 = yloc
+		frame_14 = FRAME_MOVE_COPY_ELEM_ROTATE.UI_FRAME_MOVE_COPY_ELEM_ROTATE(form_id, y_loc14)
+
+	btn_Apply = ui_button_create(                  		@
+      /*   parent  */           form_id,             	@
+      /*  callback */           "cb_Apply",          	@
+      /*     x     */           BUTTON_HALF_X_LOC1,  	@
+      /*     y     */           yloc,               	@
+      /*   width   */           BUTTON_WID_HALF,     	@
+      /*   height  */           BUTTON_DEFAULT_HGT,  	@
+      /*   label   */           "Apply",             	@
+      /*    TRUE   */           TRUE,                	@
+      /* highlight */           TRUE)
+
+      btn_Exit = ui_button_create(                    	@
+      /*   parent  */            form_id,             	@
+      /*  callback */            "cb_Exit",           	@
+      /*     x     */            BUTTON_HALF_X_LOC2,  	@
+      /*     y     */            yloc,               	@
+      /*   width   */            BUTTON_WID_HALF,     	@
+      /*   height  */            BUTTON_DEFAULT_HGT,  	@
+      /*   label   */            "Exit",              	@
+      /*    TRUE   */            TRUE,                	@
+      /* highlight */            FALSE)
+
+	CLASSNAME.cb_Action("CREATE")
+
+end function
+
+function display()
+
+    ui_exec_function(CLASS_STR, "init")
+    ui_form_display(CLASS_STR)
+
+end function
+
+function cb_Action(s_item)
+	string s_item[]
+	
+	ui_item_deleteall(opt_Object)
+
+	if(s_item == "CREATE")then
+		ui_item_create(opt_Object, "ELEMENT", "Element", TRUE)
+		ui_item_create(opt_Object, "MPC", "MPC", TRUE)
+		ui_item_create(opt_Object, "MESH", "Mesh", TRUE)
+	else if(s_item == "MODIFY")then
+		ui_item_create(opt_Object, "ELEMENT", "Element", TRUE)
+		ui_item_create(opt_Object, "NODE", "Node", TRUE)
+		ui_item_create(opt_Object, "MPC", "MPC", TRUE)
+	else if(s_item == "COPY" || s_item == "MOVE")then
+		ui_item_create(opt_Object, "ELEMENT", "Element", TRUE)
+		ui_item_create(opt_Object, "NODE", "Node", TRUE)
+	else if(s_item == "DELETE")then
+		ui_item_create(opt_Object, "ELEMENT", "Element", TRUE)
+		ui_item_create(opt_Object, "NODE", "Node", TRUE)
+		ui_item_create(opt_Object, "MPC", "MPC", TRUE)
+		ui_item_create(opt_Object, "MESH", "Mesh", TRUE)
+	end if
+
+	string on_item[virtual]
+	ui_wid_get_vstring(opt_Object, "VALUE", on_item)
+
+	CLASSNAME.cb_Object(on_item)
+end function
+
+function cb_Object(s_item)
+string s_item[]
+
+	ui_wid_set(opt_Method, "VISIBLE", TRUE)
+	ui_wid_set(opt_Method, "LABEL", "METHOD")
+
+	string action[virtual]
+	ui_wid_get_vstring(opt_Action, "VALUE", action)
+	
+	ui_item_deleteall(opt_Method)
+
+	string method[virtual]
+
+	if(action == "CREATE")then
+		if(s_item == "ELEMENT")then
+			ui_item_create(opt_Method, "EDIT", "Edit", TRUE)
+			ui_item_create(opt_Method, "ELEMEDGE", "Elem. Edge", TRUE)
+			ui_item_create(opt_Method, "BEAMTOSHL", "Beam To Shell", TRUE)
+		else if(s_item == "MPC")then
+			ui_wid_set(opt_Method, "LABEL", "TYPE")
+			ui_item_create(opt_Method, "RBE2", "RBE2", TRUE)
+		else if(s_item == "MESH")then
+			ui_item_create(opt_Method, "SURF", "Surface", TRUE)
+		end if
+	end if
+	
+	if(action == "MODIFY")then
+		if(s_item == "ELEMENT")then
+			ui_wid_set(opt_Method, "VISIBLE", TRUE)		
+			ui_item_create(opt_method, "CONNECTIVITY", "Connectivity", FALSE)
+			ui_item_create(opt_method, "LINESPLIT", "Line Split", FALSE)
+			ui_item_create(opt_method, "PATTERN", "Pattern Split", FALSE)
+			ui_item_create(opt_method, "MEMBTOSHL", "Membrane to Shell", FALSE)
+		else if(s_item == "NODE")then
+			ui_item_create(opt_method, "NEWL", "New Location", TRUE)
+			ui_item_create(opt_method, "REFNODE", "Reference Node", FALSE)
+			ui_item_create(opt_method, "RELVAL", "Relative Value", FALSE)
+			ui_item_create(opt_method, "ABSVAL", "Absolute Value", FALSE)
+
+		else if(s_item == "MPC")then
+			ui_wid_set(opt_Method, "LABEL", "TYPE")
+			ui_item_create(opt_Method, "RBE2", "RBE2", TRUE)
+		end if
+	end if
+
+	if(action == "MOVE" || action == "COPY")then
+		if(s_item == "ELEMENT")then
+			ui_item_create(opt_Method, "TRANSLATE", "Translate", TRUE)
+			ui_item_create(opt_Method, "MIRROR", "Mirror", TRUE)
+			ui_item_create(opt_Method, "ROTATE", "Rotate", TRUE)
+		else if(s_item == "NODE") then
+			ui_wid_set(opt_Method, "VISIBLE", TRUE)		
+			ui_item_create(opt_method, "REFNODE", "Reference Node", FALSE)
+			ui_item_create(opt_method, "RELVAL", "Relative Value", FALSE)
+			ui_item_create(opt_method, "ABSVAL", "Abolute Value", FALSE)
+		end if
+	end if
+
+	if(action == "DELETE")then
+		ui_wid_set(opt_Method, "VISIBLE", TRUE)
+		if(s_item == "ELEMENT")then
+			ui_item_create(opt_method, "SELFEM", "Select", FALSE)
+		else if(s_item == "NODE")then
+			ui_item_create(opt_method, "FREENODE", "Free Node", FALSE)
+			ui_item_create(opt_method, "SELFEM", "Select", FALSE)
+		else if(s_item == "MPC")then
+			ui_item_create(opt_method, "SELFEM", "Select", FALSE)
+		else if(s_item == "MESH")then	
+			ui_item_create(opt_method, "SELFEM", "Select", FALSE)
+		end if
+	end if
+
+
+	
+	ui_wid_get_vstring(opt_Method, "VALUE", method)
+	CLASSNAME.cb_Method(method)				
+end function
+
+function cb_Method(method)
+string method[]
+
+	ui_wid_set(frame_01, "VISIBLE", FALSE)
+	ui_wid_set(frame_02, "VISIBLE", FALSE)
+	ui_wid_set(frame_03, "VISIBLE", FALSE)
+	ui_wid_set(frame_04, "VISIBLE", FALSE)
+	ui_wid_set(frame_05, "VISIBLE", FALSE)
+	ui_wid_set(frame_06, "VISIBLE", FALSE)
+	ui_wid_set(frame_07, "VISIBLE", FALSE)
+	ui_wid_set(frame_08, "VISIBLE", FALSE)
+	ui_wid_set(frame_09, "VISIBLE", FALSE)
+	ui_wid_set(frame_10, "VISIBLE", FALSE)
+	ui_wid_set(frame_11, "VISIBLE", FALSE)
+	ui_wid_set(frame_12, "VISIBLE", FALSE)
+	ui_wid_set(frame_13, "VISIBLE", FALSE)
+	ui_wid_set(frame_14, "VISIBLE", FALSE)
+
+	string action[virtual]
+	ui_wid_get_vstring(opt_Action, "Value", action)
+
+	string object[virtual]
+	ui_wid_get_vstring(opt_Object, "Value", object)
+
+real Y_LOC	
+/* ======= Action : Create =======================*/
+if(action == "CREATE")then
+	if(object == "ELEMENT")then
+		if(method == "EDIT")then
+			ui_wid_set(frame_01, "VISIBLE", TRUE)
+			Y_LOC = y_loc01
+		end if
+		
+		if(method == "ELEMEDGE")then
+			ui_wid_set(frame_02, "VISIBLE", TRUE)
+			Y_LOC = y_loc02-BUTTON_DEFAULT_HGT - INTER_WIDGET_SPACE
+		end if
+		
+		if(method == "BEAMTOSHL")then
+			ui_wid_set(frame_03, "VISIBLE", TRUE)
+			Y_LOC = y_loc03
+		end if
+		
+	else if(object == "MESH")then
+		if(method == "SURF")then
+			ui_wid_set(frame_09, "VISIBLE", TRUE)
+			Y_LOC = y_loc09
+		end if
+	else if(object == "MPC")then
+		if(method == "RBE2")then
+			ui_wid_set(frame_10, "VISIBLE", TRUE)
+			ui_exec_function("FRAME_CREATE_MPC_RBE2", "Action_Click")
+			Y_LOC = y_loc10
+		end if
+	else
+		ui_wid_set(frame_01, "VISIBLE", FALSE)
+		ui_wid_set(frame_02, "VISIBLE", FALSE)
+		ui_wid_set(frame_03, "VISIBLE", FALSE)
+		ui_wid_set(frame_09, "VISIBLE", FALSE)
+		ui_wid_set(frame_10, "VISIBLE", FALSE)
+	end if
+end if
+
+	/* ======= Action : Modify =======================*/
+	if(action == "MODIFY")then
+		if(object == "ELEMENT")then
+			if(method == "CONNECTIVITY")then
+				ui_wid_set(frame_05, "VISIBLE", TRUE)
+				Y_LOC = y_loc05
+			end if
+			
+			if(method == "LINESPLIT")then
+				ui_wid_set(frame_06, "VISIBLE", TRUE)
+				Y_LOC = y_loc05
+			end if
+			
+			if(method == "PATTERN")then
+				ui_wid_set(frame_08, "VISIBLE", TRUE)
+				Y_LOC = y_loc08
+			end if
+		else if(object == "MPC")then
+			if(method == "RBE2")then
+				ui_wid_set(frame_10, "VISIBLE", TRUE)
+				ui_exec_function("FRAME_CREATE_MPC_RBE2", "Action_Click")
+				Y_LOC = y_loc10
+			end if
+		else if(object == "NODE")then
+			if(method == "MOVE")then
+				ui_wid_set(frame_11, "VISIBLE", TRUE)
+				Y_LOC = y_loc11
+			end if
+		end if
+	end if
+
+	/* ======= Action : Delete =======================*/
+	if(action == "DELETE")then
+		if(object == "ELEMENT")then
+			ui_wid_set(frame_04, "VISIBLE", TRUE)
+			Y_LOC = y_loc04
+		else
+			ui_wid_set(frame_04, "VISIBLE", FALSE)
+		end if
+	end if
+
+	/* ======= Action : Move/Copy =======================*/	
+	widget wid_dbox
+	if(action == "MOVE" || action == "COPY")then
+		if(object == "NODE")then
+			wid_dbox = sys_class_get("FRAME_MOVE_COPY_NODES", "dbox_Input")
+			switch(method)
+				case("REFNODE"); ui_wid_set(wid_dbox, "ENABLE", FALSE)
+				case("RELVAL");  ui_wid_set(wid_dbox, "ENABLE", TRUE)
+				case("ABSVAL"); ui_wid_set(wid_dbox, "ENABLE", TRUE)
+			end switch
+			
+			ui_wid_set(frame_07, "VISIBLE", TRUE)
+			Y_LOC = y_loc07
+
+		else if(object == "ELEMENT")then
+			switch(method)
+				case("TRANSLATE"); 	ui_wid_set(frame_13, "VISIBLE", TRUE)
+									Y_LOC = y_loc13	
+				case("MIRROR"); 	ui_wid_set(frame_12, "VISIBLE", TRUE)
+									Y_LOC = y_loc12
+				case("ROTATE"); ui_wid_set(frame_14, "VISIBLE", TRUE)
+									Y_LOC = y_loc14
+			end switch
+		end if	
+	else if(action == "MODIFY") then
+		IF(object == "Node") then
+			wid_dbox = sys_class_get("FRAME_MOVE_COPY_NODES", "dbox_Input")
+			switch(method)
+				case("NEWL"); ui_wid_set(frame_11, "VISIBLE", TRUE); Y_LOC = y_loc11
+				case("REFNODE"); ui_wid_set(wid_dbox, "ENABLE", FALSE); ui_wid_set(frame_07, "VISIBLE", TRUE)
+				case("RELVAL");  ui_wid_set(wid_dbox, "ENABLE", TRUE); ui_wid_set(frame_07, "VISIBLE", TRUE)
+				case("ABSVAL"); ui_wid_set(wid_dbox, "ENABLE", TRUE); ui_wid_set(frame_07, "VISIBLE", TRUE)
+			end switch
+		end IF
+	end if
+
+	ui_wid_set(btn_Apply, "Y", Y_LOC)
+	ui_wid_set(btn_Exit, "Y", Y_LOC)
+
+end function
+
+function cb_Apply()
+
+	uil_primary_file.db_save()
+
+	string s_act[virtual]
+	ui_wid_get_vstring(opt_Action, "VALUE", s_act)
+	
+	string s_obj[virtual]
+	ui_wid_get_vstring(opt_Object, "VALUE", s_obj)
+
+	string s_met[virtual]
+	ui_wid_get_vstring(opt_Method, "VALUE", s_met)
+
+	if(s_act == "CREATE")then
+		if(s_obj == "ELEMENT")then
+			switch(s_met)
+				case("EDIT"); UI_EXEC_FUNCTION("FRAME_CREATE_ELEM_EDIT", "Apply_Click")
+				case("ELEMEDGE"); UI_EXEC_FUNCTION("FRAME_CREATE_ELEM_ELEMEDGE", "Apply_Click")
+				case("BEAMTOSHL"); UI_EXEC_FUNCTION("FRAME_CREATE_ELEM_BEAMTOSHL", "Apply_Click")
+			end switch
+		end if
+		if(s_obj == "MESH")then
+			switch(s_met)
+				case("SURF"); UI_EXEC_FUNCTION("FRAME_CREATE_MESH_SURFACE", "Apply_Click")
+			end switch
+		end if
+		
+		if(s_obj == "MPC")then
+			switch(s_met)
+				case("RBE2"); UI_EXEC_FUNCTION("FRAME_CREATE_MPC_RBE2", "Apply_Click")
+			end switch
+		end if
+	end if
+
+	if(s_act == "MODIFY")then
+		if(s_obj == "ELEMENT")then
+			switch(s_met)
+				case("CONNECTIVITY"); UI_EXEC_FUNCTION("FRAME_MODIFY_ELEM_CONNECT", "Apply_Click")
+				case("LINESPLIT");  UI_EXEC_FUNCTION("FRAME_MODIFY_ELEM_LINESPLIT", "Apply_Click")
+				case("PATTERN");   UI_EXEC_FUNCTION("FRAME_MODIFY_ELEM_PATTERN", "Apply_Click")  
+				case("MEMBTOSHL"); MEMBRANE_TO_SHELL.Membrane_to_Shell()
+			end switch
+		end if
+		
+		if(s_obj == "NODE")then
+          	switch(s_met)
+          		case("MOVE"); UI_EXEC_FUNCTION("FRAME_MODIFY_NODE_MOVE", "Apply_Click")
+          	end switch                                 
+		end if
+	end if
+	
+	if(s_act == "MOVE" || s_act == "COPY")then
+		if(s_obj == "NODE")then
+			UI_EXEC_FUNCTION("FRAME_MOVE_COPY_NODES", "Apply_Click")
+		else if(s_obj == "ELEMENT")then
+			switch(s_met)
+				case("TRANSLATE"); UI_EXEC_FUNCTION("FRAME_MOVE_COPY_ELEM_TRANS", "Apply_Click")
+							return
+				case("MIRROR"); UI_EXEC_FUNCTION("FRAME_MOVE_COPY_ELEM_MIRROR", "Apply_Click")
+							return
+				case("ROTATE"); UI_EXEC_FUNCTION("FRAME_MOVE_COPY_ELEM_ROTATE", "Apply_Click")
+							return
+			end switch
+		end if
+	end if
+	
+	if(s_act == "DELETE")then
+		switch(s_met)
+			case("SELFEM"); sys_class_set("FRAME_DELETE_FEM", "s_obj", s_obj)
+					UI_EXEC_FUNCTION("FRAME_DELETE_FEM", "Apply_Click")
+			case("FREENODE");
+					bv_remove_unused_nodes()
+		end switch
+	end if						 			
+end function
+
+function cb_Exit()
+
+    ui_form_hide(CLASS_STR)
+    ui_form_delete(CLASS_STR)
+
+end function
+
+end class

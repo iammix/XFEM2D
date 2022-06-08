@@ -1,0 +1,710 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME Pattern_Split
+#define CLASS_STR "Pattern_Split"
+
+class CLASSNAME
+
+function Pattern_Split_Apply_cb(switch_pattern, sel_elem_sdbox_id, sdbox_id_option1, sdbox_id_option2, nelem_dbox_id)
+     widget switch_pattern, sel_elem_sdbox_id, sdbox_id_option1, sdbox_id_option2, nelem_dbox_id
+
+     $ get global tolerance
+     logical l_conf
+     integer i_warn
+     real r_tol
+
+     pref_global_get(l_conf, i_warn, r_tol)
+
+     string s_item[virtual], s_Elems[virtual], s_option1[virtual], s_option2[virtual]
+
+     ui_wid_get_vstring(switch_pattern, "VALUE", s_item)
+     ui_wid_get_vstring(sel_elem_sdbox_id, "VALUE", s_Elems)
+     ui_wid_get_vstring(sdbox_id_option1, "VALUE", s_option1)
+     ui_wid_get_vstring(sdbox_id_option2, "VALUE", s_option2)
+
+     integer num_nodes_created
+     integer num_elems_created
+     integer num_nodes_deleted
+     integer num_elems_deleted
+
+     string s_nodes_created[virtual]
+     string s_elems_created[virtual]
+     string s_nodes_deleted[virtual]
+     string s_elems_deleted[virtual]
+
+     integer fem_create_mesh_mom_num_elems, fem_create_mesh_mom_num_nodes
+     string fem_create_mesh_m_elems_created[virtual], fem_create_mesh_m_nodes_created[virtual]
+
+     real r_smesh
+     integer i_nmesh, i_opt1, i_opt2
+     string s_opt[virtual]
+
+     switch(s_item)
+          case("quad_pattern1");
+               fem_mod_quad_split( "2_quad", "Manual", s_Elems, "", s_option1, num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted,s_nodes_created,s_elems_created,s_nodes_deleted, s_elems_deleted )
+          case("quad_pattern2");
+               fem_mod_quad_split( "4_quad", "Auto", s_Elems, "", "", num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+$          case("quad_pattern31");
+$               ui_wid_get(nelem_dbox_id, "VALUE", i_nmesh)
+$               fem_mod_quad_split_nm( "nm_quad", "Manual", s_Elems, s_option1, i_nmesh, 1, num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+$          case("quad_pattern32");
+
+          case("quad_pattern41");
+               ui_wid_get(nelem_dbox_id, "VALUE", i_nmesh)
+               CLASSNAME.split_quad_nmesh(s_Elems, i_nmesh)
+
+          case("quad_pattern42")
+               ui_wid_get(nelem_dbox_id, "VALUE", r_smesh)
+               CLASSNAME.split_quad_size_mesh(s_Elems, r_smesh)
+          case("quad_pattern43");
+               ui_wid_get_vstring(nelem_dbox_id, "VALUE", s_opt)
+               CLASSNAME.split_quad_nm_mesh(s_Elems, s_opt, s_option1)
+          case("quad_pattern44");
+               ui_wid_get_vstring(nelem_dbox_id, "VALUE", s_opt)
+               CLASSNAME.split_quad_s1s2_mesh(s_Elems, s_opt, s_option1)
+
+          case("quad_pattern5");
+               CLASSNAME.split_quad_quad3(s_Elems, s_option1)
+               $ fem_mod_quad_split( "3_quad", "Auto", s_Elems, s_option1, "", num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+          case("quad_pattern6");
+
+          case("quad_pattern7");
+               CLASSNAME.split_quad_4_quad_y(s_Elems, s_option1)
+               $ au_break_quad_split.break_quad_4_quad_b( s_Elems, "Split on selected edge", s_option1, TRUE, TRUE, FALSE )
+          case("quad_pattern8");
+          case("quad_pattern9");
+               au_break_quad_split.break_quad_to_quad_tria( s_Elems, s_option1, s_option2, TRUE, TRUE, FALSE )
+
+          case("quad_pattern91");
+               au_break_quad_split.break_quad_to_quad_tria_b( s_Elems, s_option1, "Leave As Is", r_tol, "Tria at selected node", s_option2, TRUE, TRUE, FALSE )
+
+          case("quad_pattern10");
+               fem_mod_quad_split( "2_tria", "Manual", s_Elems, s_option1, "", num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+          case("quad_pattern11");
+               fem_mod_quad_split( "4_tria", "Auto", s_Elems, "", "", num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+          case("quad_pattern12");
+               CLASSNAME.split_quad_tria3(s_Elems, s_option1)
+
+          case("quad_pattern121");
+               au_break_quad_split.break_quad_node_edge( s_Elems, "Leave As Is", r_tol, s_option1, TRUE, TRUE, FALSE )
+
+          case("quad_pattern13");
+               $ CLASSNAME.break_quad_quad_tria2(s_Elems, s_option1)
+               CLASSNAME.break_quad_quad_tria22(s_Elems, s_option1)
+          case("quad_pattern14");
+
+               CLASSNAME.split_quad_2quad_tria(s_Elems, s_option1)
+
+          case("quad_pattern15");
+               CLASSNAME.break_quad_quad2_tria(s_Elems, s_option1)
+
+          case("quad_pattern16");
+
+          case("quad_pattern17");
+          case("tria_pattern1");
+               fem_mod_tria_split( "2_tria", "Manual", s_Elems, s_option1, num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+          case("tria_pattern2");
+               fem_mod_tria_split( "3_tria", "Auto", s_Elems, s_option1, num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+          case("tria_pattern3");
+               fem_mod_tria_split( "4_tria", "Auto", s_Elems, s_option1, num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+          case("tria_pattern4");
+               fem_mod_tria_split( "3_quad", "Auto", s_Elems, s_option1, num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+          case("tria_pattern5");
+               fem_mod_tria_split( "Mixed", "Manual", s_Elems, s_option1, num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+          case("tria_pattern6");
+               au_break_tria_split.break_tria_node_edge( s_Elems, "Leave As Is", r_tol, s_option1, TRUE, TRUE, FALSE )
+          case("tria_pattern7");
+               au_break_tria_split.break_tria_node_face(s_Elems, r_tol, s_option1, TRUE, TRUE, FALSE )
+     end switch
+
+     repaint_graphics()
+
+end function
+
+function get_elem_edge_id(i_pick_elem_edge, s_object)
+
+integer i_pick_elem_edge()
+widget sdbox_id_option1
+string s_object[]
+
+     integer count, status
+     count = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_object, false, status)
+
+     integer idx = 0
+     string s_pick_edge[15](virtual)
+
+     repeat
+          idx += 1
+          sys_reallocate_array(s_pick_edge, 1, idx)
+          s_pick_edge(idx) = str_token(s_object, " ", idx)
+
+     until(s_pick_edge(idx) == "")
+
+     sys_allocate_array(i_pick_elem_edge, 1, count, 1, 2)
+     for(idx=1 to count)
+          i_pick_elem_edge(idx,1) = str_to_integer(str_token(s_pick_edge(idx+1),".",1))
+          i_pick_elem_edge(idx,2) = str_to_integer(str_token(s_pick_edge(idx+1),".",3))
+
+     end for
+
+     return count
+
+end function
+
+function split_quad_4_quad_y(s_Elems, s_opt1)
+string s_Elems[]
+string s_opt1[]
+
+     integer status, count
+     count = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_Elems, false, status)
+
+     integer ia_elem_id(virtual)
+     sys_allocate_array(ia_elem_id, 1, count)
+     status = fem_u_get_id_list(LP_SUBLIST_ELEMENT, s_Elems, count, TRUE, ia_elem_id)
+
+     integer ia_elem_edge_id(virtual), edge_count
+     edge_count = CLASSNAME.get_elem_edge_id(ia_elem_edge_id, s_opt1)
+
+     integer idx, i
+     string s_edge_id[32], s_elem_id[32]
+
+     for(idx = 1 to count)
+          for(i = 1 to edge_count)
+               if(ia_elem_id(idx) == ia_elem_edge_id(i,1)) then
+                    s_edge_id = "Elem " // str_from_integer(ia_elem_edge_id(i,1)) // ".1." //str_from_integer(ia_elem_edge_id(i,2))
+                    s_elem_id = "Elem " // str_from_integer(ia_elem_id(idx))
+                    au_break_quad_split.break_quad_4_quad_b(s_elem_id , "Split on selected edge", s_edge_id, TRUE, TRUE, FALSE )
+               end if
+          end for
+     end for
+end function
+
+function split_quad_2quad_tria(s_Elems, s_opt1)
+string s_Elems[]
+string s_opt1[]
+
+     integer fem_create_mesh_mom_num_elems, fem_create_mesh_mom_num_nodes
+     string fem_create_mesh_m_elems_created[virtual], fem_create_mesh_m_nodes_created[virtual]
+
+     integer status, count
+     count = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_Elems, false, status)
+
+     integer ia_elem_id(virtual)
+     sys_allocate_array(ia_elem_id, 1, count)
+     status = fem_u_get_id_list(LP_SUBLIST_ELEMENT, s_Elems, count, TRUE, ia_elem_id)
+
+     integer ia_elem_edge_id(virtual), edge_count
+     edge_count = CLASSNAME.get_elem_edge_id(ia_elem_edge_id, s_opt1)
+
+     integer idx, i
+     string s_edge_id[32], s_elem_id[32]
+
+     for(idx = 1 to count)
+          for(i = 1 to edge_count)
+               if(ia_elem_id(idx) == ia_elem_edge_id(i,1)) then
+                    s_elem_id = "Elem " // str_from_integer(ia_elem_id(idx))
+                    s_edge_id = "Elem " // str_from_integer(ia_elem_edge_id(i,1)) // ".1." //str_from_integer(ia_elem_edge_id(i,2))
+                    au_break_quad_split.break_quad_2quad_tria( s_elem_id, "Split on selected edge", s_edge_id, TRUE, TRUE, FALSE )
+               end if
+          end for
+     end for
+
+end function
+
+function split_quad_tria3(s_Elems, s_opt1)
+string s_Elems[]
+string s_opt1[]
+
+     integer num_nodes_created
+     integer num_elems_created
+     integer num_nodes_deleted
+     integer num_elems_deleted
+
+     string s_nodes_created[virtual]
+     string s_elems_created[virtual]
+     string s_nodes_deleted[virtual]
+     string s_elems_deleted[virtual]
+
+     integer status, count
+     count = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_Elems, false, status)
+
+     integer ia_elem_id(virtual)
+     sys_allocate_array(ia_elem_id, 1, count)
+     status = fem_u_get_id_list(LP_SUBLIST_ELEMENT, s_Elems, count, TRUE, ia_elem_id)
+
+     integer ia_elem_edge_id(virtual), edge_count
+     edge_count = CLASSNAME.get_elem_edge_id(ia_elem_edge_id, s_opt1)
+
+     integer idx, i
+     string s_edge_id[32], s_elem_id[32]
+
+     for(idx = 1 to count)
+          for(i = 1 to edge_count)
+               if(ia_elem_id(idx) == ia_elem_edge_id(i,1)) then
+                    s_edge_id = "Elem " // str_from_integer(ia_elem_edge_id(i,1)) // ".1." //str_from_integer(ia_elem_edge_id(i,2))
+                    s_elem_id = "Elem " // str_from_integer(ia_elem_id(idx))
+                    fem_mod_quad_split( "3_tria", "Auto", s_elem_id, "", s_edge_id, num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+               end if
+          end for
+     end for
+
+end function
+
+function split_quad_size_mesh(s_Elems, r_size)
+string s_Elems[]
+real r_size
+
+     integer fem_create_mesh_mom_num_elems, fem_create_mesh_mom_num_nodes
+     string fem_create_mesh_m_elems_created[virtual], fem_create_mesh_m_nodes_created[virtual]
+
+     integer status, count
+     count = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_Elems, false, status)
+
+     integer ia_elem_id(virtual)
+     sys_allocate_array(ia_elem_id, 1, count)
+     status = fem_u_get_id_list(LP_SUBLIST_ELEMENT, s_Elems, count, TRUE, ia_elem_id)
+
+     integer idx, i
+     string s_edge_id[32], s_elem_id[32]
+
+     for(idx = 1 to count)
+         s_elem_id = "Elem " // str_from_integer(ia_elem_id(idx))
+         fem_create_mesh_mom.exec( s_elem_id, "", "", "", "", "", "", "", "#", "#", "Quad4", r_size, ["0", "1", "1", "0", "0", "0", "0", "2", "0", "0.0", "0.0", "0.2", "1.2", "0.0", "1.0", "0.1"], fem_create_mesh_mom_num_elems, fem_create_mesh_mom_num_nodes, fem_create_mesh_m_elems_created, fem_create_mesh_m_nodes_created )
+     end for
+
+end function
+
+function split_quad_quad3(s_Elems, s_node)
+string s_Elems[], s_node[]
+
+     integer num_nodes_created
+     integer num_elems_created
+     integer num_nodes_deleted
+     integer num_elems_deleted
+
+     string s_nodes_created[virtual]
+     string s_elems_created[virtual]
+     string s_nodes_deleted[virtual]
+     string s_elems_deleted[virtual]
+
+     integer status, count
+     count = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_Elems, false, status)
+
+     integer ia_elem_id(virtual)
+     sys_allocate_array(ia_elem_id, 1, count)
+     status = fem_u_get_id_list(LP_SUBLIST_ELEMENT, s_Elems, count, TRUE, ia_elem_id)
+
+     integer idx, i
+     string s_edge_id[32], s_elem_id[32]
+
+     for(idx = 1 to count)
+          s_elem_id = "Elem " // str_from_integer(ia_elem_id(idx))
+          fem_mod_quad_split( "3_quad", "Auto", s_elem_id, s_node, "", num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+     end for
+
+end function
+
+function split_quad_multi_quad3(s_Elems, s_node)
+string s_Elems[], s_node[]
+
+     integer num_nodes_created
+     integer num_elems_created
+     integer num_nodes_deleted
+     integer num_elems_deleted
+
+     string s_nodes_created[virtual]
+     string s_elems_created[virtual]
+     string s_nodes_deleted[virtual]
+     string s_elems_deleted[virtual]
+
+     integer status, count
+     count = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_Elems, false, status)
+
+     integer ia_elem_id(virtual)
+     sys_allocate_array(ia_elem_id, 1, count)
+     status = fem_u_get_id_list(LP_SUBLIST_ELEMENT, s_Elems, count, TRUE, ia_elem_id)
+
+     integer idx, i
+     string s_edge_id[32], s_elem_id[32]
+
+     for(idx = 1 to count)
+          s_elem_id = "Elem " // str_from_integer(ia_elem_id(idx))
+          fem_mod_quad_split( "3_quad", "Auto", s_elem_id, s_node, "", num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+     end for
+
+end function
+
+function get_edge_sharing_elems(s_Elems, s_edge_id)
+string s_Elems[]
+string s_edge_id[]
+
+     integer status, i_elem_id(1)
+     status = fem_u_get_id_list(LP_SUBLIST_ELEMENT, s_Elems, 1, TRUE, i_elem_id)
+
+     integer i_node_id(4)
+     db_get_nodes_for_elems(1, 4, i_elem_id, i_node_id)
+
+     integer i_elem_edge_id(4,2)
+     integer idx
+     for(idx = 0 to 3)
+          i_elem_edge_id(idx+1,1) = i_node_id(mth_mod(idx)+1)
+          i_elem_edge_id(idx+1,2) = i_node_id(mth_mod(idx+1)+1)
+     end for
+
+     integer nElem, ia_elem_id(virtual)
+     FemFx.get_elems_ass_nodes(4, i_node_id, nElem, ia_elem_id)
+
+end function
+
+function split_quad_nmesh(s_Elems, i_nmesh)
+string s_Elems[]
+integer i_nmesh
+
+     integer num_nodes_created
+     integer num_elems_created
+     integer num_nodes_deleted
+     integer num_elems_deleted
+
+     string s_nodes_created[virtual]
+     string s_elems_created[virtual]
+     string s_nodes_deleted[virtual]
+     string s_elems_deleted[virtual]
+
+     integer status, count
+     count = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_Elems, false, status)
+
+     integer ia_elem_id(virtual)
+     sys_allocate_array(ia_elem_id, 1, count)
+     status = fem_u_get_id_list(LP_SUBLIST_ELEMENT, s_Elems, count, TRUE, ia_elem_id)
+
+     integer idx, i
+     string s_edge_id[32], s_elem_id[32]
+
+     for(idx = 1 to count)
+          s_elem_id = "Elm " // str_from_integer(ia_elem_id(idx))
+          s_edge_id = s_elem_id // ".1.1"
+          fem_mod_quad_split_nm( "nm_quad", "Auto", s_elem_id, s_edge_id, i_nmesh, i_nmesh, num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+     end for
+
+end function
+
+function split_quad_nm_mesh(s_Elems, s_nmmesh, s_opt1)
+string s_Elems[]
+string s_nmmesh[]
+string s_opt1[]
+
+     integer i_nmesh, i_mmesh
+     i_nmesh = str_to_integer(str_token(s_nmmesh, ",", 1))
+     i_mmesh = str_to_integer(str_token(s_nmmesh, ",", 2))
+
+     integer num_nodes_created
+     integer num_elems_created
+     integer num_nodes_deleted
+     integer num_elems_deleted
+
+     string s_nodes_created[virtual]
+     string s_elems_created[virtual]
+     string s_nodes_deleted[virtual]
+     string s_elems_deleted[virtual]
+
+     integer status, count
+     count = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_Elems, false, status)
+
+     integer ia_elem_id(virtual)
+     sys_allocate_array(ia_elem_id, 1, count)
+     status = fem_u_get_id_list(LP_SUBLIST_ELEMENT, s_Elems, count, TRUE, ia_elem_id)
+
+     integer ia_elem_edge_id(virtual), edge_count
+     edge_count = CLASSNAME.get_elem_edge_id(ia_elem_edge_id, s_opt1)
+
+     integer idx, i
+     string s_edge_id[32], s_elem_id[32]
+
+     for(idx = 1 to count)
+          for(i = 1 to edge_count)
+               if(ia_elem_id(idx) == ia_elem_edge_id(i,1)) then
+                    s_edge_id = "Elem " // str_from_integer(ia_elem_edge_id(i,1)) // ".1." //str_from_integer(ia_elem_edge_id(i,2))
+                    s_elem_id = "Elem " // str_from_integer(ia_elem_id(idx))
+                    fem_mod_quad_split_nm( "nm_quad", "Manual", s_elem_id, s_edge_id, i_nmesh, i_mmesh, num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+               end if
+          end for
+     end for
+
+end function
+
+function split_quad_s1s2_mesh(s_Elems, s_smesh, s_opt1)
+string s_Elems[]
+string s_smesh[]
+string s_opt1[]
+
+     real r_s1mesh, r_s2mesh
+     r_s1mesh = str_to_real(str_token(s_smesh, ",", 1))
+     r_s2mesh = str_to_real(str_token(s_smesh, ",", 2))
+
+     integer num_nodes_created
+     integer num_elems_created
+     integer num_nodes_deleted
+     integer num_elems_deleted
+
+     string s_nodes_created[virtual]
+     string s_elems_created[virtual]
+     string s_nodes_deleted[virtual]
+     string s_elems_deleted[virtual]
+
+     integer status, count
+     count = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_Elems, false, status)
+
+     integer ia_elem_id(virtual)
+     sys_allocate_array(ia_elem_id, 1, count)
+     status = fem_u_get_id_list(LP_SUBLIST_ELEMENT, s_Elems, count, TRUE, ia_elem_id)
+
+     integer ia_elem_edge_id(virtual), edge_count
+     edge_count = CLASSNAME.get_elem_edge_id(ia_elem_edge_id, s_opt1)
+
+     integer idx, i, k, next, i_nmesh, i_mmesh
+     string s_edge_id[32], s_elem_id[32]
+     integer i_node_id(4), i_edge_id(4,2)
+     real nmag, mmag
+
+     for(idx = 1 to count)
+          for(i = 1 to edge_count)
+               if(ia_elem_id(idx) == ia_elem_edge_id(i,1)) then
+                    db_get_nodes_for_elems(1, 4, ia_elem_id(idx:idx), i_node_id)
+
+                    for(k = 0 to 3)
+                         i_edge_id(k+1,1) = i_node_id(mth_mod(k,4)+1)
+                         i_edge_id(k+1,2) = i_node_id(mth_mod(k+1,4)+1)
+                    end for
+
+                    nmag = FemFx.vector_from_nodes(i_edge_id(ia_elem_edge_id(i,2),1), i_edge_id(ia_elem_edge_id(i,2),2), 2)
+
+                    next = mth_mod(ia_elem_edge_id(i,2),4)+1
+
+                    mmag = FemFx.vector_from_nodes(i_edge_id(next,1), i_edge_id(next,2), 2)
+
+                    i_nmesh = nmag / r_s1mesh
+                    i_mmesh = mmag / r_s2mesh
+
+                    s_edge_id = "Elem " // str_from_integer(ia_elem_edge_id(i,1)) // ".1." //str_from_integer(ia_elem_edge_id(i,2))
+                    s_elem_id = "Elem " // str_from_integer(ia_elem_id(idx))
+                    fem_mod_quad_split_nm( "nm_quad", "Manual", s_elem_id, s_edge_id, i_nmesh, i_mmesh, num_nodes_created, num_elems_created, num_nodes_deleted, num_elems_deleted, s_nodes_created, s_elems_created, s_nodes_deleted, s_elems_deleted )
+               end if
+          end for
+     end for
+
+end function
+
+function break_quad_quad_tria2(s_Elems, s_edge_id)
+string s_Elems[]
+string s_edge_id[]
+
+     integer db_count, i_max_id, ia_elem_id(virtual), ia_shape_id(virtual), ia_node_id(virtual), ia_elem_edge_id(virtual)
+     real ra_cxyz(virtual)
+     db_count = FemFx.get_elem_edge_info(i_max_id, ia_elem_id, ia_shape_id, ia_node_id, ra_cxyz, ia_elem_edge_id)
+
+     integer status, i_eid(1)
+     status = fem_u_get_id_list(LP_SUBLIST_ELEMENT, s_Elems, 1, TRUE, i_eid)
+
+     integer i_edge, i_node_id(6)
+     string s_node_id[32](6)
+
+     string fem_node_interp_poi_created_ids[VIRTUAL]
+     STRING fem_create_elemen_elems_created[VIRTUAL]
+
+     i_edge = str_to_integer(str_token(s_edge_id,".",3))
+
+     i_node_id(1) = ia_elem_edge_id(i_eid(1), i_edge, 1)
+     i_node_id(2) = ia_elem_edge_id(i_eid(1), i_edge, 2)
+
+     s_node_id(1) = "Node " // str_from_integer(i_node_id(1))
+     s_node_id(2) = "Node " // str_from_integer(i_node_id(2))
+
+     fem_create_node_interp_pnt( "Coord 0", "Coord 0", 2, "#", s_node_id(1), s_node_id(2), 0., 2, fem_node_interp_poi_created_ids )
+
+     i_node_id(3) = str_to_integer(str_token(fem_node_interp_poi_created_ids, ",", 1))
+     i_node_id(4) = str_to_integer(str_token(fem_node_interp_poi_created_ids, ",", 2))
+
+     s_node_id(3) = "Node " // str_token(fem_node_interp_poi_created_ids, ",", 1)
+     s_node_id(4) = "Node " // str_token(fem_node_interp_poi_created_ids, ",", 2)
+
+     i_node_id(5) = ia_elem_edge_id(i_eid(1), mth_mod(i_edge+1, 4)+1, 1)
+     i_node_id(6) = ia_elem_edge_id(i_eid(1), mth_mod(i_edge+1, 4)+1, 2)
+
+     s_node_id(5) = "Node " // str_from_integer(i_node_id(5))
+     s_node_id(6) = "Node " // str_from_integer(i_node_id(6))
+
+     fem_create_elems_1( "Tri ", "Tria3", "#", "Standard", 3, s_node_id(1), s_node_id(3), s_node_id(6), "", "", "", "", "", fem_create_elemen_elems_created )
+     fem_create_elems_1( "Tri ", "Tria3", "#", "Standard", 3, s_node_id(2), s_node_id(5), s_node_id(4), "", "", "", "", "", fem_create_elemen_elems_created )
+     fem_create_elems_1( "Quad", "Quad4", "#", "Standard", 3, s_node_id(3),s_node_id(4), s_node_id(5), s_node_id(6), "", "", "", "", fem_create_elemen_elems_created )
+
+end function
+
+function break_quad_quad_tria22(s_Elems, s_edge_id)
+string s_Elems[]
+string s_edge_id[]
+
+     logical l_conf
+     integer i_warn
+     real r_tol
+
+     pref_global_get(l_conf, i_warn, r_tol)
+
+     integer nElem, ia_elem_id(virtual), ia_shape_id(virtual), ia_node_id(virtual), ia_elem_edge_id(virtual)
+     nElem = FemFx.get_elem_edge(s_Elems, ia_elem_id, ia_shape_id, ia_node_id, ia_elem_edge_id)
+
+     integer i_edge
+     i_edge = str_to_integer(str_token(s_edge_id,".",3))
+
+     integer i_node_id(6)
+     i_node_id(1) = ia_elem_edge_id(1, i_edge, 1)
+     i_node_id(2) = ia_elem_edge_id(1, i_edge, 2)
+
+     string s_node_id[32](6)
+     s_node_id(1) = "Node " // str_from_integer(i_node_id(1))
+     s_node_id(2) = "Node " // str_from_integer(i_node_id(2))
+
+     string fem_node_interp_poi_created_ids[VIRTUAL]
+     fem_create_node_interp_pnt( "Coord 0", "Coord 0", 2, "#", s_node_id(1), s_node_id(2), 0., 2, fem_node_interp_poi_created_ids )
+
+     i_node_id(3) = str_to_integer(str_token(fem_node_interp_poi_created_ids, ",", 1))
+     i_node_id(4) = str_to_integer(str_token(fem_node_interp_poi_created_ids, ",", 2))
+
+     s_node_id(3) = "Node " // str_from_integer(i_node_id(3))
+     s_node_id(4) = "Node " // str_from_integer(i_node_id(4))
+
+     i_node_id(5) = ia_elem_edge_id(1, mth_mod(i_edge+1, 4)+1, 1)
+     i_node_id(6) = ia_elem_edge_id(1, mth_mod(i_edge+1, 4)+1, 2)
+
+     s_node_id(5) = "Node " // str_from_integer(i_node_id(5))
+     s_node_id(6) = "Node " // str_from_integer(i_node_id(6))
+
+     au_break_quad_split.break_quad_to_quad_tria_b( s_Elems, s_node_id(3), "Leave As Is", r_tol, "Tria at selected node", s_node_id(6), TRUE, TRUE, FALSE )
+
+     integer i_max_id
+     db_get_max_elem_id(i_max_id)
+     s_Elems = "Elm " // str_from_integer(i_max_id-1)
+
+     au_break_quad_split.break_quad_to_quad_tria_b( s_Elems, s_node_id(4), "Leave As Is", r_tol, "Tria at selected node", s_node_id(5), TRUE, TRUE, FALSE )
+
+end function
+
+function break_quad_quad2_tria(s_Elems, s_edge_id)
+string s_Elems[]
+string s_edge_id[]
+
+     logical l_conf
+     integer i_warn
+     real r_tol
+
+     pref_global_get(l_conf, i_warn, r_tol)
+
+     integer nElem, ia_elem_id(virtual), ia_shape_id(virtual), ia_node_id(virtual), ia_elem_edge_id(virtual)
+     nElem = FemFx.get_elem_edge(s_Elems, ia_elem_id, ia_shape_id, ia_node_id, ia_elem_edge_id)
+
+     integer i_edge
+     i_edge = str_to_integer(str_token(s_edge_id,".",3))
+
+     integer i_node_id(6)
+     i_node_id(1) = ia_elem_edge_id(1, i_edge, 1)
+     i_node_id(2) = ia_elem_edge_id(1, i_edge, 2)
+
+     string s_node_id[32](6)
+     s_node_id(1) = "Node " // str_from_integer(i_node_id(1))
+     s_node_id(2) = "Node " // str_from_integer(i_node_id(2))
+
+     i_node_id(3) = ia_elem_edge_id(1, mth_mod(i_edge+1, 4)+1, 1)
+     i_node_id(4) = ia_elem_edge_id(1, mth_mod(i_edge+1, 4)+1, 2)
+
+     s_node_id(3) = "Node " // str_from_integer(i_node_id(3))
+     s_node_id(4) = "Node " // str_from_integer(i_node_id(4))
+
+     string fem_create_nodes__nodes_created[virtual], s_temp[11]
+     real r_cxyz(3)
+
+     r_cxyz = FemFx.nodes_center(4, ia_node_id(1,1:4), s_temp)
+
+     fem_create_nodes_1( "Coord 0", "Coord 0", 3, "#", @
+                    "[" // str_from_real(r_cxyz(1)) //","// str_from_real(r_cxyz(2)) // "," // str_from_real(r_cxyz(3)) // "]", @
+                     fem_create_nodes__nodes_created )
+     i_node_id(5) = str_to_integer(fem_create_nodes__nodes_created)
+
+     string fem_node_interp_poi_created_ids[VIRTUAL]
+     fem_create_node_interp_pnt( "Coord 0", "Coord 0", 2, "#", s_node_id(3), s_node_id(4), 0., 1, fem_node_interp_poi_created_ids )
+
+     i_node_id(6) = str_to_integer(fem_node_interp_poi_created_ids)
+     s_node_id(5) = "Node " // str_from_integer(i_node_id(5))
+     s_node_id(6) = "Node " // str_from_integer(i_node_id(6))
+
+     integer reg_id(1)
+     db_get_region_for_elements ( 1, ia_elem_id, reg_id)
+
+     string fem_create_elemen_elems_created[virtual]
+     STRING fem_delete_element_deleted_ids[VIRTUAL]
+
+     integer i_eid
+
+     fem_create_elems_1( "Tri ", "Tria3", "#", "Standard", 3, s_node_id(1), s_node_id(2), s_node_id(5), "", "", "", "", "", fem_create_elemen_elems_created )
+     i_eid = str_to_integer(fem_create_elemen_elems_created)
+     db_associate_element_to_region(i_eid, reg_id(1))
+
+     fem_create_elems_1( "Quad", "Quad4", "#", "Standard", 3, s_node_id(2),s_node_id(3), s_node_id(6), s_node_id(5), "", "", "", "", fem_create_elemen_elems_created )
+     i_eid = str_to_integer(fem_create_elemen_elems_created)
+     db_associate_element_to_region(i_eid, reg_id(1))
+
+     fem_create_elems_1( "Quad", "Quad4", "#", "Standard", 3, s_node_id(1),s_node_id(5), s_node_id(6), s_node_id(4), "", "", "", "", fem_create_elemen_elems_created )
+     i_eid = str_to_integer(fem_create_elemen_elems_created)
+     db_associate_element_to_region(i_eid, reg_id(1))
+
+     fem_delete_elem_and_node(s_Elems, fem_delete_element_deleted_ids )
+end function
+
+function split_quad_quad_tria2(s_Elems, s_edge_id, s_opt1)
+string s_Elems[]
+string s_edge_id[]
+string s_opt1[]
+
+     integer nElem, status
+     nElem = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_Elems, false, status)
+
+     integer i_eid(virtual)
+     sys_allocate_array(i_eid, 1, nElem)
+     status = fem_u_get_id_list(LP_SUBLIST_ELEMENT, s_Elems, nElem, TRUE, i_eid)
+
+     integer db_count, i_max_id, ia_elem_id(virtual), ia_shape_id(virtual), ia_node_id(virtual), ra_cxyz(virtual), ia_elem_edge_id(virtual)
+     db_count = FemFx.get_elem_edge_info(i_max_id, ia_elem_id, ia_shape_id, ia_node_id, ra_cxyz, ia_elem_edge_id)
+
+     integer i_edge_id(virtual), edge_count
+     edge_count = CLASSNAME.get_elem_edge_id(i_edge_id, s_opt1)
+
+     integer idx, i, i_node_id(2)
+     string s_node_id[32](4)
+     string fem_node_interp_poi_created_ids[VIRTUAL]
+     STRING fem_create_elemen_elems_created[VIRTUAL]
+
+     for(idx=1  to nElem)
+          for(i=1 to edge_count)
+
+               i_node_id(1) = ia_elem_edge_id(i_eid(idx), i_edge_id, 1)
+               i_node_id(2) = ia_elem_edge_id(i_eid(idx), i_edge_id, 2)
+
+               s_node_id(1) = "Node " // str_from_integer(i_node_id(1))
+               s_node_id(2) = "Node " // str_from_integer(i_node_id(2))
+
+               fem_create_node_interp_pnt( "Coord 0", "Coord 0", 2, "#", s_node_id(1), s_node_id(2), 0., 2, fem_node_interp_poi_created_ids )
+
+               s_node_id(3) = "Node " // str_token(fem_node_interp_poi_created_ids, ",", 1)
+               s_node_id(4) = "Node " // str_token(fem_node_interp_poi_created_ids, ",", 2)
+
+               s_node_id(5) = "Node " // str_from_integer(ia_elem_edge_id(i_eid(idx), mth_mod(i_edge_id+1, 4)+1, 1))
+               s_node_id(6) = "Node " // str_from_integer(ia_elem_edge_id(i_eid(idx), mth_mod(i_edge_id+1, 4)+1, 2))
+
+               fem_create_elems_1( "Tri ", "Tria3", "#", "Standard", 3, s_node_id(1), s_node_id(3), s_node_id(6), "", "", "", "", "", fem_create_elemen_elems_created )
+               fem_create_elems_1( "Tri ", "Tria3", "#", "Standard", 3, s_node_id(2), s_node_id(5), s_node_id(4), "", "", "", "", "", fem_create_elemen_elems_created )
+               fem_create_elems_1( "Quad", "Quad4", "#", "Standard", 3, s_node_id(3),s_node_id(4), s_node_id(5), s_node_id(6), "", "", "", "", fem_create_elemen_elems_created )
+
+          end for
+
+     end for
+end function
+
+end class

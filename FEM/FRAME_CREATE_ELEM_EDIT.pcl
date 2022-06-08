@@ -1,0 +1,261 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME FRAME_CREATE_ELEM_EDIT
+#define CLASS_STR "FRAME_CREATE_ELEM_EDIT"
+
+class CLASSNAME
+/*******************************************************************************
+ 	Action-Create, Object-Elemment, Method - Edit 
+ *******************************************************************************/
+$ ui_frame_elem_edit
+classwide widget sframe_01, wa_sdbox_01(4), opt_Material, dbox_Property
+classwide real y_loc01
+
+function UI_FRAME_CREATE_ELEM_EDIT(form_wid, Y_LOC)
+widget form_wid
+real Y_LOC
+
+
+	WIDGET frame_wid
+
+	REAL WXLOC1, WXLOC2, WXLOC3
+	
+	WXLOC1 = FORM_WID_SML*1/3
+	WXLOC2 = FORM_WID_SML*2/3 - INTER_WIDGET_SPACE * 2
+	
+	frame_wid = ui_frame_create(form_wid,"", @
+								 0, @
+								 Y_LOC, @
+								 FORM_WID_SML, @
+								 0, @
+								 "")
+	REAL Y_LOCF
+     Y_LOCF = FRAME_T_MARGIN
+					
+     opt_Material = ui_optionmenu_create(frame_wid,        @
+                                        "",            @
+                                        AOM_MENU_X_LOC,         @
+                                        Y_LOCF,      @
+                                        AOM_MENU_LABEL_LEN,     @
+                                        "MATERIAL",               @
+                                        FALSE )
+
+     ui_material_list(opt_Material) 
+
+	Y_LOCF += OPT_MENU_HGT_NO_LABOVE + INTER_WIDGET_SPACE / 2
+
+     dbox_Property = ui_databox_create(          			@
+      /*    parent    */          frame_wid,      			@
+      /*   callback   */          "",       @
+      /*       x      */          AOM_MENU_X_LOC,       	@
+      /*       y      */          Y_LOCF + INTER_WIDGET_SPACE, @
+      /* label_length */          WXLOC1,  	@
+      /*  box_length  */          WXLOC2,		@
+      /*     label    */          "Property : ",			@
+      /*     value    */          0,                   	@
+      /*  label_above */          FALSE,                 	@
+      /*   datatype   */          "REAL",             	@
+      /*   num_vals   */          1)
+
+     Y_LOCF += BUTTON_DEFAULT_HGT + LABEL_HGT + INTER_WIDGET_SPACE
+	
+	string sa_dtype[5](4) = ["NODE", "NODE", "NODE", "NODE"]
+	string sa_label[8](4) = ["Node 1 =", "Node 2 =", "Node 3 =", "Node 4 ="]
+	string sa_callback[64](4) 
+	
+	sa_callback(1) = CLASS_STR // ".cb_Node_1"
+	sa_callback(2) = CLASS_STR // ".cb_Node_2"
+	sa_callback(3) = CLASS_STR // ".cb_Node_3"
+	sa_callback(4) = CLASS_STR // ".cb_Node_4"
+	
+	sframe_01 = ui_select_frame_set(				@
+	/* parent widget id(input) 	*/	frame_wid,		@
+	/*	select frame callback	*/	CLASS_STR // ".Apply_Click",	@	
+	/* 	select frame label		*/	"Autoexec",	@
+	/*		x				*/	FORM_L_MARGIN,	@	
+	/*		y				*/	Y_LOCF, 		@
+	/*	select databax array	*/	wa_sdbox_01,	@
+	/* 	data type	array		*/	sa_dtype,		@
+	/* 	select databox label array	*/ 	sa_label,	@
+	/*	select databox collback array	*/ 	sa_callback, @
+	/*	label avove logical	*/			FALSE)
+     
+	 Y_LOCF += INTER_WIDGET_SPACE
+
+      ui_wid_set(frame_wid, "HEIGHT", Y_LOCF)
+	
+	 Y_LOC += Y_LOCF + INTER_WIDGET_SPACE
+	 	 
+	return frame_wid
+
+end function
+
+function cb_Node_1(s_event)
+	string s_event[]
+
+	if(s_event == "VALUE_CHANGED")then	
+		string node_list[virtual]
+		ui_wid_get_vstring(wa_sdbox_01(1), "VALUE", node_list)
+		
+		integer nNode, status
+	     nNode = fem_u_count_id_list(LP_SUBLIST_NODE, node_list, FALSE, status)
+	     if(nNode <= 1) then return 0
+
+		integer iv_node_id(virtual)
+		sys_allocate_array(iv_node_id, 1, nNode)	 
+		fem_u_get_id_list(LP_SUBLIST_NODE, node_list, nNode, TRUE, iv_node_id)
+		
+		integer idx
+		for(idx = 1 to nNode)
+			if(idx == 5)then return 0
+			ui_wid_set(wa_sdbox_01(idx), "VALUE", "Node " // str_from_integer(iv_node_id(idx)))
+		end for
+		
+		if(nNode < 4) then ui_set_focus(wa_sdbox_01(nNode+1))
+		
+		sys_free_array(iv_node_id)
+	end if
+end function
+
+function cb_Node_2(s_event)
+	string s_event[]
+
+	if(s_event == "VALUE_CHANGED")then	
+		string node_list[virtual]
+		ui_wid_get_vstring(wa_sdbox_01(2), "VALUE", node_list)
+		
+		integer nNode, status
+	     nNode = fem_u_count_id_list(LP_SUBLIST_NODE, node_list, FALSE, status)
+	     if(nNode <= 1) then return 0
+
+		integer iv_node_id(virtual)
+		sys_allocate_array(iv_node_id, 1, nNode)	 
+		fem_u_get_id_list(LP_SUBLIST_NODE, node_list, nNode, TRUE, iv_node_id)
+		
+		integer idx
+		for(idx = 1 to nNode)
+			if(idx == 4)then return 0
+			ui_wid_set(wa_sdbox_01(idx+1), "VALUE", "Node " // str_from_integer(iv_node_id(idx)))
+		end for
+
+		if(nNode < 3) then ui_set_focus(wa_sdbox_01(nNode+1))
+		
+		sys_free_array(iv_node_id)
+	end if
+end function
+
+function cb_Node_3(s_event)
+	string s_event[]
+
+	if(s_event == "VALUE_CHANGED")then	
+		string node_list[virtual]
+		ui_wid_get_vstring(wa_sdbox_01(3), "VALUE", node_list)
+		
+		integer nNode, status
+	     nNode = fem_u_count_id_list(LP_SUBLIST_NODE, node_list, FALSE, status)
+	     if(nNode <= 1) then return 0
+
+		integer iv_node_id(virtual)
+		sys_allocate_array(iv_node_id, 1, nNode)	 
+		fem_u_get_id_list(LP_SUBLIST_NODE, node_list, nNode, TRUE, iv_node_id)
+		
+		integer idx
+		for(idx = 1 to nNode)
+			if(idx == 3)then return 0
+			ui_wid_set(wa_sdbox_01(idx+2), "VALUE", "Node " // str_from_integer(iv_node_id(idx)))
+		end for
+
+		if(nNode < 2) then ui_set_focus(wa_sdbox_01(nNode+1))
+
+		sys_free_array(iv_node_id)
+	end if		
+end function
+
+function cb_Node_4(s_event)
+	string s_event[]
+
+	if(s_event == "VALUE_CHANGED")then	
+		string node_list[virtual]
+		ui_wid_get_vstring(wa_sdbox_01(4), "VALUE", node_list)
+		
+		integer nNode, status
+	     nNode = fem_u_count_id_list(LP_SUBLIST_NODE, node_list, FALSE, status)
+	     if(nNode <= 1) then return 0
+
+		integer iv_node_id(virtual)
+		sys_allocate_array(iv_node_id, 1, nNode)	 
+		fem_u_get_id_list(LP_SUBLIST_NODE, node_list, nNode, TRUE, iv_node_id)
+		
+		ui_wid_set(wa_sdbox_01(4), "VALUE", "Node " // str_from_integer(iv_node_id(1)))
+		
+		sys_free_array(iv_node_id)
+	 end if		
+end function
+
+$ Action-Create Object-Element Method-Edit
+function Apply_Click()
+	uil_primary_file.db_save()
+
+	string mat_name[virtual]
+     ui_wid_get_vstring(opt_Material, "VALUE", mat_name)
+
+	string node_list[virtual]
+	string sel_node[32](4)
+	
+	integer i
+
+	for(i = 1 to 4)
+		ui_wid_get(wa_sdbox_01(i), "VALUE", sel_node(i))
+		list_create_boolean_list(node_list, sel_node(i), "or" ,node_list)
+	end for
+
+	integer nNode, status
+     nNode = fem_u_count_id_list(LP_SUBLIST_NODE, node_list, FALSE, status)
+
+    string s_eid[virtual]
+     
+	switch(nNode)
+		case(1); s_eid = FemFx.nodes_POINT(node_list)
+		case(2); s_eid = FemFx.nodes_BAR2(node_list)
+		case(3); s_eid = FemFx.nodes_TRI3(node_list)
+		case(4); 
+				fem_create_elems_1( "Quad", "Quad4", "#", "Standard", 3, @
+                         sel_node(1), sel_node(2), sel_node(3), sel_node(4), @
+                         "", "", "", "", s_eid )
+				
+	end switch
+	
+	ui_set_focus(wa_sdbox_01(1))
+
+	real r_prop
+    ui_wid_get(dbox_property, "VALUE", r_prop)
+	
+	if(r_prop == 0) then 
+		return 0
+	else
+          string s_prop_name[32]
+          
+     	if(nNode == 1)then
+     		return 0
+     	else if(nNode == 2)then
+     		ui_wid_set(dbox_property, "LABEL", "Sec. Area :")
+     		s_prop_name = mat_name // "_ROD" // str_from_real(r_prop) 
+			PropFx.create_rod_property(s_prop_name, mat_name, r_prop, "Elem "// s_eid)
+     		$ Area_FringePlot()     		
+     	else if(nNode >= 3)then
+     		ui_wid_set(dbox_property, "LABEL", "Thickness :" )
+     		s_prop_name = str_from_real(r_prop) //"_"//mat_name
+     		PropFx.create_shell_property(s_prop_name, mat_name, r_prop, "Elem "// s_eid)
+     		$ thick_FringePlot()
+	    	end if
+     end if	
+
+
+	ui_wid_set(wa_sdbox_01(1), "VALUE", "")
+	ui_wid_set(wa_sdbox_01(2), "VALUE", "")
+	ui_wid_set(wa_sdbox_01(3), "VALUE", "")
+	ui_wid_set(wa_sdbox_01(4), "VALUE", "")
+	
+end function
+
+end class

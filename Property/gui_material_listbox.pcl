@@ -1,0 +1,31 @@
+FUNCTION gui_material_listbox(w_widget)
+	widget w_widget
+    integer mat_id, mat_cat, mat_lin, mat_dir, mat_type, cnt
+	integer next_status = 0
+	string mat_name[31](virtual)
+
+	db_get_all_material_names()
+	cnt=0
+	sys_allocate_array(mat_name, 1, 1)
+	WHILE(next_status == 0)
+	cnt +=1
+	sys_reallocate_array(mat_name,1, cnt)
+	next_status = db_get_next_material_name(mat_name(cnt),@
+						mat_id,		  @
+						mat_cat,	@
+						mat_lin,	@
+						mat_dir,	@
+						mat_type )
+	END WHILE
+
+	ui_item_deleteall(w_widget)
+
+    integer idx
+
+    for(idx=1 to cnt-1)
+        ui_item_create(w_widget, mat_name(idx), mat_name(idx), false)
+    end for
+
+	sys_free_array(mat_name)
+
+END FUNCTION

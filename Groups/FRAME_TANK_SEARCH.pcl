@@ -1,0 +1,88 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME FRAME_TANK_SEARCH
+#define CLASS_STR "FRAME_TANK_SEARCH"
+#define UI_INIT UI_FRAME_TANK_SEARCH
+
+CLASS CLASSNAME
+    classwide widget sframe_01, wa_Sdbox_01(1), dbox_GroupName
+
+    function UI_INIT(parent_id, y_loc)
+        widget parent_id
+        real y_loc
+
+        widget frame_wid
+        
+        frame_wid=ui_frame_create(                   @
+        /* parent */             parent_id,           @
+        /*  name  */             "",                @
+        /*    x   */             FRAME_X_LOC_COL1,  @
+        /*    y   */             y_loc,         @
+        /*  width */             FRAME_L_MARGIN + FRAME_WID_SINGLE + FRAME_R_MARGIN,  @
+        /* height */             0.0,               @
+        /*  label */             "Tank Search")
+
+        REAL Y_LOCF = 0
+ 	
+		Y_LOCF = FRAME_T_MARGIN
+
+        dbox_GroupName = ui_databox_create(                         @
+            /*    parent    */                  frame_wid,               @
+            /*   callback   */                  "",                     @
+            /*       x      */                  FRAME_L_MARGIN,         @
+            /*       y      */                  Y_LOCF,                  @
+            /* label_length */                  DBOX_WID_SINGLE,     @
+            /*  box_length  */                  DBOX_WID_SINGLE,      @
+            /*     label    */                  "Group Name :",         @
+            /*     value    */                  "",                     @
+            /*  label_above */                  TRUE,                  @
+            /*   datatype   */                  "STRING",               @
+            /*   num_vals   */                  1)
+
+        Y_LOCF += DBOX_HGT_LABOVE + INTER_WIDGET_SPACE
+
+		sframe_01 = ui_select_frame_set(				@
+		/* parent widget id(input) 	*/	frame_wid,		@
+		/*	select frame callback	*/	CLASS_STR // ".Apply_Click",	@	
+		/* 	select frame label		*/	"Autoexec",	@
+		/*		x				*/	FORM_L_MARGIN,	@	
+		/*		y				*/	Y_LOCF, 		@
+		/*	select databax array	*/	wa_sdbox_01,	@
+		/* 	data type	array		*/	["ELEMENT"],		@
+		/* 	select databox label array	*/ 	["Select Elements"],	@
+		/*	select databox collback array	*/ 	[""], @
+		/*	label avove logical	*/			TRUE)	             
+		  
+        Y_LOCF += INTER_WIDGET_SPACE
+
+        ui_wid_set(frame_wid, "HEIGHT", Y_LOCF)
+
+        y_loc += Y_LOCF + INTER_WIDGET_SPACE
+
+        return frame_wid
+    end function
+
+    function Apply_Click()
+        string s_group_name[virtual]
+        string s_ElemList[virtual]
+
+        ui_wid_get_vstring(dbox_GroupName, "VALUE", s_group_name)
+        ui_wid_get_vstring(wa_sdbox_01(1), "VALUE", s_ElemList)
+
+        ga_group_create(s_group_name)
+        ga_group_entity_add(s_group_name, s_ElemList)
+        integer i_group_id
+        db_get_group_id(s_group_name, i_group_id)
+
+        GrpFx.remove_nodes_in_group(i_group_id, s_group_name)
+        GrpFx.remove_1d_elems_in_group(i_group_id, s_group_name)
+
+        integer i_cnt
+        repeat
+            i_cnt = GrpFx.exclude_free_edge_elements(i_group_id, s_group_name)
+        until(i_cnt == 0)
+
+        ga_group_current_set( s_group_name )
+
+    end function
+END CLASS

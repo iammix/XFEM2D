@@ -1,0 +1,15 @@
+function xfem_get_value_mat_ass_elem(nmat, sa_mat_name, ia_ElemID)
+string sa_mat_name[]()
+integer ia_ElemID(), nmat
+integer word_ids(5) = [11, 15, 0, 0, 0]
+real word_values(5)
+integer idx, field_ids(5)
+
+for( idx=1 to nmat)
+    sa_mat_name(idx) = xfem_get_mat_name_ass_elem(ia_ElemID(idx))
+    db_get_material_id_from_name(sa_mat_name(idx), mat_id(idx))
+    db_get_matl_prop_value ( mat_id(idx), word_ids, field_ids, word_values )
+    dump word_values
+end for
+
+end function

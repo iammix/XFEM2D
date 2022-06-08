@@ -1,0 +1,1343 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME PROPERTY_TOOLS
+#define CLASS_STR "PROPERTY_TOOLS"
+#define NAME_LENGTH 32
+#define MY_APPLICATION  "Property Tools"
+
+class CLASSNAME
+
+classwide widget form_id, opt_Action, opt_Object, btn_Apply, btn_Exit
+classwide widget property_frame, listbox_Property, btn_ProfileList
+CLASSWIDE WIDGET seldbox_Element, selfrm_Element, dbox_vector, opt_Vector
+CLASSWIDE WIDGET opt_Material, dbox_Property, sframe_PropName, sdbox_PropName
+   CLASSWIDE WIDGET tree_id, dummy_lbox
+   CLASSWIDE WIDGET switch_Display, txt_PropInfo
+   CLASSWIDE WIDGET sep_00, sep_01, sep_02
+   CLASSWIDE INTEGER Property_item_id
+   CLASSWIDE LOGICAL tree_created
+   CLASSWIDE REAL x_tree, y_tree, tree_width, tree_height
+
+function init()
+    real yloc = 0
+
+   form_id = ui_form_create(CLASS_STR,       @
+          /* x location */  FORM_X_LOC ,     @
+          /* y location */  FORM_Y_LOC,"ul", @
+          /* width      */  FORM_WID_SML,    @
+          /* height     */  FORM_HGT_TALL,   @
+          /* label      */  MY_APPLICATION,  @
+                            "")
+
+    opt_Object = ui_optionmenu_create(  form_id,                @
+                                        "cb_Object",            @
+                                        AOM_MENU_X_LOC,         @
+                                        ACTION_MENU_Y_LOC,      @
+                                        AOM_MENU_LABEL_LEN,     @
+                                        "Type",               @
+                                        FALSE )
+
+    ui_item_create(	opt_Object, "SHELL", "Shell", TRUE)
+    ui_item_create(	opt_Object, "BAR", "Bar", TRUE)
+    ui_item_create(	opt_Object, "BEAM", "Beam", TRUE)
+    ui_item_create(	opt_Object, "ROD", "Rod", TRUE)
+
+      yloc += OBJECT_MENU_Y_LOC
+
+      real yloc_frame
+
+      property_frame = ui_frame_create(form_id,"", @
+								 0, @
+								 yloc, @
+								 FORM_WID_SML, @
+								 0, @
+								 "")
+
+      yloc_frame = FRAME_T_MARGIN
+
+      opt_Material = ui_optionmenu_create(  property_frame,                @
+                                        "",            @
+                                        FORM_L_MARGIN,         @
+                                        yloc_frame,      @
+                                        DBOX_LABEL_LEN_SINGLE,     @
+                                        "Material",               @
+                                        FALSE )
+
+     yloc_frame += OPT_MENU_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+
+     real wid
+
+     wid = DBOX_WID_SINGLE - DBOX_LABEL_LEN_DOUBLE
+
+     dbox_Property = ui_databox_create(               @
+      /*    parent    */          property_frame,             @
+      /*   callback   */          "",                   @
+      /*       x      */          FORM_L_MARGIN,        @
+      /*       y      */          yloc_frame,           @
+      /* label_length */          DBOX_LABEL_LEN_DOUBLE,                  @
+      /*  box_length  */          wid,      @
+      /*     label    */          "Property",  @
+      /*     value    */          "",                   @
+      /*  label_above */          FALSE,                 @
+      /*   datatype   */          "STRING",             @
+      /*   num_vals   */          1)
+
+      yloc_frame += DBOX_HGT_NO_LABOVE + LINE_THICKNESS
+
+      btn_ProfileList = ui_button_create(                  @
+      /*   parent  */           property_frame,             @
+      /*  callback */           "cb_ProfileList",          @
+      /*     x     */           FORM_L_MARGIN + DBOX_LABEL_LEN_DOUBLE,  @
+      /*     y     */           yloc_frame,               @
+      /*   width   */           wid,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "ProfileList",             @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           TRUE)
+
+      yloc_frame += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+
+      ui_wid_set(btn_ProfileList, "VISIBLE", FALSE)
+
+      opt_Vector = ui_optionmenu_create(property_frame,                @
+                                        "cb_opt_vector",            @
+                                        FORM_L_MARGIN,         @
+                                        yloc_frame,      @
+                                        DBOX_LABEL_LEN_SINGLE,     @
+                                        "Vector",               @
+                                        FALSE )
+          ui_item_create(opt_Vector, "_PN", "+Normal", TRUE)
+          ui_item_create(opt_Vector, "_MN", "-Normal", TRUE)
+          ui_item_create(opt_Vector, "_PNF", "+Normal(field)", TRUE)
+          ui_item_create(opt_Vector, "_MNF", "-Normal(field)", TRUE)
+          ui_item_create(opt_Vector, "_PX", "+X", TRUE)
+          ui_item_create(opt_Vector, "_MX", "-X", TRUE)
+          ui_item_create(opt_Vector, "_PY", "+Y", TRUE)
+          ui_item_create(opt_Vector, "_MY", "-Y", TRUE)
+          ui_item_create(opt_Vector, "_PZ", "+Z", TRUE)
+          ui_item_create(opt_Vector, "_MZ", "-Z", TRUE)
+          ui_item_create(opt_Vector, "_CX", "CX", TRUE)
+          ui_item_create(opt_Vector, "_CY", "CY", TRUE)
+          ui_item_create(opt_Vector, "_CZ", "CZ", TRUE)
+
+     yloc_frame += OPT_MENU_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+
+     dbox_vector = ui_databox_create(               @
+      /*    parent    */          property_frame,             @
+      /*   callback   */          "",                   @
+      /*       x      */          FORM_L_MARGIN,        @
+      /*       y      */          yloc_frame,           @
+      /* label_length */          DBOX_LABEL_LEN_DOUBLE,                  @
+      /*  box_length  */          wid,      @
+      /*     label    */          "Orient. Vector",  @
+      /*     value    */          "",                   @
+      /*  label_above */          FALSE,                 @
+      /*   datatype   */          "STRING",             @
+      /*   num_vals   */          1)
+
+      yloc_frame += DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+
+      selfrm_Element = ui_selectframe_create(                        @
+      /*  parent  */                       property_frame,                 @
+      /* callback */                       "",         @
+      /*     x    */                       FORM_L_MARGIN,          @
+      /*     y    */                       yloc_frame,                   @
+      /*   width  */                       SFRAME_WID_SINGLE,      @
+      /*  height  */                       SFRAME_1SDB_HGT_LABOVE, @
+      /*   label  */                       "",            @
+      /*  recycle */                       TRUE)
+
+      seldbox_Element = ui_selectdatabox_create(                       @
+      /*    parent    */                    selfrm_Element,          @
+      /*   callback   */                    "",        @
+      /*       x      */                    SFRAME_L_MARGIN,       @
+      /*       y      */                    SDBOX_Y_LOC1_LABOVE ,  @
+      /* label_length */                    0.0,                   @
+      /*  box_length  */                    SDBOX_WID_SINGLE,      @
+      /*     label    */                    "Select Elements",     @
+      /*     value    */                    "",                    @
+      /*  label_above */                    TRUE,                  @
+      /*   datatype   */                    "ELEM2D",             @
+      /*    prompt    */                    "Select Elements")
+
+
+      real sframe_hgt
+      ui_wid_get(selfrm_Element,"HEIGHT", sframe_hgt)
+/*
+      sframe_hgt = SFRAME_T_MARGIN +                @
+                        SFRAME_1SDB_HGT_LABOVE +    @
+                        SFRAME_B_MARGIN +           @
+                        INTER_WIDGET_SPACE +        @
+                        SFRAME_1EDGE
+*/
+      yloc_frame += sframe_hgt + LABEL_HGT
+
+	yloc_frame += INTER_WIDGET_SPACE
+
+      ui_wid_set(property_frame, "HEIGHT", yloc_frame)
+
+      yloc += yloc_frame + INTER_WIDGET_SPACE
+
+      gui_material_listbox(opt_Material)
+
+      btn_Apply = ui_button_create(                  @
+      /*   parent  */           form_id,             @
+      /*  callback */           "cb_Apply",          @
+      /*     x     */           BUTTON_HALF_X_LOC1,  @
+      /*     y     */           yloc,               @
+      /*   width   */           BUTTON_WID_HALF,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Apply",             @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           TRUE)
+
+      btn_Exit = ui_button_create(                    @
+      /*   parent  */            form_id,             @
+      /*  callback */            "cb_Exit",           @
+      /*     x     */            BUTTON_HALF_X_LOC2,  @
+      /*     y     */            yloc,               @
+      /*   width   */            BUTTON_WID_HALF,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Exit",              @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+
+      ui_wid_set(opt_Object, "VALUE", "SHELL")
+
+      yloc += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+
+    ui_separator_create (   form_id, "",           @
+                            0.0,                   @
+                            yloc,   @
+                            FORM_WID_SML,          @
+                            TRUE )
+     yloc += LINE_THICKNESS + INTER_WIDGET_SPACE
+
+      CLASSNAME.TREE_FORM(yloc)
+end function
+
+function display()
+
+    ui_exec_function(CLASS_STR, "init")
+    ui_form_display(CLASS_STR)
+
+    string s_item[15]
+    ui_wid_get(opt_Object, "VALUE", s_item)
+
+    CLASSNAME.cb_Object(s_item)
+    CLASSNAME.update()
+end function
+
+function cb_Object(s_item)
+string s_item[]
+
+     switch(s_item)
+        case("SHELL");
+            ui_wid_set(dbox_Property,"LABEL", "Thickness")
+            ui_wid_set(dbox_Property,"DATATYPE", "REAL")
+            ui_wid_set(btn_ProfileList,"VISIBLE", FALSE)
+            ui_wid_set(seldbox_Element,"DATATYPE", "ELEM2D")
+            ui_wid_set(opt_Vector,"ENABLE", FALSE)
+            ui_wid_set(dbox_vector,"ENABLE", FALSE)
+        case("BEAM");
+            ui_wid_set(dbox_Property,"LABEL", "Section name")
+            ui_wid_set(dbox_Property,"DATATYPE", "STRING")
+            ui_wid_set(btn_ProfileList,"VISIBLE", TRUE)
+            ui_wid_set(seldbox_Element,"DATATYPE", "BEAMELEM")
+            ui_wid_set(opt_Vector,"ENABLE", TRUE)
+            ui_wid_set(dbox_vector,"ENABLE", TRUE)
+        case("BAR");
+            ui_wid_set(dbox_Property,"LABEL", "Section name")
+            ui_wid_set(dbox_Property,"DATATYPE", "STRING")
+            ui_wid_set(btn_ProfileList,"VISIBLE", TRUE)
+            ui_wid_set(seldbox_Element,"DATATYPE", "BEAMELEM")
+            ui_wid_set(opt_Vector,"ENABLE", TRUE)
+            ui_wid_set(dbox_vector,"ENABLE", TRUE)
+        case("ROD");
+            ui_wid_set(dbox_Property,"LABEL", "Section name")
+            ui_wid_set(dbox_Property,"DATATYPE", "STRING")
+            ui_wid_set(btn_ProfileList,"VISIBLE", TRUE)
+            ui_wid_set(seldbox_Element,"DATATYPE", "BEAMELEM")
+            ui_wid_set(opt_Vector,"ENABLE", FALSE)
+            ui_wid_set(dbox_vector,"ENABLE", FALSE)
+     end switch
+
+end function
+/*
+function cb_sdbox(s_event)
+string s_event[]
+string s_item[virtual]
+
+     ui_wid_get_vstring(opt_Object, "VALUE", s_item)
+
+     if(s_event == "GAIN") then
+          switch(s_item)
+               case("SHELL");
+                    ui_wid_set(seldbox_Element,"DATATYPE", "ELEM2D")
+               default;
+                    ui_wid_set(seldbox_Element,"DATATYPE", "BEAMELEM")
+          end switch
+     end if
+
+end function
+*/
+function cb_ProfileList()
+
+        ui_exec_function("Profile_List","init")
+        sys_class_set("Profile_List", "s_class", CLASS_STR)
+        sys_class_set("Profile_List", "s_widget", "dbox_Property")
+
+        Profile_List.display()
+
+        widget btn
+        btn = sys_class_get("Profile_List", "btn_Apply")
+        ui_wid_set(btn, "ENABLE", TRUE)
+
+end function
+
+function cb_opt_vector(s_item)
+     string s_item[]
+
+     switch(s_item)
+          case("_PN");
+             ui_wid_set(dbox_vector, "VALUE", "vetor sum")
+          case("_MN");
+             ui_wid_set(dbox_vector, "VALUE", "vetor sum")
+          case("_PNF");
+             ui_wid_set(dbox_vector, "VALUE", "field")
+          case("_MNF");
+             ui_wid_set(dbox_vector, "VALUE", "field")
+          case("_PX");
+             ui_wid_set(dbox_vector, "VALUE", "<1,0,0>")
+          case("_MX");
+             ui_wid_set(dbox_vector, "VALUE", "<-1,0,0>")
+          case("_CX");
+             ui_wid_set(dbox_vector, "VALUE", "<1,0,0>")          
+          case("_PY");
+             ui_wid_set(dbox_vector, "VALUE", "<0,1,0>")
+          case("_MY");
+             ui_wid_set(dbox_vector, "VALUE", "<0,-1,0>")
+          case("_CY");
+             ui_wid_set(dbox_vector, "VALUE", "<0,1,0>")          
+          case("_PZ");
+             ui_wid_set(dbox_vector, "VALUE", "<0,0,1>")
+          case("_MZ");
+             ui_wid_set(dbox_vector, "VALUE", "<0,0,-1>")
+          case("_CZ");
+             ui_wid_set(dbox_vector, "VALUE", "<0,0,1>")          
+     end switch
+
+end function
+
+function cb_sel_elems(s_event)
+      string s_event[]
+      string s_item[virtual]
+      
+      ui_wid_get_vstring(seldbox_Element, "VALUE", s_item)
+      
+      integer i_count, i_status
+
+      i_count = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_item, false, i_status)
+      
+      if(i_count == 1) then
+            integer i_Elem(1)
+            fem_u_get_id_list(LP_SUBLIST_ELEMENT, s_item, i_count, TRUE, i_Elem)
+            integer rids(1)
+            db_get_region_for_elements( 1, i_Elem, rids)
+
+           STRING   property_mame[32]
+           INTEGER  gener_elem_type, dof_set_flag, condense_flag
+           INTEGER  geom_flag, form_flag, lam_flag, layer_count
+           integer  material_id, material_lin, material_dir
+                                 
+            db_get_region_definition(                          @
+             /* region ID        */  rids(1),                  @
+             /* set name         */  property_mame,            @
+             /* element type ID  */  gener_elem_type,          @
+             /* dof set flag     */  dof_set_flag,             @
+             /* condense flag    */  condense_flag,            @
+             /* geom flag        */  geom_flag,                @
+             /* form flag        */  form_flag,                @
+             /* lam_flag         */  lam_flag,                 @
+             /* layer count      */  layer_count,              @
+             /* material id      */  material_id,              @
+             /* material linear  */  material_lin,             @
+             /* material direct  */  material_dir)
+
+           STRING   prop_word_name[32]
+           REAL     real_array(3)
+           INTEGER  data_type, nrec, rec
+           INTEGER  int_value,coord_value, node_value, field_value
+           STRING   string_value[31], shape_name[5], material_name[32], section_name[128], mat_name[32], shp_name[5], sec_name[32]
+
+$ 6, 13, 39, 4042, 4043
+$ "Orientation", "Material", "Section", "Offset1", "Offset2"]
+
+        integer prop_word_id
+         
+        LIST(prop_word_id = 6, 13, 39)
+            db_get_prop_value(                                 @
+             /* region ID        */  rids(1),                  @
+             /* word of interest */  prop_word_id,                       @
+             /* material ID      */  material_id,              @
+             /* data type        */  data_type,                @
+             /* INTEGER value    */  int_value,                @
+             /* REAL array       */  real_array,               @
+             /* char STRING      */  string_value,             @
+             /* coord ID         */  coord_value,              @
+             /* node ID          */  node_value,               @
+             /* field ID         */  field_value)
+
+        	 prop_word_name = xfem_get_word_name_from_id(prop_word_id)
+
+     REAL o_vct(3)
+
+             switch(prop_word_id)
+                case(6)
+                    xfem_vector.unit2(real_array,o_vct)
+
+                case(13)
+                    db_get_material_name_from_id(material_id, mat_name)
+                    material_name = mat_name
+                    
+                case(39)
+                    db_get_beam_section( int_value, shp_name, sec_name, nrec, rec)
+                    shape_name = shp_name
+                    section_name = sec_name
+                    $ int_value : section id
+             end switch
+        END LIST
+                               
+$     REAL dim(virtual)
+$     INTEGER ndim, entyp
+$     INTEGER nprop
+$     REAL r_prop(30)
+$     INTEGER i_data_types(virtual), i_field_ids(virtual)
+
+$			ndim = blgetnumdimension(shape_name)
+$			IF(ndim !=0) THEN	sys_allocate_array(i_data_types, 1, ndim)
+$			IF(ndim !=0) THEN	sys_allocate_array(i_field_ids, 1 , ndim)
+$			IF(ndim !=0) THEN	sys_allocate_array(dim, 1, ndim)
+$			bl_get_std_beam_section_data (int_value, ndim, i_data_types, dim, i_field_ids)
+$			blgetprop(entyp, shape_name, dim, ndim, r_prop , nprop)
+
+$            o_vct(1) = o_vct(1)*dim(2)
+$            o_vct(2) = o_vct(2)*dim(2)
+$            o_vct(3) = o_vct(3)*dim(2)
+
+$            dump ia_ElemId(idx)
+$            dump dim(2)
+$            dump shape_name, ndim, dim
+$            dump o_vct
+
+            string orientation[64]
+            real mag
+            real vct(3)
+            vct(1) = o_vct(1)**2
+            vct(2) = o_vct(2)**2
+            vct(3) = o_vct(3)**2
+      
+            mag = mth_sqrt(vct(1) + vct(2) + vct(3))
+            
+            if(mag == 0) then return -1
+            
+            orientation = xfem_str_from_vector(o_vct)
+      
+            ui_wid_set(opt_Material, "VALUE", material_name)
+            ui_wid_set(dbox_Property, "VALUE", section_name)
+            ui_wid_set(dbox_vector, "VALUE", orientation)
+      
+      end if
+            
+end function
+
+function cb_Exit()
+
+    ui_form_hide(CLASS_STR)
+    ui_form_delete(CLASS_STR)
+
+end function
+
+function cb_Apply()
+     uil_primary_file.db_save()
+     string obj_item[virtual]
+     ui_wid_get_vstring(opt_Object, "VALUE", obj_item)
+
+     string mat_name[63]
+     ui_wid_get_vstring(opt_Material, "VALUE", mat_name)
+
+     string s_prop_name[31]
+     string sec_name[63]
+     string s_orv[125]
+
+     real thk
+     integer sec_id
+     
+     string shell_mat[64]
+     
+     if(obj_item == "SHELL") then
+          ui_wid_get(dbox_Property, "VALUE", thk)
+          if(str_index(mat_name, "NS") != 0) then
+               shell_mat = ""
+          else if(str_index(mat_name, "MILD") != 0) then
+               shell_mat = ""
+          else if(str_index(mat_name, "24") != 0) then
+               shell_mat = ""
+          else 
+               shell_mat = "_" // mat_name
+          end if
+                     
+          s_prop_name = str_from_real(thk) //shell_mat
+
+     else if(obj_item == "BAR" || obj_item == "BEAM") then
+          ui_wid_get(dbox_Property, "VALUE", sec_name)
+          db_get_beam_section_id(sec_name, sec_id)
+          string on_direct[5]
+          ui_wid_get(opt_Vector, "VALUE", on_direct)
+          s_prop_name = "BAR" // str_from_integer(sec_id)// mat_name // on_direct
+
+     else if(obj_item == "ROD") then
+          ui_wid_get(dbox_Property, "VALUE", sec_name)
+            db_get_beam_section_id(sec_name, sec_id)
+          s_prop_name = "ROD"//str_from_integer(sec_id)//mat_name
+
+     end if
+
+$     integer reg_id
+$     reg_id = ideasf_check_exist_property(s_prop_name)
+
+     switch(obj_item)
+          case("SHELL");
+               CLASSNAME.create_shell_property(s_prop_name, mat_name, thk)
+
+          case("BAR");
+               CLASSNAME.create_beam_bar_property(s_prop_name, mat_name, 1, sec_name)
+
+          case("BEAM");
+               CLASSNAME.create_beam_bar_property(s_prop_name, mat_name, 2, sec_name)
+
+          case("ROD");
+               CLASSNAME.create_rod_property(s_prop_name, mat_name, sec_name)
+
+          end switch
+
+    CLASSNAME.update()
+end function
+
+function create_shell_property(reg_name, mat_name, thk)
+     string reg_name[]
+     string mat_name[]
+     real thk
+
+     string element_list[virtual]
+     ui_wid_get_vstring(seldbox_Element, "value", element_list)
+
+     integer reg_id
+
+     reg_id = ideasf_check_exist_property(reg_name)
+
+     if(reg_id != 0) then
+          ideasf_modify_property(reg_name, reg_id, element_list)
+          return 0
+     end if
+
+     string prop_dat[63](8)
+     integer status
+
+     prop_dat(1) = "m:"//mat_name
+     prop_dat(3) = str_from_real(thk)
+     prop_dat(5) = "0"
+     prop_dat(6) = "0"
+     prop_dat(7) = "0"
+
+	status = elementprops_create(	reg_name,	@
+							51,		@
+							25,		@
+							35,		@
+							1,		@
+							1,		@
+							20,		@
+							[13, 20, 36, 4037, 4111, 4118, 4119, 8111],		@
+							[5, 9, 1, 1, 1, 1, 1, 4],	@
+							prop_dat,		@
+							element_list )
+
+end function
+
+function create_rod_property(reg_name, mat_name, sec_name)
+     string reg_name[]
+     string mat_name[]
+     string sec_name[]
+
+     string element_list[virtual]
+     ui_wid_get_vstring(seldbox_Element, "value", element_list)
+
+     integer reg_id
+     reg_id = ideasf_check_exist_property(reg_name)
+
+     if(reg_id != 0) then
+          ideasf_modify_property(reg_name, reg_id, element_list)
+          return 0
+     end if
+
+     real area
+     area = get_section_prop(1, sec_name, 1)
+
+     string prop_dat[63](6)
+     integer status
+
+     prop_dat(1) = "m:"//mat_name
+     prop_dat(2) = str_from_real(area)
+
+     status = elementprops_create(	reg_name,	@
+							18,		@
+							2,		@
+							26,		@
+							1,		@
+							1,		@
+							20,		@
+							[13, 1, 1026, 4036, 4037, 8112],		@
+							[5, 1, 1, 1, 1, 1],	@
+							prop_dat,		@
+							element_list )
+
+end function
+
+function create_beam_bar_property(reg_name, s_mat, ent_typ, sec_name)
+     string reg_name[]
+     string s_mat[]
+     integer ent_typ
+     string sec_name[]
+
+     static integer idx = 0
+     static integer idfx = 0
+
+     string element_list[virtual]
+     ui_wid_get_vstring(seldbox_Element, "value", element_list)
+
+     string on_item[5]
+     ui_wid_get(opt_Vector, "VALUE", on_item)
+
+     string s_orv[125]
+     ui_wid_get(dbox_vector, "VALUE", s_orv)
+
+     real r_sign
+     switch(on_item)
+     	case("_PN"); r_sign = +1
+     	case("_MN"); r_sign = -1
+          case("_PNF"); r_sign = +1
+          case("_MNF"); r_sign = -1
+     end switch
+
+     real r_orv(3), r_ofv(3), r_ovct(3)
+     string s_ofv[125], s_orvf[125], s_ofvf[125]
+     string PROPERTY_DATA[64](9)
+     string s_prop_name[32]
+
+     logical l_chk = false
+
+     if(on_item == "_PN" || on_item == "_MN") then
+          s_prop_name = reg_name // str_from_integer(idx)
+          while(ideasf_check_exist_property(s_prop_name) != 0)
+               idx += 1
+               s_prop_name = reg_name // str_from_integer(idx)
+          end while
+          get_norv_sum(ent_typ, sec_name, element_list, r_sign, r_orv, r_ofv)
+
+          r_orv(1) = mth_round(r_orv(1),1)
+          r_orv(2) = mth_round(r_orv(2),1)
+          r_orv(3) = mth_round(r_orv(3),1)
+          r_ofv(1) = mth_round(r_ofv(1),1)
+          r_ofv(2) = mth_round(r_ofv(2),1)
+          r_ofv(3) = mth_round(r_ofv(3),1)
+
+          PROPERTY_DATA(3) = xfem_str_from_vector(r_orv)
+          PROPERTY_DATA(4) = xfem_str_from_vector(r_ofv)
+          PROPERTY_DATA(5) = xfem_str_from_vector(r_ofv)
+
+     else if(on_item == "_PNF" || on_item == "_MNF") then
+          s_prop_name = reg_name //"_"// str_from_integer(idx)
+          while(ideasf_check_exist_property(s_prop_name) != 0)
+               idx += 1
+               s_prop_name = reg_name // str_from_integer(idx)
+          end while
+
+          get_norv_field(ent_typ, sec_name, element_list, r_sign, s_prop_name, s_orvf, s_ofvf)
+
+          PROPERTY_DATA(3) = "f:" // s_orvf
+          PROPERTY_DATA(4) = "f:" // s_ofvf
+          PROPERTY_DATA(5) = "f:" // s_ofvf
+     else
+          integer reg_id
+
+          s_prop_name = reg_name
+          dump "100001 = " // s_prop_name
+          integer i_pos
+
+          while(str_index(s_prop_name, "+") != 0)
+               i_pos = str_index(s_prop_name, "+")
+               str_assign(s_prop_name, i_pos, 1, "_")
+          end while
+          dump "100002 = " // s_prop_name
+          while(str_index(s_prop_name, "/") != 0)
+               i_pos = str_index(s_prop_name, "/")
+               str_assign(s_prop_name, i_pos, 1, "_")
+          end while
+          dump "100003 = " // s_prop_name
+          reg_id = ideasf_check_exist_property(s_prop_name)
+
+          dump reg_id
+
+          if(reg_id == 0) then
+               string s_vct[31]
+               s_vct = str_token(str_token(s_orv, "<", 2), ">", 1)
+               dump s_orv
+               dump s_vct
+               
+               real vct(3)
+               r_orv(1) = str_to_real(str_token(s_vct, ",", 1))
+               r_orv(2) = str_to_real(str_token(s_vct, ",", 2))
+               r_orv(3) = str_to_real(str_token(s_vct, ",", 3))
+
+               dump "1:", r_orv
+               
+               integer sec_id, nrec, bytes_per_rec
+               string s_shape[5]
+
+               db_get_beam_section_id(sec_name, sec_id)
+               db_get_beam_section(sec_id, s_shape, sec_name, nrec, bytes_per_rec)
+
+               real offset_dist
+               dump s_shape
+               if(s_shape == "L") then
+                    offset_dist = get_section_prop(ent_typ, sec_name, 13)
+                    r_orv(1) = -r_orv(1)
+                    r_orv(2) = -r_orv(2)
+                    r_orv(3) = -r_orv(3)
+                    r_sign = -1
+               else
+                    offset_dist = get_section_prop(ent_typ, sec_name, 11)
+                    r_sign = -1
+               end if
+
+               dump offset_dist
+               
+               if(on_item == "_CX" || on_item == "_CY" || on_item == "_CZ") then
+                    offset_dist = 0.0
+               end if
+               
+               r_ofv(1) = r_sign * offset_dist * r_orv(1)
+               r_ofv(2) = r_sign * offset_dist * r_orv(2)
+               r_ofv(3) = r_sign * offset_dist * r_orv(3)
+
+               s_ofv = xfem_str_from_vector(r_ofv)
+               s_orv = xfem_str_from_vector(r_orv)
+               
+               dump s_ofv
+               dump s_orv
+
+               PROPERTY_DATA(3) = s_orv
+               PROPERTY_DATA(4) = s_ofv
+               PROPERTY_DATA(5) = s_ofv
+          else
+               ideasf_modify_property(s_prop_name, reg_id, element_list)
+               sys_free_string(element_list)
+               return 0
+          end if
+     end if
+
+     PROPERTY_DATA(1) = sec_name
+     PROPERTY_DATA(2) = "m:" // s_mat
+
+     $ PROPERTY_DATA(6) = "0. 1."
+     PROPERTY_DATA(7) = "Analysis"
+     PROPERTY_DATA(8) = "Analysis"
+     PROPERTY_DATA(9) = "Analysis"
+
+     INTEGER	PROPERTY_ID(9) = [39, 13, 6, 4042, 4043, 4061, 8200, 8201, 8202]
+     INTEGER	PROPERTY_TYPE(9) = [11, 5, 2, 2, 2, 6, 4, 4, 4]
+
+     integer goid
+     if(ent_typ==1) then
+          goid = 2
+     else if(ent_typ == 2) then
+          goid = 36
+     end if
+
+     elementprops_create(s_prop_name,	@
+     					11,		@
+     					goid,		@
+     					42,		@
+     					1,		@
+     					1,		@
+     					20,		@
+     					PROPERTY_ID,				@
+     					PROPERTY_TYPE,				@
+     					PROPERTY_DATA,				@
+     					element_list)
+
+     sys_free_string(element_list)
+
+end function
+
+FUNCTION check_exist_property(s_prop_name)
+/*
+*  check exist property using property_name
+*  input : property name
+*  output: exist -> return region id, not exist -> return 0
+*/
+
+  string s_prop_name[], sa_prop_name[32](virtual),s_temp_prop_name[virtual]
+  integer i_count,ia_region_id(virtual),i_return,i
+
+   i_return = 0
+
+   db_count_region_ids(i_count)
+
+   if(i_count !=0) then
+      sys_allocate_array(sa_prop_name,1,i_count)
+      sys_allocate_array(ia_region_id,1,i_count)
+
+      db_get_region_ids_and_names(i_count,ia_region_id,sa_prop_name)
+
+      for(i =1 to i_count)
+
+         s_temp_prop_name = sa_prop_name(i)
+
+         s_temp_prop_name = str_strip_lead(s_temp_prop_name)
+         s_temp_prop_name = str_strip_trail(s_temp_prop_name)
+
+         if(s_temp_prop_name == s_prop_name) then
+
+             i_return = ia_region_id(i)
+
+             break
+          end if
+
+      end for
+      sys_free_array(sa_prop_name)
+      sys_free_array(ia_region_id)
+
+  else
+      sys_allocate_array(sa_prop_name,1,1)
+      sys_allocate_array(ia_region_id,1,1)
+
+      i_return = 0
+
+      sys_free_array(sa_prop_name)
+      sys_free_array(ia_region_id)
+
+  end if
+
+
+  return i_return
+
+
+END FUNCTION /* check_exist_property */
+
+   FUNCTION TREE_FORM(yloc_main)
+
+      REAL yloc_main, xloc_main, frame_width, yloc
+
+      yloc_main += FORM_T_MARGIN
+	  xloc_main = FORM_L_MARGIN
+	  frame_width = FORM_WID_SML - FORM_L_MARGIN - FORM_R_MARGIN
+
+		/* */
+	   dummy_lbox = ui_listbox_create(form_id, "", xloc_main, yloc_main, frame_width, 5, "Hidden Sort", "EXTEND", TRUE)
+	   ui_wid_set(dummy_lbox, "DISPLAY", FALSE)
+	   /* */
+
+
+	  switch_Display=ui_switch_create(                @
+      /*   parent   */           form_id,       @
+      /*  callback  */           "cb_switch_display", @
+      /*      x     */           FORM_L_MARGIN,  @
+      /*      y     */           yloc_main,  @
+      /*  num_cols  */           3,              @
+      /*    label   */           "",  @
+      /* always_one */           TRUE)
+
+		ui_item_create(	switch_Display, "PLOT_ERASE", "Plot/Erase", FALSE)
+		ui_item_create(	switch_Display, "HIGHLIGHT",  "Highlight ", FALSE)
+		ui_item_create(	switch_Display, "NONE",       "None      ", FALSE)
+
+		ui_wid_set(switch_Display, "VALUE", "PLOT_ERASE")
+
+	  yloc_main += SWITCH_1R_HGT_NO_LABEL  + @
+                       FORM_B_MARGIN
+
+      sep_00=ui_separator_create(               @
+      /*   parent   */           form_id,       @
+      /*    name    */           "",            @
+      /*      x     */           0.0,           @
+      /*      y     */           yloc_main,     @
+      /*   length   */           FORM_WID_SML,  @
+      /* horizontal */           TRUE)
+
+      yloc_main += 5*PIXEL_HGT             + @
+                   INTER_WIDGET_SPACE
+
+	   x_tree      = xloc_main
+	   y_tree      = yloc_main
+	   tree_width  = FORM_WID_SML
+$	   tree_height = FORM_HGT_5_8THS
+	   tree_height = FORM_HGT_HALF*3/5
+
+	   yloc_main = yloc_main + tree_height + INTER_WIDGET_SPACE
+
+	ui_wid_set(form_id,"HEIGHT",yloc_main)
+
+	END FUNCTION /* init */
+
+FUNCTION cb_switch_display(sel_item, s_value)
+STRING	sel_item[], s_value[]
+
+IF(sel_item == "NONE" && s_value == "ON") THEN
+	gm_visibility_all(TRUE)
+	gm_hilight_clear()
+END IF
+END FUNCTION
+
+$
+FUNCTION create_tree()
+
+   integer i
+
+   if (tree_created) then ui_wid_delete(tree_id)
+
+	  tree_id = ui_tree_create(								@
+								form_id,					@
+								"cb_tree",					@
+								x_tree,				@
+								y_tree,				@
+								tree_width, @
+								tree_height,	@
+								"p3db Property Tree",			@
+								"EXTEND",					@
+								0)
+
+		ui_wid_set(tree_id, "DISPLAY", TRUE)
+
+   tree_created = TRUE
+
+end function /* create_tree */
+
+$
+FUNCTION cb_tree(wid, event, callData, userData)
+widget  wid, callData
+string  event[], userData[]
+string item_label[32](virtual)
+integer itemCount, itemIds(virtual), i
+logical status
+
+		if(event != "SELCHANGED") then return
+
+		if(ui_treeitem_is_selected(wid, Property_item_id) == TRUE) then
+			ui_tree_select_item(wid, Property_item_id, FALSE)
+			return
+		end if
+
+		status = ui_tree_get_selection( wid, itemIds, itemCount)
+
+		sys_allocate_array(item_label, 1, itemCount)
+
+		for(i=1 to itemCount)
+			ui_treeitem_get_label(wid, itemIds(i), item_label(i) )
+		end for
+
+		CLASSNAME.SelectProperty(itemCount, item_label)
+
+		sys_free_array(item_label)
+
+end function /* cb_tree */
+
+
+$
+function add_tree_item(parent, item_label, image)
+
+	   integer parent
+	   integer image
+	   integer item
+
+	   string  item_label[]
+
+	   item = ui_tree_add_item(tree_id, parent, -1, item_label, image, image)
+
+	   return (item)
+
+end function /* add_tree_item */
+
+
+$
+function update()
+
+  integer status
+   integer num_rgns, rgn_type_ids(virtual), num_elms_per_rgn(virtual)
+
+   logical props_by_type = TRUE
+
+   string  rgn_names[NAME_LENGTH](virtual)
+
+		CLASSNAME.create_tree()
+
+		ui_wid_set(tree_id, "DISPLAY", FALSE)
+
+	        status = CLASSNAME.get_prop_sets(props_by_type, num_rgns, rgn_names, rgn_type_ids, num_elms_per_rgn)
+
+		if (status != 0) then return (status)
+
+		CLASSNAME.add_prop_sets(props_by_type, num_rgns, rgn_names, rgn_type_ids, num_elms_per_rgn)
+
+		ui_wid_set(tree_id, "DISPLAY", TRUE)
+
+end function /* update */
+
+$
+function get_prop_sets(props_by_type, num_rgns, rgn_names, rgn_type_ids, num_elms_per_rgn)
+
+   integer i, status
+   integer num_rgns, rgn_type_ids(), num_elms_per_rgn()
+   integer rgn_ids(virtual)
+
+   logical props_by_type
+
+   string  rgn_names[]()
+
+
+   status = db_count_region_ids(num_rgns)
+   if (status != 0) then
+      msg_to_form(status, 4, appcode(status), 0, 0., ""); return (status)
+   end if
+
+   if (num_rgns == 0) then return (0)
+
+   sys_allocate_array(rgn_ids,   1, num_rgns)
+   sys_allocate_array(rgn_names, 1, num_rgns)
+
+   status = db_get_region_ids_and_names(num_rgns, rgn_ids, rgn_names)
+   if (status != 0) then
+      msg_to_form(status, 4, appcode(status), 0, 0., ""); return (status)
+   end if
+
+   CLASSNAME.sort_names2(num_rgns, rgn_names, rgn_ids)
+
+   sys_allocate_array(num_elms_per_rgn, 1, num_rgns)
+   sys_allocate_array(rgn_type_ids,     1, num_rgns)
+
+   user_message("Info", 0, MY_APPLICATION, "Processing "//str_from_integer(num_rgns)//" property sets ...")
+
+   for (i = 1 to num_rgns)
+      if (!em_proceed_quick()) then return (-1)
+
+      status = db_count_elements_in_region(rgn_ids(i), num_elms_per_rgn(i))
+      /* if (status != 0) then
+         msg_to_form(status, 4, appcode(status), 0, 0., ""); return (status)
+      end if */
+
+      if (props_by_type) then
+         status = CLASSNAME.get_prop_set_type(rgn_ids(i), rgn_type_ids(i))
+         if (status != 0) then return (status)
+      end if
+   end for
+
+   return (0)
+
+end function /* get_prop_sets */
+
+
+$
+function get_prop_set_type(rgn_id, rgn_type_id)
+
+   integer status
+   integer rgn_id, rgn_type_id
+   integer idum
+
+   string  name[NAME_LENGTH]
+
+
+   status = db_get_region_definition(rgn_id, name, rgn_type_id, idum, idum, idum, idum, idum, idum, idum, idum, idum)
+   if (status != 0) then
+      msg_to_form(status, 4, appcode(status), 0, 0., "")
+   end if
+
+   return (status)
+
+end function /* get_prop_set_type */
+
+$
+function add_prop_sets(props_by_type, num_rgns, rgn_names, rgn_type_ids, num_elms_per_rgn)
+
+   integer i, p
+   integer num_rgns, rgn_type_ids(), num_elms_per_rgn()
+   integer main_item
+   integer num_types, type_ids(virtual)
+   integer num_sets_per_type(virtual)
+   integer type_items(virtual)
+
+   logical props_by_type
+
+   string  rgn_names[]()
+   string  type_names[NAME_LENGTH](virtual)
+
+
+$   main_item = CLASSNAME.add_tree_item(0, "Property Sets", num_rgns)
+   main_item = CLASSNAME.add_tree_item(0, "Property Sets", 0)
+
+   if (num_rgns == 0) then return
+
+   if (!props_by_type) then return
+
+   CLASSNAME.get_prop_set_types(num_types, type_ids, type_names)
+
+   sys_allocate_array(num_sets_per_type, 1, num_types)
+   for (i = 1 to num_types)
+      num_sets_per_type(i) = 0
+   end for
+
+   for (i = 1 to num_rgns)
+      p = mth_array_search(type_ids, rgn_type_ids(i), FALSE)
+      if (p != 0) then
+         num_sets_per_type(p) += 1
+      end if
+   end for
+
+   sys_allocate_array(type_items, 1, num_types)
+   for (i = 1 to num_types)
+      if (num_sets_per_type(i) > 0) then
+         type_items(i) = CLASSNAME.add_tree_item(main_item, type_names(i), num_sets_per_type(i))
+      end if
+   end for
+
+   for (i = 1 to num_rgns)
+      p = mth_array_search(type_ids, rgn_type_ids(i), FALSE)
+      if (p != 0) then
+         CLASSNAME.add_tree_item(type_items(p), rgn_names(i), -1)
+      end if
+   end for
+
+end function /* add_prop_sets */
+
+
+$
+function get_prop_set_types(num_types, type_ids, type_names)
+
+   integer status
+   integer num_types, type_ids()
+   integer acode_id, atype_id
+   integer max_ent_types(4), max_types
+   integer num_types_found
+
+   string  type_names[]()
+
+
+   CLASSNAME.get_acode_data(acode_id, atype_id)
+
+   db_count_elem_type(acode_id, atype_id, max_ent_types)
+
+   max_types = max_ent_types(1) + max_ent_types(2) + max_ent_types(3) + max_ent_types(4)
+
+   sys_allocate_array(type_ids,   1, max_types)
+   sys_allocate_array(type_names, 1, max_types)
+
+   status = db_get_analysis_elements(acode_id, atype_id, max_types, num_types_found, type_ids, type_names)
+
+   num_types = num_types_found
+   if (num_types > 0) then
+      sys_reallocate_array(type_ids,   1, num_types)
+      sys_reallocate_array(type_names, 1, num_types)
+   end if
+
+   return (0)
+
+end function /* get_prop_set_types */
+
+$
+function sort_names(num_names, names)
+
+   integer num_names
+
+   string  names[]()
+
+
+   ui_listbox_items_delete(dummy_lbox)
+
+   if (num_names == 0) then return
+
+   ui_listbox_items_create(dummy_lbox, names, names, num_names, WIDGET_NULL)
+
+   ui_wid_get(dummy_lbox, "VALUE", names)
+
+	return names
+
+end function /* sort_names */
+
+$
+function sort_names2(num_names, names, ids)
+
+   integer i
+   integer num_names, ids()
+
+   string  names[]()
+   string  new_names[65](virtual)
+
+
+   if (num_names == 0) then return
+
+   sys_allocate_array(new_names, 1, num_names)
+
+   for (i = 1 to num_names)
+	  new_names(i) = names(i)//","//str_from_integer(ids(i))
+   end for
+
+   CLASSNAME.sort_names(num_names, new_names)
+
+   for (i = 1 to num_names)
+	  names(i) = str_token(new_names(i), ",", 1)
+	  ids(i)   = str_to_integer(str_token(new_names(i), ",", 2))
+   end for
+
+end function /* sort_names2 */
+
+$
+function get_acode_data(acode_id, atype_id)
+
+   integer status
+   integer acode_id, atype_id
+
+   string  acode[NAME_LENGTH], atype[NAME_LENGTH]
+
+   status = db_get_default_anal_code(acode)
+   status = db_get_anal_code_id(acode, acode_id)
+   status = db_get_default_anal_type(atype)
+   status = db_get_anal_type_id(atype, atype_id)
+
+end function /* get_acode_data */
+
+$
+FUNCTION SelectProperty(nselect, sel_item)
+	integer nselect, nprop, prop_id(virtual), i, reg_id(VIRTUAL), elem_id(virtual), nelem
+	string sel_item[](), prop_name[80](virtual), elem_list[virtual], DisplayOption[15], reg_name[80]
+	string Text_Content[500], c_val[100], word_name[100], prop_dat[100]
+	integer gen_elem_type, dof_set_flag, con_flag, geom_flag
+	integer  form_flag, lam_flag, layer_count, mat_id, mat_lin, mat_dir, status
+	integer nword, word_id(virtual),prop_dat_type, i_val, coord_id, node_id, field_id
+	real r_val(3)
+
+	db_count_region_ids(nprop)
+
+	sys_allocate_array(prop_id,1, nprop)
+	sys_allocate_array(prop_name, 1, nprop)
+
+	db_get_region_ids_and_names(nprop, prop_id, prop_name)
+
+	INTEGER j
+
+	sys_allocate_array(reg_id, 1, nselect)
+	FOR(i=1 TO nselect)
+		FOR(j=1 TO nprop)
+			IF(sel_item(i)== prop_name(j)) THEN
+					reg_id(i) = prop_id(j)
+			END IF
+		END FOR
+	END FOR
+
+
+
+
+	/* status = db_count_elements_in_region(reg_id, nelem)
+	IF(status != 0) THEN
+		gm_visibility_all(TRUE)
+		gm_hilight_clear()
+		return
+	END IF
+*/
+
+ui_wid_get(switch_Display, "VALUE", DisplayOption)
+
+	SWITCH(DisplayOption)
+		CASE("PLOT_ERASE")
+			gm_visibility_all(FALSE)
+		CASE("HIGHLIGHT")
+			gm_hilight_clear()
+	END SWITCH
+
+FOR(i=1 TO nselect)
+	status = db_count_elements_in_region(reg_id(i), nelem)
+ 	sys_allocate_array(elem_id, 1, nelem)
+	db_get_elements_in_region(nelem, reg_id(i), elem_id)
+	app_int_array_to_vstring("Element", nelem, elem_id, elem_list)
+	IF(DisplayOption == "PLOT_ERASE") THEN
+			gm_visibility_widget(elem_list, TRUE )
+	ELSE IF(DisplayOption == "HIGHLIGHT") THEN
+			gm_hilight_clear()
+			gm_hilight_string(elem_list, 1)
+	END IF
+END FOR
+
+	db_get_region_definition( reg_id(nselect), reg_name, gen_elem_type, dof_set_flag, con_flag, @
+					  geom_flag, form_flag, lam_flag, layer_count, mat_id, mat_lin, mat_dir)
+
+	db_count_props ( reg_id(nselect), nword)
+	sys_allocate_array(word_id, 1, nword)
+	db_get_props_by_region (nword, reg_id(nselect), word_id)
+
+	Text_Content = ""
+	FOR(i=1 TO nword)
+		db_get_prop_value ( reg_id(nselect),			@
+					word_id(i),		@
+					mat_id,			@
+					prop_dat_type,		@
+					i_val,			@
+					r_val,			@
+					c_val,			@
+					coord_id,			@
+					node_id,			@
+					field_id)
+
+		word_name = xfem_get_word_name_from_id(word_id(i))
+		prop_dat = xfem_word_dat(prop_dat_type,		@
+												mat_id,			@
+												i_val,			@
+												r_val,			@
+												c_val,			@
+												coord_id,			@
+												node_id,			@
+												field_id)
+
+$		Text_Content = Text_Content // word_name //" : "// prop_dat
+$		if(word_id(i) == 1 || word_id(i) == 13 || word_id(i) == 17 || word_id(i) == 18 || word_id(i) == 19 || word_id(i) = 36) then
+			Text_Content = str_from_integer(word_id(i)) // "," // word_name //" : "// prop_dat
+			dump Text_Content
+$		end if
+
+
+
+     switch(word_id(i))
+          case(13); ui_wid_set(opt_Material, "VALUE", prop_dat)
+          case(36); ui_wid_set(opt_object, "VALUE", "SHELL")
+                    ui_wid_set(dbox_Property, "VALUE", prop_dat)
+          case(39); ui_wid_set(opt_object, "VALUE", "BEAM")
+                    ui_wid_set(dbox_Property, "VALUE", prop_dat)
+          case(1);  ui_wid_set(opt_object, "VALUE", "ROD")
+          case(4042); ui_wid_set(dbox_vector, "VALUE", prop_dat)
+     end switch
+
+	END FOR
+
+     string s_ElemType[virtual]
+     ui_wid_get_vstring(opt_object, "VALUE", s_ElemType)
+
+     CLASSNAME.cb_Object(s_ElemType)
+
+
+$ dump Text_Content
+$	ui_wid_set(txt_PropInfo,"VALUE", Text_Content)
+
+	sys_free_array(prop_name)
+	sys_free_array(prop_id)
+ 	sys_free_array(elem_id)
+	sys_free_array(word_id)
+
+   END FUNCTION
+end class

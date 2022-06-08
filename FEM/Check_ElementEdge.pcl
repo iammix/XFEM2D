@@ -1,0 +1,158 @@
+#include "appforms.p"
+
+CLASS Check_ElementEdge
+
+/* Classwide Variables */
+   CLASSWIDE WIDGET main_form, dbox_Edge_Distance, Btn_OK, Btn_Cancel
+
+   $ ==============================================================================
+   FUNCTION init()
+      REAL box_length=0.0
+      REAL yloc_main
+
+      main_form=ui_form_create(                 @
+      /* callback */           "",              @
+      /*     x    */           FORM_X_LOC_SML,  @
+      /*     y    */           FORM_Y_LOC,      @
+      /* position */           "UL",            @
+      /*   width  */           FORM_WID_SML,    @
+      /*  height  */           FORM_HGT_QTR,    @
+      /*   label  */           "",              @
+      /*  unused  */           "")
+
+      yloc_main = FORM_T_MARGIN
+
+      box_length = DBOX_WID_SINGLE
+
+
+      dbox_Edge_Distance=ui_databox_create(                          @
+      /*    parent    */                   main_form,                @
+      /*   callback   */                   "",                       @
+      /*       x      */                   FORM_L_MARGIN,            @
+      /*       y      */                   yloc_main,                @
+      /* label_length */                   0.,                       @
+      /*  box_length  */                   box_length,               @
+      /*     label    */                   "Distance betw. edges ",  @
+      /*     value    */                   0.,                       @
+      /*  label_above */                   FALSE,                    @
+      /*   datatype   */                   "REAL",                @
+      /*   num_vals   */                   1)
+
+      yloc_main += DBOX_HGT_NO_LABOVE  + @
+                   INTER_WIDGET_SPACE
+
+      Btn_OK=ui_button_create(                     @
+      /*   parent  */         main_form,           @
+      /*  callback */         "OK_cb",             @
+      /*     x     */         BUTTON_HALF_X_LOC1,  @
+      /*     y     */         yloc_main,           @
+      /*   width   */         BUTTON_WID_HALF,     @
+      /*   height  */         BUTTON_DEFAULT_HGT,  @
+      /*   label   */         "OK",                @
+      /*    TRUE   */         TRUE,                @
+      /* highlight */         FALSE)
+
+      Btn_Cancel=ui_button_create(                     @
+      /*   parent  */             main_form,           @
+      /*  callback */             "Cancel_cb",         @
+      /*     x     */             BUTTON_HALF_X_LOC2,  @
+      /*     y     */             yloc_main,           @
+      /*   width   */             BUTTON_WID_HALF,     @
+      /*   height  */             BUTTON_DEFAULT_HGT,  @
+      /*   label   */             "Cancel",            @
+      /*    TRUE   */             TRUE,                @
+      /* highlight */             FALSE)
+
+      yloc_main += BUTTON_DEFAULT_HGT  + @
+                   INTER_WIDGET_SPACE
+
+   END FUNCTION /* init */
+
+   $ 
+   FUNCTION display()
+      ui_form_display("Check_ElementEdge")
+   END FUNCTION /* display */
+
+   $ 
+   FUNCTION OK_cb()
+/*
+ * This is a callback for the button named Btn_OK
+ */
+   Check_ElementEdge.CHECK_MODEL()
+   
+   uil_viewport_post_groups.posted_groups( "default_viewport", 1, ["CHECK_MODEL"] )
+
+   END FUNCTION /* OK_cb */
+
+$
+   FUNCTION Cancel_cb()
+/*
+ * This is a callback for the button named Btn_Cancel
+ */
+	ui_form_hide("Check_ElementEdge")
+$	ui_form_delete("Model_Check")
+
+   END FUNCTION /* Cancel_cb */
+
+FUNCTION CHECK_MODEL()
+
+    integer i_nElem
+
+    db_count_elems( i_nElem )
+
+    integer iv_ElemID(virtual), iv_TopoCode(virtual), iv_ShapeCode(virtual), iv_nNode(virtual)
+
+    sys_allocate_array( iv_ElemID, 1, i_nElem )
+    sys_allocate_array( iv_TopoCode, 1, i_nElem )
+    sys_allocate_array( iv_ShapeCode, 1, i_nElem )
+    sys_allocate_array( iv_nNode, 1, i_nElem )
+
+    db_get_elem_ids( i_nElem, iv_ElemID )
+    db_get_elem_etop( i_nElem, iv_ElemID, iv_TopoCode )
+    db_get_elem_topology_data( i_nElem, iv_TopoCode, iv_ShapeCode, iv_nNode)
+
+   REAL EdgeDistance
+
+   ui_wid_get(dbox_Edge_Distance,"VALUE",EdgeDistance)
+
+integer idx, ix, iz
+integer nNode
+integer NodeID(8)
+real bxyzs(3), cxyzs(3)
+real mag
+
+string group_name[63]
+
+group_name = "CHECK_MODEL"
+
+ga_group_delete(group_name)
+ga_group_create(group_name)
+
+for(idx = 1 to i_nElem)
+    db_get_elem_nodes(iv_ElemID(idx), nNode, NodeID)
+
+    for(ix = 1 to nNode)
+    	db_get_node(NodeID(ix), bxyzs)
+        for(iz = 1 to nNode)
+            if(ix != iz) then
+                db_get_node(NodeID(iz), cxyzs)
+                mag = mth_sqrt((bxyzs(1)-cxyzs(1))**2 + (bxyzs(2)-cxyzs(2))**2 + (bxyzs(3)-cxyzs(3))**2)
+                if(mag <= EdgeDistance) then
+                    ga_group_entity_add(group_name, "Element " // str_from_integer(iv_ElemID(idx)))
+                     ui_write("  >>> Element " // str_from_integer(iv_ElemID(idx)) // " was added in CHECK_MODEL group")
+                end if
+
+                if(NodeID(ix) == NodeID(iz)) then
+                    ga_group_entity_add(group_name, "Element " // str_from_integer(iv_ElemID(idx)))
+                     ui_write("  >>> Element " // str_from_integer(iv_ElemID(idx)) // " was added in CHECK_MODEL group")
+                end if
+            end if
+        end for
+    end for
+END FOR
+
+END FUNCTION
+
+END CLASS /* FIND_SMALL_EDGE */
+
+$ 

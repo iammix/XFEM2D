@@ -1,0 +1,1682 @@
+#include "lpenums.i"
+#define CLASSNAME PropFx
+#define CLASS_STR "PropFx" 
+
+class CLASSNAME
+/*=============================================================================
+					Check Property                                                                               		
+ ==============================================================================*/
+FUNCTION ideasx_check_exist_property(reg_name)
+	string reg_name[]
+
+	string sa_prop_name[32](virtual),s_temp_prop_name[virtual]
+	integer i_count,ia_region_id(virtual), i
+
+  	integer reg_id
+	reg_id = 0
+
+  	db_count_region_ids(i_count)
+
+   	if(i_count !=0) then
+     	sys_allocate_array(sa_prop_name,1,i_count)
+      	sys_allocate_array(ia_region_id,1,i_count)
+
+      	db_get_region_ids_and_names(i_count, ia_region_id, sa_prop_name)
+
+      	for(i =1 to i_count)
+
+         		s_temp_prop_name = sa_prop_name(i)
+
+         		s_temp_prop_name = str_strip_lead(s_temp_prop_name)
+         		s_temp_prop_name = str_strip_trail(s_temp_prop_name)
+
+         		if(s_temp_prop_name == reg_name) then
+
+             		reg_id = ia_region_id(i)
+
+             		break
+          	end if
+
+      	end for
+      	
+		sys_free_array(sa_prop_name)
+      	sys_free_array(ia_region_id)
+
+  	else
+     	sys_allocate_array(sa_prop_name,1,1)
+      	sys_allocate_array(ia_region_id,1,1)
+
+      	reg_id = 0
+
+      	sys_free_array(sa_prop_name)
+      	sys_free_array(ia_region_id)
+
+  	end if
+
+
+  	return reg_id
+
+END FUNCTION /* check_exist_property */
+
+FUNCTION ideasx_check_exist_property_1(s_prop_name)
+	/*
+	*  check exist property using property_name
+	*  input : property name
+	*  output: exist -> return region id, not exist -> return 0
+	*/
+
+  string s_prop_name[], sa_prop_name[32](virtual),s_temp_prop_name[virtual]
+  integer i_count,ia_region_id(virtual),i_return,i
+
+   i_return = 0
+
+   db_count_region_ids(i_count)
+
+   if(i_count !=0) then
+      sys_allocate_array(sa_prop_name,1,i_count)
+      sys_allocate_array(ia_region_id,1,i_count)
+
+      db_get_region_ids_and_names(i_count,ia_region_id,sa_prop_name)
+
+      for(i =1 to i_count)
+
+         s_temp_prop_name = sa_prop_name(i)
+
+         s_temp_prop_name = str_strip_lead(s_temp_prop_name)
+         s_temp_prop_name = str_strip_trail(s_temp_prop_name)
+
+         if(s_temp_prop_name == s_prop_name) then
+
+             i_return = ia_region_id(i)
+
+             break
+          end if
+
+      end for
+      sys_free_array(sa_prop_name)
+      sys_free_array(ia_region_id)
+
+  else
+      sys_allocate_array(sa_prop_name,1,1)
+      sys_allocate_array(ia_region_id,1,1)
+
+      i_return = 0
+
+      sys_free_array(sa_prop_name)
+      sys_free_array(ia_region_id)
+
+  end if
+
+
+  return i_return
+
+
+END FUNCTION /* check_exist_property */
+
+FUNCTION check_exist_property(region_name, property_value)
+	STRING region_name[]
+	STRING property_value[]
+  
+   	INTEGER region_id  = 0
+
+   	INTEGER i_count
+	db_count_region_ids(i_count)
+
+	IF(i_count == 0) THEN
+		region_id = 0
+		return region_id
+	END IF
+
+     STRING sa_region_name[32](virtual)
+	INTEGER ia_region_id(virtual)
+	sys_allocate_array(sa_region_name, 1, i_count)
+     sys_allocate_array(ia_region_id, 1, i_count)
+
+     db_get_region_ids_and_names(i_count, ia_region_id, sa_region_name)
+
+     INTEGER i
+     STRING temp_region_name[virtual]
+
+	for(i =1 to i_count)
+		temp_region_name = sa_region_name(i)
+          temp_region_name = str_strip_lead(temp_region_name)
+          temp_region_name = str_strip_trail(temp_region_name)
+         if(temp_region_name == region_name) then
+             region_id = ia_region_id(i)
+             break
+          end if
+     end for
+      
+	sys_free_array(sa_region_name)
+	sys_free_array(ia_region_id)
+
+	integer nword
+	integer word_id(virtual)	
+
+	db_count_props(region_id, nword)
+	
+	if(nword == 0) then return region_id
+	
+	sys_allocate_array(word_id, 1, nword)
+	db_get_props_by_region(nword, region_id, word_id)
+
+	INTEGER mat_id, data_type, i_val, coord_id, field_id, node_id
+	STRING char_val[31], word_name[31], sec_name[31], shape[9] 
+	REAL r_val(3)
+     INTEGER nrec, rec, sec_id
+     
+	FOR(i = 1 TO nword)
+		db_get_prop_value( region_id, word_id(i), mat_id, data_type, @ 
+					i_val, r_val, char_val, coord_id, node_id, field_id )
+		
+		IF(word_id(i) == 39) THEN
+			sec_id = i_val
+			db_get_beam_section(sec_id, shape, sec_name, nrec, rec)
+			IF(property_value != sec_name)THEN
+				user_message ("C_YN_Y", 1000000101, "Property UTIL", "The property exists, but section name is different each other(" // property_value //" and "// sec_name // ")" // @ 
+										"Please, check the section profile of " // region_name )
+		$		Message.display("Error Message", "Section name of existed region_name is    and new property section name is   ")
+				
+				region_id = -1
+				RETURN region_id	
+			END IF
+		END IF
+	END FOR
+	
+	RETURN region_id
+END FUNCTION /* check_exist_property */
+
+/*=============================================================================
+					Check Beam Section                                                                               		
+ ==============================================================================*/
+ 
+function check_exist_beam_section(section_name, shape, ndim, rdim, create_option)
+	string section_name[]
+	string shape[]
+	logical create_option
+	integer ndim
+	real rdim()
+
+	integer nsec
+	string db_sec_name[64](virtual)
+	string db_shape[64](virtual)
+	integer db_sec_id(virtual)
+
+	nsec = CLASSNAME.beam_section_list(db_sec_name, db_shape, db_sec_id)
+
+	integer idx
+	integer i_value = 0
+
+	for(idx = 1 to nsec)
+		if(db_sec_name(idx) == section_name) then
+			i_value = db_sec_id(idx)
+			break
+		end if	
+	end for
+
+	string s_dim[32](virtual)
+	sys_allocate_array(s_dim, 1, ndim)
+
+	integer i
+	if(i_value == 0)then
+		if(create_option == TRUE) then
+			for(i = 1 to ndim)
+				s_dim(i) = str_from_real(rdim(i))
+			end for
+			beam_section_create(section_name, shape, s_dim)
+			db_get_beam_section_id(section_name, i_value)
+		end if
+	end if
+
+	return i_value
+	
+end function
+
+function check_exist_beam_section2(shape, sec_name, sec_id, ndim, rdim)
+	string shape[]
+	string sec_name[]
+	integer sec_id, ndim
+	real rdim()
+
+	integer nsec
+	string db_sec_name[31](virtual)
+	string db_shape[5](virtual)
+	integer db_sec_id(virtual)
+
+	nsec = CLASSNAME.beam_section_list(db_sec_name, db_shape, db_sec_id)
+
+	integer ndimen
+	integer idx, i
+	integer i_data_types(virtual)
+	integer i_field_ids(virtual)
+	real r_dimen(virtual)
+	logical chk
+	integer count = 0 
+
+	for(idx=1 to nsec)
+		ndimen = blgetnumdimension(db_shape(idx))
+		
+		IF(ndim > 0) THEN	
+			sys_allocate_array(i_data_types, 1, ndimen)
+			sys_allocate_array(i_field_ids, 1 , ndimen)
+			sys_allocate_array(r_dimen, 1, ndimen)
+		end if
+		
+		bl_get_std_beam_section_data(db_sec_id(idx), ndim, i_data_types, r_dimen, i_field_ids)
+		
+		if(db_shape_name(idx) == shape) then
+			chk = TRUE
+			if(ndim == ndimen) then
+				for(i = 1 to ndim)
+					if(r_dimen(i) == r_dim(i)) then
+						chk = chk && TRUE	
+					end if
+				end for
+				if(chk == TRUE) then
+					count = count + 1
+				end if
+			end if
+		end if
+	end for
+
+	return count	
+end function
+
+/*=============================================================================
+					create_element_property                                                                               		
+ =============================================================================*/
+ function create_shell_property(reg_name, mat_name, thk, element_list)
+     string reg_name[]
+     string mat_name[]
+     real thk
+     string element_list[]
+
+     integer reg_id
+
+     reg_id = CLASSNAME.ideasx_check_exist_property(reg_name)
+
+     string prop_dat[63](8)
+     integer status
+
+     prop_dat(1) = "m:"//mat_name
+     prop_dat(3) = str_from_real(thk)
+     prop_dat(5) = "0"
+     prop_dat(6) = "0"
+     prop_dat(7) = "0"
+
+	if(reg_id == 0) then
+		status = elementprops_create(	reg_name,	@
+								51,		@
+								25,		@
+								35,		@
+								1,		@
+								1,		@
+								20,		@
+								[13, 20, 36, 4037, 4111, 4118, 4119, 8111],		@
+								[5, 9, 1, 1, 1, 1, 1, 4],	@
+								prop_dat,		@
+								element_list )
+	else
+		CLASSNAME.ideasx_modify_element_property(reg_name, reg_id, element_list)
+	end if
+	
+end function
+
+FUNCTION create_bar_beam_property(reg_name, mat_name, sec_name, geom_flag, value_type, ori_vct, off_vct, element_list)
+
+     string reg_name[]
+     string mat_name[]
+     string sec_name[]
+     string element_list[]
+     integer geom_flag
+	string value_type[]
+	real ori_vct(), off_vct()
+ 
+     integer reg_id
+
+     reg_id = CLASSNAME.check_exist_property(reg_name, sec_name)
+
+     IF(reg_id == -1)THEN
+     	RETURN -1
+     END IF
+     
+	IF(reg_id != 0) THEN
+          CLASSNAME.ideasx_modify_element_property(reg_name, reg_id, element_list)
+          return 0
+	END IF
+
+     string prop_dat[63](9)
+     integer status
+
+     prop_dat(1) = sec_name
+     prop_dat(2) = "m:" // mat_name 
+     prop_dat(3) = xfem_str_from_vector(ori_vct)
+     prop_dat(4) = xfem_str_from_vector(off_vct)
+     prop_dat(5) = xfem_str_from_vector(off_vct)
+     prop_dat(7) = "Analysis"
+     prop_dat(8) = "Analysis"
+     prop_dat(9) = "Analysis"
+
+     INTEGER	PROPERTY_ID(9) = [39, 13, 6, 4042, 4043, 4061, 8200, 8201, 8202]
+     
+	INTEGER	PROPERTY_TYPE(9) 
+	
+	IF(value_type == "Dimensions")THEN
+		PROPERTY_TYPE = [11, 5, 2, 2, 2, 6, 4, 4, 4]
+	ELSE IF(value_type == "Properties")THEN
+		PROPERTY_TYPE = [12, 5, 2, 2, 2, 6, 4, 4, 4]
+	END IF
+	 
+     elementprops_create(reg_name,	@
+     					11,		@
+     					geom_flag,		@
+     					42,		@
+     					1,		@
+     					1,		@
+     					20,		@
+     					PROPERTY_ID,				@
+     					PROPERTY_TYPE,				@
+     					prop_dat,				@
+     					element_list)
+
+	$     sys_free_string(element_list)
+	RETURN 0
+END FUNCTION
+
+function create_rod_property(reg_name, mat_name, SecArea, element_list)
+	string reg_name[]
+	string mat_name[]
+	real SecArea
+	string element_list[]
+
+
+	integer reg_id
+
+	reg_id = CLASSNAME.check_exist_property(reg_name, "")
+
+	if(reg_id != 0) then
+		CLASSNAME.ideasx_modify_element_property(reg_name, reg_id, element_list)
+		return 0
+	end if
+
+
+	string prop_dat[63](6)
+	integer status
+
+
+	prop_dat(1) = "m:"//mat_name
+	prop_dat(2) = str_from_real(SecArea)
+	prop_dat(3) = ""
+	prop_dat(4) = ""
+	prop_dat(5) = ""
+	prop_dat(6) = ""
+
+
+	status = elementprops_create(	reg_name,	@
+							18,		@
+							2,		@
+							26,		@
+							1,		@
+							1,		@
+							20,		@
+							[13, 1, 1026, 4036, 4037, 8112],		@
+							[5, 1, 1, 1, 1, 1],	@
+							prop_dat,		@
+							element_list )
+
+
+end function
+ 
+
+/*=============================================================================
+					modify_element_property                                                                               		
+ ==============================================================================*/
+
+function ideasx_modify_element_property(reg_name, reg_id, element_list)
+     string reg_name[]
+     integer reg_id
+     string element_list[]
+
+	db_get_region_id_from_name(reg_name, reg_id)
+	
+	integer option_id(6)
+	integer property_id(virtual)
+	integer property_type(virtual)
+	string property_data[256](virtual)
+
+	CLASSNAME.ideasx_get_element_property(reg_id, option_id, property_id, property_type, property_data)
+
+	integer ia_reg_id(1)
+	string s_old_element[virtual]
+	
+	ia_reg_id(1) = reg_id
+	ep_get_app_reg_str(1, ia_reg_id, s_old_element)     
+	string s_boolean_element[virtual]
+	list_create_boolean_list(s_old_element,element_list , "or", s_boolean_element)
+     elementprops_modify( reg_name, reg_name, option_id(1), option_id(2), option_id(3), option_id(4), option_id(5), option_id(6), @
+           property_id, property_type, property_data, s_boolean_element ) 	
+
+end function
+
+/*=============================================================================
+					get_element_property                                                                               		
+ ==============================================================================*/
+FUNCTION ideasx_get_beam_property(reg_id, mat_id, mat_name, sec_shape, sec_id, @
+							sec_name, field_id, ori_vct, off_vct1, off_vct2)
+	integer reg_id, field_id
+	integer mat_id, sec_id, m_id
+	string mat_name[], sec_shape[], sec_name[]
+	real ori_vct(), off_vct1(), off_vct2()
+
+	string region_name[63]
+	db_get_region_id_from_name(region_name, reg_id)
+
+	integer data_type, i_val, fld_id, coord_id, node_id, word_id, nrec, rec
+	string c_val[100]
+	real r_val(3)
+
+	LIST(word_id = 6, 13, 39, 4042, 4043)		
+		db_get_prop_value ( reg_id,			@
+						word_id, 			@
+						m_id,			@
+						data_type,			@
+						i_val,			@
+						r_val,			@
+						c_val,			@
+						coord_id,			@
+						node_id,			@
+						fld_id)
+		
+		SWITCH(word_id)
+              	CASE(6)
+         			if(fld_id == 0)then
+				   ori_vct = r_val
+				else
+				   field_id = fld_id 
+				end if
+              	CASE(13)
+                   	mat_id = m_id
+				db_get_material_name_from_id(mat_id, mat_name)
+              	CASE(39)
+                   	sec_id = i_val
+				db_get_beam_section( sec_id, sec_shape, sec_name, nrec, rec)
+               CASE(4042)
+              		off_vct1 = r_val
+              	CASE(4043)
+              		off_vct2 = r_val
+          END SWITCH
+          
+	END LIST
+
+	RETURN 0
+END FUNCTION
+
+FUNCTION ideasx_get_element_property(reg_id, option_id, word_id, data_type, word_data)
+	INTEGER reg_id, option_id()
+	STRING word_data[]()
+	INTEGER word_id(), data_type()
+
+     INTEGER  elem_type, geom_flag, dof_set_flag, condense_flag
+     INTEGER  form_flag, lam_flag, layer_count
+     integer material_lin, material_dir, material_id
+     STRING   property_name[64]
+     
+	/*
+	option_id(1) = elem_type_id
+	option_id(2) = geo_opt_id
+	option_id(3) = con_opt_id
+	option_id(4) = for_opt_id
+	option_id(5) = lam_opt_id
+	option_id(6) = dof_opt_id
+	 */
+     	db_get_region_definition(                          @
+            /* region ID        */  reg_id,               @
+            /* set name         */  property_name,            @
+            /* element type ID  */  elem_type,          @
+            /* dof set flag     */  dof_set_flag,             @
+            /* condense flag    */  condense_flag,            @
+            /* geom flag        */  geom_flag,                @
+            /* form flag        */  form_flag,                @
+            /* lam_flag         */  lam_flag,                 @
+            /* layer count      */  layer_count,              @
+            /* material id      */  material_id,              @
+            /* material linear  */  material_lin,             @
+            /* material direct  */  material_dir)
+
+		option_id(1) = elem_type
+		option_id(2) = geom_flag
+		option_id(3) = condense_flag
+		option_id(4) = form_flag
+		option_id(5) = lam_flag
+		option_id(6) = dof_set_flag
+	
+	integer i_val, coord_id, node_id, field_id, nword, mat_id
+	string c_val[64], mat_name[64]
+	real r_val(3)
+     
+	db_count_props(reg_id, nword)
+	sys_allocate_array(word_id, 1, nword)
+	sys_allocate_array(data_type, 1, nword)
+	sys_allocate_array(word_data, 1, nword)
+
+	db_get_props_by_region( nword, reg_id, word_id )
+	
+	integer i, nrec, rec
+	string sec_shape[16], sec_name[32]
+	FOR(i=1 TO nword)		
+		db_get_prop_value ( reg_id,			@
+						word_id(i), 			@
+						mat_id,			@
+						data_type(i),			@
+						i_val,			@
+						r_val,			@
+						c_val,			@
+						coord_id,			@
+						node_id,			@
+						field_id)
+
+		$word_name = CLASSNAME.word_name_from_id(word_id(i))
+
+		SWITCH(data_type(i))
+			CASE(1);	word_data(i) = str_from_real(r_val(1))
+			CASE(2); 	word_data(i) = "< " // str_from_real(r_val(1)) //","// @
+			                                 str_from_real(r_val(2)) //","// @
+									   str_from_real(r_val(3)) // " >"
+			CASE(3); 	wor_dataa(i) = str_from_integer(i_val)
+			CASE(4);	word_data(i) = c_val
+			CASE(5);  db_get_material_name_from_id(mat_id, mat_name)
+					word_data(i) = "m:" // mat_name
+			CASE(6);	word_data(i) =""  
+			CASE(7);	word_data(i) =""
+			CASE(8);  word_data(i) = str_from_integer(node_id)
+			CASE(9);  word_data(i) = str_from_integer(i_val)
+			CASE(11); db_get_beam_section( i_val, sec_shape, sec_name, nrec, rec)
+					word_data(i) = sec_name 
+			CASE(12); db_get_beam_section( i_val, sec_shape, sec_name, nrec, rec)
+					word_data(i) = sec_name  
+		END SWITCH
+	END FOR		
+
+	RETURN nword
+END FUNCTION
+
+
+FUNCTION ideasx_get_shell_property(reg_id, mat_id, mat_name, thick)
+	$ string region_name[]
+	integer reg_id
+	integer mat_id
+	string mat_name[]
+	real thick
+
+	$ db_get_region_id_from_name(region_name, reg_id)
+
+	integer data_type, i_val, coord_id, node_id, field_id, word_id
+	string c_val[100]
+	real r_val(3)
+	
+	LIST(word_id = 13, 36)		
+		db_get_prop_value ( reg_id,			@
+						word_id, 			@
+						mat_id,			@
+						data_type,		@
+						i_val,			@
+						r_val,			@
+						c_val,			@
+						coord_id,			@
+						node_id,			@
+						field_id)
+          SWITCH(word_id)
+              	CASE(13)
+                   	db_get_material_name_from_id(mat_id, mat_name)
+              	CASE(36)
+          		thick = r_val(1)
+          END SWITCH
+	END LIST
+
+	RETURN 0
+
+END FUNCTION
+
+FUNCTION ideasx_get_rod_property(reg_id, mat_id, mat_name, sec_area)
+	integer reg_id
+	integer mat_id
+	string mat_name[]
+	real sec_area
+
+	$ db_get_region_id_from_name(region_name, reg_id)
+
+	integer data_type, i_val, coord_id, node_id, field_id, word_id
+	string c_val[100]
+	real r_val(3)
+	
+	LIST(word_id = 1, 13)		
+		db_get_prop_value ( reg_id,			@
+						word_id, 			@
+						mat_id,			@
+						data_type,		@
+						i_val,			@
+						r_val,			@
+						c_val,			@
+						coord_id,			@
+						node_id,			@
+						field_id)
+          SWITCH(word_id)
+              	CASE(1)
+                   	sec_area = r_val(1)
+              	CASE(13)
+          		db_get_material_name_from_id(mat_id, mat_name)
+          END SWITCH
+	END LIST
+
+	RETURN 0
+
+END FUNCTION
+
+function get_section_prop(ent_typ, sec_name, res_typ)
+
+     integer ent_typ
+     string sec_name[]
+     integer res_typ
+
+     integer sec_id
+     db_get_beam_section_id(sec_name, sec_id)
+
+     integer nrec, bytes_per_rec
+     string s_shape[5]
+     db_get_beam_section(sec_id, s_shape, sec_name, nrec, bytes_per_rec)
+
+     integer entyp, ndim, i_data_types(virtual), i_field_ids(virtual)
+     integer nprop
+     real  	r_prop(31), r_shear_center(2), r_centroid(2), r_dimen(virtual)
+     string labels[31](31)
+
+     $ ent_typ = 1   /* CBAR */
+
+     ndim = blgetnumdimension(s_shape)
+
+	>		IF(ndim !=0) THEN	sys_allocate_array(i_data_types, 1, ndim)
+	>		IF(ndim !=0) THEN	sys_allocate_array(i_field_ids, 1 , ndim)
+	>		IF(ndim !=0) THEN	sys_allocate_array(r_dimen, 1, ndim)
+
+          bl_get_std_beam_section_data (sec_id, ndim, i_data_types, r_dimen, i_field_ids)
+          blgetproplabels(ent_typ, labels)
+          blgetprop(ent_typ, s_shape, r_dimen, ndim, r_prop , nprop)
+          blgetcenters(ent_typ, s_shape, r_dimen, r_prop, r_centroid, r_shear_center)
+
+          sys_free_array(i_data_types)
+		sys_free_array(i_field_ids)
+
+          return r_prop(res_typ)
+
+end function
+
+function ideasx_get_elem_prop(i_ElemId, word_id)
+    integer word_id
+	integer i_ElemId
+    integer ia_Elem(1)
+	integer reg_id(1)
+	integer prop_dat_type, i_val, coord_id, node_id, field_id, mat_id
+	real r_val(10)
+	string c_val[100], s_beam_ori[1]
+
+	ia_Elem(1) = i_ElemId
+
+	db_get_region_for_elements(1,ia_Elem,reg_id)
+
+	db_get_prop_value ( reg_id(1),			@
+						word_id,		@
+						mat_id,			@
+						prop_dat_type,		@
+						i_val,			@
+						r_val,			@
+						c_val,			@
+						coord_id,			@
+						node_id,			@
+						field_id)
+
+     switch(prop_dat_type)
+          case(1);  return r_val
+          case(2);  return r_val
+          case(3);  return i_val
+          case(4);  return c_val
+          case(5);  return mat_id
+          case(6);  return r_val
+          case(7);  return r_val
+          case(8);  return node_id
+          case(9);  return coord_id
+          case(11);  return c_val
+          case(12);  return r_val
+     end switch
+
+end function
+
+function ideasf_get_beam_ori_from_region(reg_id)
+
+          integer reg_id
+          real ovct(3)
+
+		integer prop_dat_type, i_val, coord_id, node_id, field_id, mat_id
+		string c_val[100]
+
+		db_get_prop_value ( reg_id,			@
+							6,		@
+							mat_id,			@
+							prop_dat_type,		@
+							i_val,			@
+							ovct,			@
+							c_val,			@
+							coord_id,			@
+							node_id,			@
+							field_id)
+
+
+		return ovct
+end function
+
+function ideasf_modify_property(reg_name, reg_id, element_list)
+     string reg_name[]
+     integer reg_id
+     string element_list[]
+
+     integer i_cnt, i_status
+	i_cnt = fem_u_count_id_list(LP_SUBLIST_ELEMENT, element_list, TRUE, i_status)
+
+	integer ia_eid(virtual)
+	sys_allocate_array(ia_eid, 1, i_cnt)
+
+	fem_u_get_id_list(LP_SUBLIST_ELEMENT, element_list, i_cnt, TRUE, ia_eid)
+
+     integer idx
+
+     for(idx=1 to i_cnt)
+          db_associate_element_to_region(ia_eid(idx), reg_id)
+     end for
+
+	$     dump reg_name // " is modified."
+
+end function
+
+/*=============================================================================
+					                                                                               		
+ ==============================================================================*/
+
+FUNCTION print_property(reg_name)
+	STRING reg_name[]
+
+	integer reg_id
+	db_get_region_id_from_name(reg_name, reg_id)
+
+     INTEGER  gener_elem_type, dof_set_flag, condense_flag
+     INTEGER  geom_flag, form_flag, lam_flag, layer_count
+     integer material_lin, material_dir, material_id
+     STRING   property_name[64]
+     
+     	db_get_region_definition(                          @
+            /* region ID        */  reg_id,               @
+            /* set name         */  property_name,            @
+            /* element type ID  */  gener_elem_type,          @
+            /* dof set flag     */  dof_set_flag,             @
+            /* condense flag    */  condense_flag,            @
+            /* geom flag        */  geom_flag,                @
+            /* form flag        */  form_flag,                @
+            /* lam_flag         */  lam_flag,                 @
+            /* layer count      */  layer_count,              @
+            /* material id      */  material_id,              @
+            /* material linear  */  material_lin,             @
+            /* material direct  */  material_dir)
+
+	integer data_type(virtual), i_val, coord_id, node_id, field_id, word_id(virtual), nword, mat_id
+	string c_val[100], word_name[64]
+	real r_val(3)
+     
+	db_count_props(reg_id, nword)
+	sys_allocate_array(word_id,1,nword)
+	sys_allocate_array(data_type,1,nword)
+
+	db_get_props_by_region( nword, reg_id, word_id )
+
+	integer i
+	FOR(i=1 TO nword)		
+		db_get_prop_value ( reg_id,			@
+						word_id(i), 			@
+						mat_id,			@
+						data_type(i),			@
+						i_val,			@
+						r_val,			@
+						c_val,			@
+						coord_id,			@
+						node_id,			@
+						field_id)
+
+		word_name = CLASSNAME.word_name_from_id(word_id(i))
+
+		SWITCH(data_type(i))
+				case(1);	ui_writec("%s, %d, %f", word_name, data_type(i), r_val)
+				case(2); 	ui_writec("%s, %d, %f", word_name, data_type(i), r_val)
+				case(3); 	ui_writec("%s, %d, %f", word_name, data_type(i), i_val)
+				case(4);	ui_writec("%s, %d, %s", word_name, data_type(i), c_val)
+				case(5);  ui_writec("%s, %d, %d, %d, %f, $s", word_name, data_type(i), mat_id, i_val, r_val, c_val)
+				CASE(6);	ui_writec("%s, %d, %f", word_name, data_type(i), r_val)  
+				CASE(7);	ui_writec("%s, %d, %f", word_name, data_type(i), r_val)
+				CASE(8);  ui_writec("%s, %d, %d, %d, %f, %s", word_name, data_type(i), node_id, i_val, r_val, c_val)
+				CASE(9);  ui_writec("%s, %d, %d, %d, %f, %s", word_name, data_type(i), coord_id, i_val, r_val, c_val)
+				CASE(11); ui_writec("%s, %d, %d, %f, %s", word_name, data_type(i), i_val, r_val, c_val)
+				CASE(12); ui_writec("%s, %d, %d, %f, %s", word_name, data_type(i), i_val, r_val, c_val)
+				DEFAULT;  ui_writec("%s, %d, %d, %f, %s", word_name, data_type(i), i_val, r_val, c_val)
+		END SWITCH
+	END FOR		
+       
+END FUNCTION
+
+function get_norv_sum(ent_typ, sec_name, SelElems, r_sign, orientv, offsetv)
+	integer ent_typ   /* input */
+	string sec_name[]   /* input */
+	string SelElems[]   /* input */
+	real r_sign         /* input */
+	real orientv()      /* output */
+	real offsetv()      /* output */
+
+	real offset_point
+	real r_dimen(virtual)
+	string s_shape[5]
+
+	offset_point = CLASSNAME.std_offset_point(ent_typ, sec_name, s_shape, r_dimen)
+
+	integer nElem, va_ElemId(virtual)
+	real va_orientv(virtual)
+
+	CLASSNAME.get_orv_nomral(SelElems, nElem, va_ElemId, r_sign, va_orientv)
+
+	real r_shpchk = -1
+
+	IF(s_shape == "L") THEN
+		r_shpchk = -1
+	ELSE
+		r_shpchk = 1
+	END IF
+
+	integer i
+	real vsum(3)
+
+	FOR(i=1 TO nElem)
+		vsum(1) += r_shpchk*va_orientv(i, 1)
+		vsum(2) += r_shpchk*va_orientv(i, 2)
+		vsum(3) += r_shpchk*va_orientv(i, 3)
+	END FOR
+
+	xfem_vector.unit2(vsum, orientv)
+
+	offsetv(1) = -1 * offset_point * orientv(1)
+	offsetv(2) = -1 * offset_point * orientv(2)
+	offsetv(3) = -1 * offset_point * orientv(3)
+
+END FUNCTION
+
+$ 
+function get_norv_field(ent_typ, sec_name, SelElems, r_sign, field_name, orient_field_name, offset_field_name)
+	integer ent_typ   /* input */
+	string sec_name[]   /* input */
+	string SelElems[]   /* input */
+	real r_sign         /* input */
+	string field_name[]
+	string orient_field_name[]      /* output */
+	string offset_field_name[]      /* output */
+
+	real offset_point
+	real r_dimen(virtual)
+	string s_shape[5]
+
+	offset_point = CLASSNAME.std_offset_point(ent_typ, sec_name, s_shape, r_dimen)
+
+	integer nElem, va_ElemId(virtual)
+	real va_orientv(virtual)
+	CLASSNAME.get_orv_nomral(SelElems, nElem, va_ElemId, r_sign, va_orientv)
+
+	real r_shpchk
+
+	IF(s_shape == "L") THEN
+		r_shpchk = -1
+	ELSE
+		r_shpchk = 1
+	END IF
+
+	integer i
+	real orient_vct(3), offset_vct(3)
+	string s_ElemId[63](virtual)
+	string s_orient_vct[63](virtual), s_offset_vct[63](virtual)
+
+	sys_allocate_array(s_ElemId, 1, nElem)
+	sys_allocate_array(s_orient_vct, 1, nElem)
+	sys_allocate_array(s_offset_vct, 1, nElem)
+
+	FOR(i=1 TO nElem)
+
+		s_ElemId(i)="Elem " // str_from_integer(va_ElemId(i))
+
+		orient_vct(1) = r_shpchk*va_orientv(i, 1)
+		orient_vct(2) = r_shpchk*va_orientv(i, 2)
+		orient_vct(3) = r_shpchk*va_orientv(i, 3)
+		offset_vct(1) = -1*offset_point*orient_vct(1)
+		offset_vct(2) = -1*offset_point*orient_vct(2)
+		offset_vct(3) = -1*offset_point*orient_vct(3)
+
+		s_orient_vct(i) = xfem_str_from_vector(orient_vct)
+		s_offset_vct(i) = xfem_str_from_vector(offset_vct)
+
+	END FOR
+
+	orient_field_name = field_name // "_orv"
+	offset_field_name = field_name // "_ofv"
+
+	fields_create_dfem(orient_field_name, "Element", "Vector", nElem, s_ElemId, s_orient_vct)
+	fields_create_dfem(offset_field_name, "Element", "Vector", nElem, s_ElemId, s_offset_vct)
+
+	sys_free_array(s_ElemId)
+	sys_free_array(s_orient_vct)
+	sys_free_array(s_offset_vct)
+
+END FUNCTION
+
+$ 
+function std_offset_point(ent_typ, sec_name, s_shape, r_dimen)
+	integer ent_typ
+	string sec_name[] /* input */
+	string s_shape[]  /* ouput */
+	real r_dimen()    /* ouput */
+	real r_shear_center(2) /* return value */
+
+	integer sec_id, nrec, bytes_per_rec
+	db_get_beam_section_id(sec_name, sec_id)
+	db_get_beam_section(sec_id, s_shape, sec_name, nrec, bytes_per_rec)
+
+	integer ndim, i_data_types(virtual), i_field_ids(virtual)
+	integer nprop
+	real	r_prop(31), r_centroid(2)
+	string labels[31](31)
+	$			entyp = 1   /* CBAR */
+	$			entyp = 2   /* CBEAM */
+
+	>  			ndim = blgetnumdimension(s_shape)
+	>			IF(ndim !=0) THEN	sys_allocate_array(i_data_types, 1, ndim)
+	>			IF(ndim !=0) THEN	sys_allocate_array(i_field_ids, 1 , ndim)
+	>			IF(ndim !=0) THEN	sys_allocate_array(r_dimen, 1, ndim)
+	>			bl_get_std_beam_section_data (sec_id, ndim, i_data_types, r_dimen, i_field_ids)
+	>              blgetproplabels(ent_typ, labels)
+	>			blgetprop(ent_typ, s_shape, r_dimen, ndim, r_prop , nprop)
+	>			blgetcenters(ent_typ, s_shape, r_dimen, r_prop, r_centroid, r_shear_center)
+
+  			sys_free_array(i_data_types)
+   			sys_free_array(i_field_ids)
+
+
+     real offset_point
+
+     if(s_shape == "L") then
+          offset_point = r_prop(13)
+     else
+          offset_point = r_prop(11)
+     end if
+
+     integer i
+     for(i=1 to 31)
+          dump labels(i) // " = " // str_from_real(r_prop(i))
+     end for
+
+    RETURN offset_point
+
+end function
+
+$ 
+FUNCTION get_Normal_Direction_Vector(SelElems)
+	STRING	SelElems[]           /* input */
+
+	integer Elem2D(virtual), nElem2D
+	nElem2D = get_2D_Ass_1D(SelElems, Elem2D)
+
+	REAL	uvct(3), svct(3), nvct(3)     
+	integer idx
+	for(idx = 1 to nElem2D)
+		xfem_get_elem_normal(Elem2D(idx), nvct)
+		svct(1) += nvct(1)
+		svct(2) += nvct(2)
+		svct(3) += nvct(3)
+	end for
+
+	xfem_vector.unit2(svct, uvct)
+
+	RETURN uvct
+END FUNCTION
+/* ============ End of get_Normal_Direction_Vector Function ================*/
+
+FUNCTION word_data(prop_dat_type, mat_id,i_val,r_val,c_val,coord_id,node_id,field_id)
+	integer prop_dat_type, mat_id, i_val, coord_id, node_id, field_id, nrec, rec
+	real r_val()
+	string c_val[], shape_name[80], mat_name[80], prop_dat[128]
+
+	SWITCH(prop_dat_type)                                                          
+																			
+		CASE(1)	                                                         
+				prop_dat= str_from_real(r_val(1))		               
+		CASE(2)	                                                                
+				prop_dat= str_from_real_array("<", r_val, ">")
+				
+		CASE(3)	                                                                
+				prop_dat= str_from_integer(i_val)                            
+		CASE(4)	                                                                
+				prop_dat= c_val                                              
+		CASE(5)	                                                                
+				db_get_material_name_from_id(mat_id, mat_name)                   
+				prop_dat= "m:"//mat_name                                   
+																					
+		CASE(6)	
+				prop_dat= ""                                                   
+		CASE(7)	
+				prop_dat= ""                                                   
+		CASE(8)	
+				prop_dat= ""                                                   
+		CASE(9)	
+				prop_dat= ""                                                   
+		CASE(11)	                                                                
+				db_get_beam_section( i_val, shape_name, prop_dat, nrec, rec)
+				prop_dat = shape_name // "\n" // prop_dat
+																				
+		CASE(12)	
+				db_get_beam_section( i_val, shape_name, prop_dat, nrec, rec)
+				prop_dat = shape_name // "\n" // prop_dat
+
+	END SWITCH                                                                        
+
+	RETURN prop_dat
+END FUNCTION
+
+
+
+function beam_section_list(section_name, shape_name, section_id)
+
+     string section_name[]()
+     string shape_name[]()
+     integer section_id()
+
+     integer status
+     status = db_get_all_beam_section_ids()
+
+     integer idx, sec_id
+     idx = 0
+
+     sys_allocate_array(section_name, 1, 1)
+     sys_allocate_array(shape_name, 1, 1)
+     sys_allocate_array(section_id, 1, 1)
+
+     integer nrec, bytes_per_rec
+     
+     WHILE ((status = db_get_next_beam_section_id(sec_id)) == 0 )
+          idx += 1
+
+          sys_reallocate_array(section_name, 1, idx)
+          sys_reallocate_array(shape_name, 1, idx)
+          sys_reallocate_array(section_id, 1, idx)
+          section_id(idx) = sec_id
+          
+          status = db_get_beam_section( section_id(idx), shape_name(idx), section_name(idx), nrec, bytes_per_rec)
+
+    END WHILE
+
+    return idx
+    
+end function
+
+function elem_bar_beam_prop(nElem, ia_ElemId, reg_id, opt_id, mat_id, sec_id, ori_vct, off_vct1, off_vct2)
+	integer nElem
+	integer ia_ElemId()
+
+	integer reg_id()
+	sys_allocate_array( reg_id,  1, nElem )
+	db_get_region_for_elements( nElem, ia_ElemId, reg_id)
+
+	integer opt_id()
+	sys_allocate_array(opt_id, 1, nElem, 1, 6)
+
+	INTEGER  mat_id()
+	sys_allocate_array(mat_id, 1, nElem)
+
+	integer sec_id()
+	sys_allocate_array(sec_id, 1, nElem)
+
+	real ori_vct(), off_vct1(), off_vct2()
+	sys_allocate_array(ori_vct, 1, nElem, 1 , 3)
+	sys_allocate_array(off_vct1, 1, nElem, 1, 3)
+	sys_allocate_array(off_vct2, 1, nElem, 1, 3)
+
+		INTEGER  layer_count
+		integer material_lin, material_dir
+		STRING   PropName[32]
+		REAL     real_array(3)
+		INTEGER  data_type, material_id
+		INTEGER  int_value,coord_value, node_value, field_value
+		STRING   string_value[31]
+		INTEGER prop_word_id
+		integer idx
+
+		FOR ( idx = 1 TO nElem )
+
+			db_get_region_definition(                          @
+				/* region ID        */  reg_id(idx),              @
+				/* set name         */  PropName,                 @
+				/* element type ID  */  opt_id(idx,1),          @
+				/* dof set flag     */  opt_id(idx,6),             @
+				/* condense flag    */  opt_id(idx,3),            @
+				/* geom flag        */  opt_id(idx,2),           @
+				/* form flag        */  opt_id(idx,4),                @
+				/* lam_flag         */  opt_id(idx,5),                 @
+				/* layer count      */  layer_count,              @
+				/* material id      */  mat_id(idx),              @
+				/* material linear  */  material_lin,             @
+				/* material direct  */  material_dir)
+
+		/*
+		option_id(1) = elem_type_id
+		option_id(2) = geo_opt_id
+		option_id(3) = con_opt_id
+		option_id(4) = for_opt_id
+		option_id(5) = lam_opt_id
+		option_id(6) = dof_opt_id
+		*/
+
+	$ 6, 13, 39, 4042, 4043
+	$ "Orientation", "Material", "Section", "Offset1", "Offset2"]
+			
+			LIST(prop_word_id = 6, 39, 4042, 4043)
+				
+				db_get_prop_value(                                 @
+					/* region ID        */  reg_id(idx),              @
+					/* word of interest */  prop_word_id,             @
+					/* material ID      */  material_id,              @
+					/* data type        */  data_type,                @
+					/* INTEGER value    */  int_value,                @
+					/* REAL array       */  real_array,               @
+					/* char STRING      */  string_value,             @
+					/* coord ID         */  coord_value,              @
+					/* node ID          */  node_value,               @
+					/* field ID         */  field_value)
+
+					switch(prop_word_id)
+					case(6)
+							if(field_value == 0)then
+							ori_vct(idx, 1:3) = real_array
+						else
+							ori_vct(idx, 1:3) = Femfx.get_fem_field_elem_vector(field_value, ia_ElemId(idx))
+						end if
+						case(39)
+							sec_id(idx) = int_value
+						case(4042)
+						off_vct1(idx, 1:3) = real_array
+					case(4043)
+						off_vct2(idx, 1:3) = real_array
+					end switch
+				
+			END LIST
+		END FOR
+     
+end function
+
+function get_offset_vector(ent_type, sec_shape, sec_name, r_orv)
+	integer ent_type
+	string sec_name[], sec_shape[]
+	real r_orv()
+
+	integer sec_id
+	db_get_beam_section_id(sec_name, sec_id)
+
+	real offset_distance
+	real r_sign
+
+
+	IF(sec_shape == "L")THEN
+		r_sign = 1
+		offset_distance = -1 * CLASSNAME.get_section_prop(ent_type, sec_name, 13)
+	$	dump offset_distance 
+	ELSE 
+		r_sign = -1
+		offset_distance = CLASSNAME.get_section_prop(ent_type, sec_name, 11)
+	$	dump offset_distance
+	END IF
+
+	real r_ofv(3)
+
+	r_ofv(1) = r_sign * r_orv(1) * offset_distance
+	r_ofv(2) = r_sign * r_orv(2) * offset_distance
+	r_ofv(3) = r_sign * r_orv(3) * offset_distance
+
+	return r_ofv
+
+	end function
+
+	FUNCTION word_name_from_id(wid)
+	STRING	word_name[64](10000)
+	INTEGER	wid
+
+	word_name(1)    =  "Area                     "
+	word_name(2)    =  "Beam Orientation         "
+	word_name(3)    =  "Center of Rotation       "
+	word_name(4)    =  "Closure Direction        "
+	word_name(5)    =  "Damping Coefficient      "
+	word_name(6)    =  "Definition of XY Plane   "
+	word_name(7)    =  "Dof at Node 1            "
+	word_name(8)    =  "Dof at Node 2            "
+	word_name(9)    =  "Emissivity               "
+	word_name(10)   =  "Inertia 1,1              "
+	word_name(11)   =  "Inertia 2,2              "
+	word_name(12)   =  "Inertia 3,3              "
+	word_name(13)   =  "Material Name            "
+	word_name(14)   =  "Translation Inertia,X    "
+	word_name(15)   =  "Translation Inertia,Y    "
+	word_name(16)   =  "Translation Inertia,Z    "
+	word_name(17)   =  "Ixx                      "
+	word_name(18)   =  "Iyy                      "
+	word_name(19)   =  "Izz                      "
+	word_name(20)   =  "Orientation Angle        "
+	word_name(21)   =  "Orientation System       "
+	word_name(22)   =  "Pipe Thickness           "
+	word_name(23)   =  "Rotary Inertia,XX        "
+	word_name(24)   =  "Rotary Inertia,YY        "
+	word_name(25)   =  "Rotary Inertia,ZZ        "
+	word_name(27)   =  "Section Height           "
+	word_name(28)   =  "Section Radius (ave)     "
+	word_name(29)   =  "Section Width            "
+	word_name(30)   =  "Shear Area-2             "
+	word_name(31)   =  "Shear Area-3             "
+	word_name(32)   =  "Shear Area-y             "
+	word_name(33)   =  "Shear Area-z             "
+	word_name(34)   =  "Stefan-Boltzmann Constant"
+	word_name(35)   =  "Stiffness                "
+	word_name(36)   =  "Thickness                "
+	word_name(39)   =  "Section Name             "
+	word_name(1002) =  "Degree-of-freedom        "
+	word_name(1003) =  "Element Set Name         "
+	word_name(1004) =  "Shear Factor             "
+	word_name(1005) =  "Reference Temperature    "
+	word_name(1006) =  "X-Sectional area         "
+	word_name(1010) =  "Mass Magnitude           "
+	word_name(1011) =  "Mass Damping Factor      "
+	word_name(1012) =  "Crit Damping Factor      "
+	word_name(1013) =  "Force/Displcmnt Tble     "
+	word_name(1014) =  "Force/Velocity Table     "
+	word_name(1015) =  "Channel Thickness        "
+	word_name(1016) =  "Initial Clearence        "
+	word_name(1017) =  "Stiffness in Stick       "
+	word_name(1018) =  "Equiv Shear Strs Lim     "
+	word_name(1019) =  "Friction in Dir_1 "
+	word_name(1020) =  "Friction in Dir_2 "
+	word_name(1021) =  "Area Moment I1    "
+	word_name(1022) =  "Area Moment I2    "
+	word_name(1023) =  "Area Moment I11   "
+	word_name(1024) =  "Area Moment I22   "
+	word_name(1025) =  "Area Moment I12   "
+	word_name(1026) =  "Torsional Constant"
+	word_name(1027) =  "Outside Radius    "
+	word_name(1031) =  "Thickness_RHS     "
+	word_name(1032) =  "Thickness_TOP     "
+	word_name(1033) =  "Thickness_LHS     "
+	word_name(1034) =  "Thickness_BOT     "
+	word_name(1036) =  "Centroidal Height "
+	word_name(1038) =  "Bottom Web Width  "
+	word_name(1039) =  "Top Web Width     "
+	word_name(1040) =  "Bottom Web Thickness"
+	word_name(1041) =  "Top Web Thickness   "
+	word_name(1042) =  "Middle Web Thickness"
+	word_name(1043) =  "Circumscrbing Radius"
+	word_name(1045) =  "Wall Thickness      "
+	word_name(1046) =  "Torus Radius        "
+	word_name(1047) =  "Bottom Width        "
+	word_name(1048) =  "Top Width           "
+	word_name(1049) =  "Horizontal Width    "
+	word_name(1050) =  "Vertical Height     "
+	word_name(1051) =  "Horizontal Thickness"
+	word_name(1052) =  "Vertical Thickness  "
+	word_name(1054) =  "Surfce Contct Softnd"
+	word_name(1055) =  "Clearence Zero-Press"
+	word_name(1056) =  "Contact Pressure    "
+	word_name(1057) =  "Maximum Overclosure "
+	word_name(1058) =  "Maximum -ve Pressure"
+	word_name(1059) =  "Gap Conductance Tble"
+	word_name(1060) =  "Rad Constant Fa     "
+	word_name(1061) =  "Rad Constant Fb     "
+	word_name(1062) =  "Absolute Zero Temp  "
+	word_name(1063) =  "Hourglss Stiff Param"
+	word_name(1064) =  "Shear Stiffness K13 "
+	word_name(1065) =  "Shear Stiffness K23 "
+	word_name(1066) =  "Ave Shear Stiffness "
+	word_name(1067) =  "Membrne Hourglss Stif "
+	word_name(1068) =  "Normal Hourglss Stiff "
+	word_name(1069) =  "Bending Hourglss Stiff"
+	word_name(1070) =  "Density, mass/area    "
+	word_name(1071) =  "# Integration Points  "
+	word_name(1072) =  "Poisson Parameter     "
+	word_name(1073) =  "Point Tangents Intersecti"
+	word_name(1074) =  "Integ Points thru Thickness"
+	word_name(1075) =  "Integ Points around Pipe   "
+	word_name(1076) =  "# Ovalization Modes        "
+	word_name(1077) =  "Section Points             "
+	word_name(1079) =  "Orientation Axis           "
+	word_name(1081) =  "Membrane Thickness         "
+	word_name(1080) =  "Shell Thickness            "
+	word_name(2015) =  "Distance Centroid to Bottom at I"
+	word_name(2016) =  "Distance Centroid to Bottom at J"
+	word_name(2017) =  "Cable or Gap Option             "
+	word_name(2018) =  "Cable Stiffness Options         "
+	word_name(2019) =  "Convection Function Constant    "
+	word_name(2020) =  "Compression Options             "
+	word_name(2021) =  "Heat Gen. Rate Const1"
+	word_name(2022) =  "Heat Gen. Rate Const2"
+	word_name(2023) =  "Heat Gen. Rate Const3"
+	word_name(2024) =  "Heat Gen. Rate Const4"
+	word_name(2025) =  "Heat Gen. Rate Const5"
+	word_name(2026) =  "Heat Gen. Rate Const6"
+	word_name(2027) =  "Convergence Tolerance"
+	word_name(2028) =  "Damping Coefficient 1"
+	word_name(2029) =  "Damping Coefficient 2"
+	word_name(2030) =  "Deflection                      "
+	word_name(2031) =  "Delta Temperature               "
+	word_name(2032) =  "Degree(s) of Freedom            "
+	word_name(2033) =  "Shear Center Offset Y at I      "
+	word_name(2034) =  "Shear Center Offset Y at J      "
+	word_name(2035) =  "Shear Center Offset Z at I      "
+	word_name(2036) =  "Shear Center Offset Z at J      "
+	word_name(2037) =  "Application Type                "
+	word_name(2042) =  "Y Elastic Foundation Stiffness  "
+	word_name(2043) =  "Z Elastic Foundation Stiffness  "
+	word_name(2044) =  "Elastic Foundation Stiffness    "
+	word_name(2046) =  "Empirical Convection Term Expone"
+	word_name(2047) =  "End I Releases        "
+	word_name(2048) =  "End J Releases        "
+	word_name(2049) =  "Extra Shapes Option   "
+	word_name(2050) =  "Force                 "
+	word_name(2051) =  "Geometric Form Factor "
+	word_name(2052) =  "Gap Size              "
+	word_name(2053) =  "Gap Size Opion        "
+	word_name(2054) =  "Heat Rate             "
+	word_name(2055) =  "Height                "
+	word_name(2056) =  "Initial Displacement  "
+	word_name(2057) =  "Initial Status        "
+	word_name(2058) =  "Initial Strain        "
+	word_name(2059) =  "Layer Input Format    "
+	word_name(2060) =  "Torsional Moment of Inertia at I"
+	word_name(2061) =  "Torsional Moment of Inertia at J"
+	word_name(2062) =  "Y Moment of Inertia at I        "
+	word_name(2063) =  "Y Moment of Inertia at J        "
+	word_name(2064) =  "Z Moment of Inertia at I        "
+	word_name(2065) =  "Z Moment of Inertia at J        "
+	word_name(2066) =  "Large Deflection Coordinate Opti"
+	word_name(2067) =  "Segment Point Y Location(s)     "
+	word_name(2068) =  "Segment Point Z Location(s)     "
+	word_name(2069) =  "Mass                            "
+	word_name(2070) =  "Mass Distribution               "
+	word_name(2071) =  "Mass Matrix Options             "
+	word_name(2076) =  "Bending Moment Of Inertia Ratio "
+	word_name(2080) =  "Node Location Options     "
+	word_name(2081) =  "X Nodal Offset at I       "
+	word_name(2082) =  "X Nodal Offset at J       "
+	word_name(2083) =  "Normal Stiffness          "
+	word_name(2084) =  "Outer Diameter            "
+	word_name(2085) =  "Pressure Direction Options"
+	word_name(2086) =  "Pressure Loading Options  "
+	word_name(2087) =  "Pressure Sign Options     "
+	word_name(2088) =  "Radiation Equation Types  "
+	word_name(2089) =  "Radius                    "
+	word_name(2093) =  "Shear Area at I           "
+	word_name(2094) =  "Shear Area at J           "
+	word_name(2097) =  "Y Direction Shear Constant"
+	word_name(2098) =  "Z Direction Shear Constant"
+	word_name(2099) =  "Slide Force Limit         "
+	word_name(2100) =  "Stability Options         "
+	word_name(2102) =  "Sticking Options          "
+	word_name(2103) =  "Sticking Stiffness        "
+	word_name(2104) =  "Spring Constant 1         "
+	word_name(2105) =  "Spring constant 2         "
+	word_name(2106) =  "Stifness Direction Options   "
+	word_name(2108) =  "Strain Representation Options"
+	word_name(2109) =  "Temperature Loading Options  "
+	word_name(2110) =  "Thermal Capacitance          "
+	word_name(2111) =  "Theta                        "
+	word_name(2113) =  "Thickness at I               "
+	word_name(2114) =  "Thickness at J               "
+	word_name(2115) =  "Y Direction Thickness        "
+	word_name(2116) =  "Z Direction Thickness        "
+	word_name(2117) =  "Y Bottom Thickness at I      "
+	word_name(2118) =  "Y Bottom Thickness at J      "
+	word_name(2119) =  "Y Top Thickness at I         "
+	word_name(2120) =  "Y Top Thickness at J         "
+	word_name(2121) =  "Z Bottom Thickness at I      "
+	word_name(2122) =  "Z Bottom Thickness at J      "
+	word_name(2123) =  "Z Top Thickness at I         "
+	word_name(2124) =  "Z Top Thickness at J         "
+	word_name(2125) =  "Distance Centroid to Top     "
+	word_name(2126) =  "Distance Centroid to Top at I"
+	word_name(2127) =  "Distance Centroid to Top at J"
+	word_name(2128) =  "Torsional Shear Factor at I  "
+	word_name(2129) =  "Torsional Shear Factor at J  "
+	word_name(2130) =  "Ultimate Shear Stress        "
+	word_name(2131) =  "Unloading Path Options       "
+	word_name(3001) =  "Absolute Temp Conversion     "
+	word_name(3002) =  "Angular Vel at Center of Rot "
+	word_name(3003) =  "Branch Length                "
+	word_name(3004) =  "Closure Distance             "
+	word_name(3005) =  "Direction of Rotation Axis   "
+	word_name(3006) =  "dx/ds where Branches Begin   "
+	word_name(3007) =  "dx/ds where Branches End     "
+	word_name(3008) =  "dy/ds where Branches Begin   "
+	word_name(3009) =  "dy/ds where Branches End     "
+	word_name(3010) =  "Element Length               "
+	word_name(3011) =  "Film Coefficient             "
+	word_name(3012) =  "Friction Coefficient         "
+	word_name(3013) =  "Initially Open or Closed     "
+	word_name(3014) =  "Initial Stress               "
+	word_name(3015) =  "K Normal (closed)            "
+	word_name(3016) =  "K Tangent (closed)           "
+	word_name(3017) =  "Limiting Distance            "
+	word_name(3018) =  "Min or Max Limit Type        "
+	word_name(3019) =  "Number Divisions ea Branch   "
+	word_name(3020) =  "Thicknesses where Branches Begin"
+	word_name(3021) =  "Thicknesses where Branches End  "
+	word_name(3022) =  "Tied Shell Thickness            "
+	word_name(3023) =  "Activation Time                 "
+	word_name(3024) =  "Deactivation Time               "
+	word_name(3025) =  "Vel at Center of Rotation       "
+	word_name(3026) =  "X Coords where Branches Begin   "
+	word_name(3027) =  "X Coords where Branches End     "
+	word_name(3028) =  "Y Coords where Branches Begin   "
+	word_name(3029) =  "Y Coords where Branches End     "
+	word_name(4001) =  "Mass Orientation   "
+	word_name(4002) =  "Mass Component 1,1 "
+	word_name(4003) =  "Mass Component 2,1 "
+	word_name(4004) =  "Mass Component 2,2 "
+	word_name(4005) =  "Mass Component 3,1 "
+	word_name(4006) =  "Mass Component 3,2 "
+	word_name(4007) =  "Mass Component 3,3 "
+	word_name(4008) =  "Mass Component 4,1 "
+	word_name(4009) =  "Mass Component 4,2 "
+	word_name(4010) =  "Mass Component 4,3 "
+	word_name(4011) =  "Mass Component 4,4 "
+	word_name(4012) =  "Mass Component 5,1 "
+	word_name(4013) =  "Mass Component 5,2 "
+	word_name(4014) =  "Mass Component 5,3 "
+	word_name(4015) =  "Mass Component 5,4 "
+	word_name(4016) =  "Mass Component 5,5 "
+	word_name(4017) =  "Mass Component 6,1 "
+	word_name(4018) =  "Mass Component 6,2 "
+	word_name(4019) =  "Mass Component 6,3 "
+	word_name(4020) =  "Mass Component 6,4 "
+	word_name(4021) =  "Mass Component 6,5 "
+	word_name(4022) =  "Mass Component 6,6 "
+	word_name(4023) =  "Spring Constant    "
+	word_name(4024) =  "Mass Offset        "
+	word_name(4026) =  "Inertia 2,1        "
+	word_name(4028) =  "Inertia 3,1        "
+	word_name(4029) =  "Inertia 3,2        "
+	word_name(4032) =  "Stress Coefficient "
+	word_name(4033) =  "Ext. Viscous Coeff."
+	word_name(4034) =  "Rot. Viscous Coeff."
+	word_name(4036) =  "Tors. Stress Coeff."
+	word_name(4037) =  "Nonstructural Mass "
+	word_name(4039) =  "Outer Diam. @ Node 2"
+	word_name(4042) =  "Offset @ Node 1 "
+	word_name(4043) =  "Offset @ Node 2 "
+	word_name(4044) =  "Shear Stiff. Y  "
+	word_name(4045) =  "Shear Stiff. Z  "
+	word_name(4046) =  "Shear Stiff. R  "
+	word_name(4047) =  "Y of Point C"
+	word_name(4048) =  "Z of Point C"
+	word_name(4049) =  "R of Point C"
+	word_name(4050) =  "Y of Point D"
+	word_name(4051) =  "Z of Point D"
+	word_name(4052) =  "R of Point D"
+	word_name(4053) =  "Y of Point E"
+	word_name(4054) =  "Z of Point E"
+	word_name(4055) =  "R of Point E"
+	word_name(4056) =  "Y of Point F"
+	word_name(4057) =  "Z of Point F"
+	word_name(4058) =  "R of Point F"
+	word_name(4059) =  "Ys of C Points  "
+	word_name(4060) =  "Zs of C Points   "
+	word_name(4061) =  "Station Distances"
+	word_name(4062) =  "Ys of D Points   "
+	word_name(4063) =  "Zs of D Points   "
+	word_name(4064) =  "Warp DOF @ Node 1"
+	word_name(4065) =  "Ys of E Points   "
+	word_name(4066) =  "Zs of E Points   "
+	word_name(4067) =  "Warp DOF @ Node 2"
+	word_name(4068) =  "Ys of F Points   "
+	word_name(4069) =  "Zs of F Points   "
+	word_name(4070) =  "Cross Sect. Areas"
+	word_name(4071) =  "Initial Opening  "
+	word_name(4072) =  "Preload          "
+	word_name(4073) =  "Opened Stiffness "
+	word_name(4074) =  "Closed Stiffness "
+	word_name(4075) =  "Sliding Stiffness"
+	word_name(4076) =  "Friction Coeff. Y"
+	word_name(4077) =  "Friction Coeff. Z"
+	word_name(4078) =  "Inertias 1,1     "
+	word_name(4079) =  "Inertias 1,2     "
+	word_name(4080) =  "Inertias 2,2     "
+	word_name(4081) =  "Torsional Constants "
+	word_name(4082) =  "Nonstructural Masses"
+	word_name(4083) =  "Shear Relief Y      "
+	word_name(4084) =  "Shear Relief Z      "
+	word_name(4085) =  "NSM Inertia @ Node 1"
+	word_name(4086) =  "NSM Inertia @ Node 2"
+	word_name(4087) =  "Warp Coeff. @ Node 1"
+	word_name(4088) =  "Warp Coeff. @ Node 2"
+	word_name(4089) =  "Y of NSM @ Node 1   "
+	word_name(4090) =  "Z of NSM @ Node 1   "
+	word_name(4091) =  "Y of NSM @ Node 2   "
+	word_name(4092) =  "Z of NSM @ Node 2   "
+	word_name(4093) =  "Y of NSM            "
+	word_name(4094) =  "Z of NSM            "
+	word_name(4095) =  "Y of NA @ Node 1    "
+	word_name(4096) =  "Z of NA @ Node 1    "
+	word_name(4097) =  "Y of NA @ Node 2    "
+	word_name(4098) =  "Z of NA @ Node 2    "
+	word_name(4099) =  "Y of Neut. Axis     "
+	word_name(4100) =  "Z of Neut. Axis     "
+	word_name(4101) =  "Center of Curvature "
+	word_name(4102) =  "Radial NA Offset    "
+	word_name(4103) =  "Mean Pipe Radius    "
+	word_name(4104) =  "Internal Pipe Press."
+	word_name(4105) =  "Stress Intensific.  "
+	word_name(4106) =  "Symmetry Option     "
+	word_name(4107) =  "Ys of Lumped Areas  "
+	word_name(4108) =  "Zs of Lumped Areas  "
+	word_name(4109) =  "Area Factors        "
+	word_name(4111) =  "Plate Offset        "
+	word_name(4112) =  "Membrane Material   "
+	word_name(4113) =  "Bending Material    "
+	word_name(4114) =  "Shear Material      "
+	word_name(4115) =  "Coupling Material   "
+	word_name(4116) =  "Bending Stiffness   "
+	word_name(4117) =  "Thickness Ratio     "
+	word_name(4118) =  "Fiber Dist. 1       "
+	word_name(4119) =  "Fiber Dist. 2        "
+	word_name(4121) =  "Extensional Stiff. 12"
+	word_name(4122) =  "Extensional Stiff. 14"
+	word_name(4124) =  "Integration Network  "
+	word_name(4125) =  "Output Locations     "
+	word_name(4126) =  "Integration Scheme   "
+	word_name(4127) =  "Gap Orientation      "
+	word_name(4128) =  "Axial Bar Offset     "
+	word_name(4129) =  "Radial Bar Offset    "
+
+	if(wid > 4129) then 
+		word_name(wid) = str_from_integer(wid)
+	end if
+
+	return str_strip_trail(word_name(wid))
+END FUNCTION
+
+function delete_empty_prop()
+
+    integer nreg  	
+    db_count_region_ids(nreg)
+    
+    integer reg_id(virtual)
+    string reg_name[63](virtual)
+    sys_allocate_array(reg_id, 1, nreg)
+    sys_allocate_array(reg_name, 1, nreg)
+
+    db_get_all_region_ids(nreg, reg_id)
+    
+    db_get_region_ids_and_names(nreg, reg_id, reg_name)
+
+    integer idx, nelems
+    string del_group[63](1)
+    for(idx = 1 to nreg)
+        db_count_elements_in_region ( reg_id(idx), nelems)
+        if (nelems == 0) then
+            del_group(1) =  reg_name(idx)
+            elementprops_delete( del_group )
+        end if        
+    end for
+
+end function
+
+FUNCTION word_data(prop_dat_type, mat_id,i_val,r_val,c_val,coord_id,node_id,field_id)
+integer prop_dat_type, mat_id, i_val, coord_id, node_id, field_id, nrec, rec
+real r_val()
+string c_val[], shape_name[80], mat_name[80], prop_dat[128]
+
+SWITCH(prop_dat_type)                                                          
+                                                                           
+	CASE(1)	                                                         
+			prop_dat= str_from_real(r_val(1))		               
+	CASE(2)	                                                                
+			prop_dat= str_from_real_array("<", r_val, ">")
+			
+	CASE(3)	                                                                
+			prop_dat= str_from_integer(i_val)                            
+	CASE(4)	                                                                
+			prop_dat= c_val                                              
+	CASE(5)	                                                                
+			db_get_material_name_from_id(mat_id, mat_name)                   
+		     prop_dat= "m:"//mat_name                                   
+                                                                                  
+	CASE(6)	
+			prop_dat= ""                                                   
+	CASE(7)	
+			prop_dat= ""                                                   
+	CASE(8)	
+			prop_dat= ""                                                   
+	CASE(9)	
+			prop_dat= ""                                                   
+	CASE(11)	                                                                
+			db_get_beam_section( i_val, shape_name, prop_dat, nrec, rec)
+			prop_dat = shape_name // "\n" // prop_dat
+			                                                                
+	CASE(12)	
+			db_get_beam_section( i_val, shape_name, prop_dat, nrec, rec)
+			prop_dat = shape_name // "\n" // prop_dat
+
+END SWITCH                                                                        
+
+RETURN prop_dat
+END FUNCTION
+
+END CLASS

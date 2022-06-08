@@ -1,0 +1,853 @@
+$ !! input ideasf_QUAD4_nodes.pcl
+$ ideasf_QUAD4_nodes([1,2,3,4])
+#include "lpenums.i"
+#define CLASSNAME FemFx
+#define CLASS_STR "FemFx"
+
+CLASS CLASSNAME
+/* ============================================== */
+/*          IDEAS SHELL FUNCTION                 */
+/* ============================================== */
+function nodes_SHELL(i_node_id)
+     integer i_node_id()
+     string e_Shape[7], e_Topo[7], s_node_id[32](4)
+
+     if(i_node_id(4) == 0)then
+          s_node_id(1) = "Node " // str_from_integer(i_node_id(1))
+          s_node_id(2) = "Node " // str_from_integer(i_node_id(2))
+          s_node_id(3) = "Node " // str_from_integer(i_node_id(3))
+          s_node_id(4) = ""
+          e_Shape = "Tri "
+          e_Topo = "Tria3"
+     else
+          integer diagonal(2,2), parallel(2,2,2)
+          diagonal = CLASSNAME.QUAD4_diagonal_check(i_node_id)
+          parallel = CLASSNAME.QUAD4_parallel_check(i_node_id)
+
+          s_node_id(1) = "Node " // str_from_integer(parallel(1,1,1))
+          s_node_id(2) = "Node " // str_from_integer(parallel(1,1,2))
+          integer i, j
+
+          for(i=1 to 2)
+               if(parallel(1,1,1) == diagonal(i, 1)) then
+                    s_node_id(3) = "Node " // str_from_integer(diagonal(i, 2))
+               else if(parallel(1,1,1) == diagonal(i, 2)) then
+                    s_node_id(3) = "Node " // str_from_integer(diagonal(i, 1))
+               end if
+
+               if(parallel(1,1,2) == diagonal(i, 1)) then
+                    s_node_id(4) = "Node " // str_from_integer(diagonal(i, 2))
+               else if(parallel(1,1,2) == diagonal(i, 2)) then
+                    s_node_id(4) = "Node " // str_from_integer(diagonal(i, 1))
+               end if
+
+          end for
+          e_Shape = "Quad"
+          e_Topo = "Quad4"
+     end if
+
+     string fem_create_elemen_elems_created[virtual]
+
+     fem_create_elems_1( e_Shape, e_Topo, "#", "Standard", 3, @
+                         s_node_id(1), s_node_id(2), s_node_id(3), s_node_id(4), @
+                         "", "", "", "", fem_create_elemen_elems_created )
+
+     return fem_create_elemen_elems_created
+end function
+
+function nodes_QUAD4(s_node_list)
+     string s_node_list[]
+     
+     integer ia_node_id(4)
+     fem_u_get_id_list(LP_SUBLIST_NODE, s_node_list, 4, TRUE, ia_node_id)
+
+     integer diagonal(2,2), parallel(2,2,2)
+     diagonal = CLASSNAME.QUAD4_diagonal_check(ia_node_id)
+     parallel = CLASSNAME.QUAD4_parallel_check(ia_node_id)
+
+     string sa_node_id[32](4)
+
+	sa_node_id(1) = "Node " // str_from_integer(parallel(1,1,1))
+     sa_node_id(2) = "Node " // str_from_integer(parallel(1,1,2))
+     integer i, j
+
+	     for(i=1 to 2)
+     	     if(parallel(1,1,1) == diagonal(i, 1)) then
+                    sa_node_id(3) = "Node " // str_from_integer(diagonal(i, 2))
+               else if(parallel(1,1,1) == diagonal(i, 2)) then
+                    sa_node_id(3) = "Node " // str_from_integer(diagonal(i, 1))
+               end if
+
+               if(parallel(1,1,2) == diagonal(i, 1)) then
+                    sa_node_id(4) = "Node " // str_from_integer(diagonal(i, 2))
+               else if(parallel(1,1,2) == diagonal(i, 2)) then
+                    sa_node_id(4) = "Node " // str_from_integer(diagonal(i, 1))
+               end if
+          end for
+          string e_Shape[5] = "Quad"
+          string e_Topo[6]="Quad4"
+
+     string fem_create_elemen_elems_created[virtual]
+
+     fem_create_elems_1( e_Shape, e_Topo, "#", "Standard", 3, @
+                         sa_node_id(1), sa_node_id(2), sa_node_id(3), sa_node_id(4), @
+                         "", "", "", "", fem_create_elemen_elems_created )
+
+     return fem_create_elemen_elems_created
+end function
+
+function nodes_TRI3(s_node_list)
+     string s_node_list[]
+     
+     integer ia_node_id(4)
+     fem_u_get_id_list(LP_SUBLIST_NODE, s_node_list, 3, TRUE, ia_node_id)
+
+     string e_Shape[7], e_Topo[7], sa_node_id[32](4)
+
+          sa_node_id(1) = "Node " // str_from_integer(ia_node_id(1))
+          sa_node_id(2) = "Node " // str_from_integer(ia_node_id(2))
+          sa_node_id(3) = "Node " // str_from_integer(ia_node_id(3))
+          e_Shape = "Tri "
+          e_Topo = "Tria3"
+
+     string fem_create_elemen_elems_created[virtual]
+
+     fem_create_elems_1( e_Shape, e_Topo, "#", "Standard", 3, @
+                         sa_node_id(1), sa_node_id(2), sa_node_id(3), sa_node_id(4), @
+                         "", "", "", "", fem_create_elemen_elems_created )
+
+     return fem_create_elemen_elems_created
+end function
+
+function nodes_BAR2(s_node_list)
+     string s_node_list[]
+     
+     integer ia_node_id(4)
+     fem_u_get_id_list(LP_SUBLIST_NODE, s_node_list, 2, TRUE, ia_node_id)
+
+     string e_Shape[7], e_Topo[7], sa_node_id[32](4)
+
+          sa_node_id(1) = "Node " // str_from_integer(ia_node_id(1))
+          sa_node_id(2) = "Node " // str_from_integer(ia_node_id(2))
+          e_Shape = "Bar "
+          e_Topo = "Bar2"
+
+     string fem_create_elemen_elems_created[virtual]
+
+     fem_create_elems_1( e_Shape, e_Topo, "#", "Standard", 3, @
+                         sa_node_id(1), sa_node_id(2), sa_node_id(3), sa_node_id(4), @
+                         "", "", "", "", fem_create_elemen_elems_created )
+
+     return fem_create_elemen_elems_created
+end function
+
+function nodes_POINT(s_node_list)
+     string s_node_list[]
+     
+     integer ia_node_id(4)
+     fem_u_get_id_list(LP_SUBLIST_NODE, s_node_list, 1, TRUE, ia_node_id)
+
+     string e_Shape[7], e_Topo[7], sa_node_id[32](4)
+
+          sa_node_id(1) = "Node " // str_from_integer(ia_node_id(1))
+          sa_node_id(2) = "Node " // str_from_integer(ia_node_id(2))
+          e_Shape = "Point"
+          e_Topo = "Point"
+
+     string fem_create_elemen_elems_created[virtual]
+
+     fem_create_elems_1( e_Shape, e_Topo, "#", "Standard", 3, @
+                         sa_node_id(1), sa_node_id(2), sa_node_id(3), sa_node_id(4), @
+                         "", "", "", "", fem_create_elemen_elems_created )
+
+     return fem_create_elemen_elems_created
+end function
+
+
+$ fem_func_QUAD4_diagonal_check([1,2,3,4])
+function QUAD4_diagonal_check(i_node_id)
+     integer i_node_id()
+
+     integer idx, idy, idm, idn
+
+     integer i_node(4)
+     real px(3), div_s
+
+     integer diagonal(2,2)
+
+     logical l_chk
+     integer status
+     integer i = 0
+
+     for(idx = 1 to 4)
+          i_node(1) = i_node_id(idx)
+          for(idy=1 to 4)
+               if(idy > idx)then
+                    i_node(2) = i_node_id(idy)
+                    l_chk = TRUE
+                    for(idm = 1 to 4)
+                         i_node(3) = i_node_id(idm)
+                         for(idn=1 to 4)
+                              if(idn > idm)then
+                                   if(idx != idm || idy != idn)then
+                                        i_node(4) = i_node_id(idn)
+                                        status = CLASSNAME.intersect_point(i_node, div_s, px)
+                                        if(status == 0) then
+                                             l_chk = l_chk && TRUE
+                                        else
+                                             l_chk = l_chk && FALSE
+                                        end if
+                                   end if
+                              end if
+                         end for
+                    end for
+                    if(l_chk == TRUE)then
+                         i += 1
+                         diagonal(i,1:2) = i_node(1:2)
+                    end if
+               end if
+          end for
+     end for
+
+     return diagonal
+end function
+
+$ fem_func_QUAD4_parallel_check([1,2,3,4])
+function QUAD4_parallel_check(i_node_id)
+     integer i_node_id()
+
+     integer idx, idy, idm, idn
+
+     integer i_node(4)
+     real px(3), div_s
+
+     integer parallel(2,2,2)
+
+     logical l_chk
+     integer status
+     integer i = 0
+
+     integer val1, val2
+
+     for(idx = 1 to 4)
+          i_node(1) = i_node_id(idx)
+          for(idy=1 to 4)
+               if(idy > idx)then
+                    i_node(2) = i_node_id(idy)
+                    for(idm = 1 to 4)
+                         i_node(3) = i_node_id(idm)
+                         for(idn=1 to 4)
+                              if(idn > idm)then
+                                   val1 = idx*10+idy
+                                   val2 = idm*10+idn
+                                   if(val2 > val1) then
+                                        i_node(4) = i_node_id(idn)
+                                        status = CLASSNAME.intersect_point(i_node, div_s, px)
+                                        if(status == -1 || status == 2)then
+                                             i += 1
+$                                             dump "i_node =", status, i_node
+                                             parallel(i,1,1:2) = i_node(1:2)
+                                             parallel(i,2,1:2) = i_node(3:4)
+                                        end if
+                                   end if
+                              end if
+                         end for
+                    end for
+               end if
+          end for
+     end for
+
+     return parallel
+end function
+$ real div_s
+$ real px(3)
+$ fem_func_intersect_point([990390, 990354, 990391, 990354], div_s, px)
+function intersect_point(i_Node_id, div_s, px)
+     integer i_node_id()
+     real div_s
+     real px()
+
+     real p1(3), p2(3), p3(3), p4(3)
+
+     db_get_node(i_node_id(1), p1)
+     db_get_node(i_node_id(2), p2)
+     db_get_node(i_node_id(3), p3)
+     db_get_node(i_node_id(4), p4)
+
+     real vct(3,3)
+     vct(1,1:3) = CLASSNAME.vector_from_nodes(i_node_id(1), i_node_id(2), 0)
+     vct(2,1:3) = CLASSNAME.vector_from_nodes(i_node_id(2), i_node_id(3), 0)
+     vct(3,1:3) = CLASSNAME.vector_from_nodes(i_node_id(3), i_node_id(4), 0)
+
+     integer i, j
+     real sum(3)
+     for(i=1 to 3)
+          for(j=1 to 3)
+               sum(i) += mth_abs(vct(j,i))
+          end for
+     end for
+
+     real min_sum = 1E30
+     integer min_i
+
+     for(i=1 to 3)
+          if(sum(i) < min_sum)then
+               min_sum = sum(i)
+               min_i = i
+          end if
+     end for
+
+     real numerator(3), denominator(3)
+
+$     dump sum
+$     dump min_i
+$ 12-3-1
+     numerator(1) = (p2(1) - p1(1)) * (p1(2) - p3(2)) - (p2(2) - p1(2)) * (p1(1) - p3(1))
+     denominator(1) = (p4(2) - p3(2)) * (p2(1) - p1(1)) - (p4(1) - p3(1)) * (p2(2) - p1(2))
+
+$ 23-1-2
+     numerator(2) = (p2(2) - p1(2)) * (p1(3) - p3(3)) - (p2(3) - p1(3)) * (p1(2) - p3(2))
+     denominator(2) = (p4(3) - p3(3)) * (p2(2) - p1(2)) - (p4(2) - p3(2)) * (p2(3) - p1(3))
+
+$ 31-2-3
+     numerator(3) = (p2(3) - p1(3)) * (p1(1) - p3(1)) - (p2(1) - p1(1)) * (p1(3) - p3(3))
+     denominator(3) = (p4(1) - p3(1)) * (p2(3) - p1(3)) - (p4(3) - p3(3)) * (p2(1) - p1(1))
+
+$     dump numerator
+$     dump denominator
+     integer idx
+     switch(min_i)
+          case(1); idx = 2
+          case(2); idx = 3
+          case(3); idx = 1
+     end switch
+
+$     dump idx
+
+     if(denominator(idx) == 0)then
+          if(numerator(idx) == 0) then
+               div_s = 1e-10
+               return 1
+          else if(numerator(idx) != 0)then
+               div_s = 1e10
+               return 2
+          end if
+     end if
+
+     div_s = mth_round(numerator(idx) / denominator(idx),3)
+
+$     dump div_s
+     integer status
+     if(div_s >= 0 && div_s <= 1) then
+
+          status = 0
+     else
+          status = -1
+     end if
+
+     px(1) = p3(1) + div_s*(p4(1)-p3(1))
+     px(2) = p3(2) + div_s*(p4(2)-p3(2))
+     px(3) = p3(3) + div_s*(p4(3)-p3(3))
+
+     /* 0 : Intersect, -1 : No Intersect, 1 : Same Line, 2 : Parallel Line */
+     return status
+end function
+
+/* ============================================== */
+/*          IDEAS VECTOR FUNCTION                 */
+/* ============================================== */
+$ vec_type = 0 : vector with scalar
+$ vec_type = 1 : vector with unit
+$ vec_type = 2 : magnitude
+     FUNCTION vector_from_xyzs(start_xyz, end_xyz, vec_type)
+          REAL start_xyz(),end_xyz()
+          integer vec_type
+          REAL vct(3)
+
+            vct(1) = end_xyz(1) - start_xyz(1)
+            vct(2) = end_xyz(2) - start_xyz(2)
+            vct(3) = end_xyz(3) - start_xyz(3)
+
+            real mag
+            mag = mth_sqrt(vct(1)*vct(1) + vct(2)*vct(2) + vct(3)*vct(3))
+
+            switch(vec_type)
+               case(0);
+                         return vct
+               case(1);
+                         vct(1) = vct(1)/mag
+                         vct(2) = vct(2)/mag
+                         vct(3) = vct(3)/mag
+                         return vct
+                case(2);
+                         return mag
+                default;
+                         return -1
+            end switch
+
+      END FUNCTION
+
+$ vec_type = 0 : vector with scalar
+$ vec_type = 1 : vector with unit
+$ vec_type = 2 : magnitude
+     FUNCTION vector_from_nodes(i_node_1, i_node_2, vec_type)
+            integer i_node_1, i_node_2, vec_type
+
+            REAL s_xyz(3), e_xyz(3)
+
+            db_get_node(i_node_1, s_xyz)
+            db_get_node(i_node_2, e_xyz)
+
+            real vct(3)
+            if(vec_type == 0 || vec_type == 1)then
+               vct = CLASSNAME.vector_from_xyzs(s_xyz, e_xyz, vec_type)
+               return vct
+            else if(vec_type == 2) then
+               real mag
+               mag = CLASSNAME.vector_from_xyzs(s_xyz, e_xyz, vec_type)
+               return mag
+            else
+               return -1
+            end if
+
+      END FUNCTION
+
+FUNCTION get_elems_ass_nodes(nNode, NodeIds, nElem, ElemIds)
+	integer nNode, NodeIds(), nElem, ElemIds()
+	integer ia_nElem(virtual), ia_ElemId(virtual)
+	integer MaxElem = 16
+	integer cnt, i
+
+	sys_allocate_array(ia_nElem, 1, nNode)
+	sys_allocate_array(ia_ElemId, 1, nNode*MaxElem)
+	db_get_elems_using_nodes(nNode, NodeIds, MaxElem, ia_nElem, ia_ElemId)
+
+	cnt = 0
+	FOR(i=1 TO nNode*MaxElem)
+		IF(ia_ElemId(i) !=0) THEN
+			cnt += 1
+			sys_reallocate_array(ElemIds, 1, cnt)
+			ElemIds(cnt) = ia_ElemId(i)
+		END IF
+	END FOR
+
+	mth_sort(ElemIds, TRUE, nElem)
+	sys_reallocate_array(ElemIds, 1, nElem)
+END FUNCTION
+
+function get_elem_edge_info(i_max_id, ia_elem_id, ia_shape_id, ia_node_id, ra_cxyz, ia_elem_edge_id)
+     integer i_max_id
+     integer ia_elem_id()
+     integer ia_shape_id()
+     integer ia_node_id()
+     integer ia_elem_edge_id()
+     real ra_cxyz()
+
+     integer nElem
+     db_count_elems(nElem)
+
+     integer i_eid(virtual)
+     sys_allocate_array(i_eid, 1, nElem)
+     db_get_elem_ids(nElem, i_eid)
+
+     integer ia_shape(virtual)
+	sys_allocate_array(ia_shape, 1, nElem)
+	db_get_elem_shape_for_id(nElem, i_eid, ia_shape)
+
+     string s_Elems[virtual]
+     app_int_array_to_vstring("Element", nElem, i_eid, s_Elems)
+
+     integer count
+     real ra_xyz(virtual)
+     $ sys_allocate_array(ra_xyz, 1, nElem)
+	fem_geom_elem_location(s_Elems, ra_xyz, count)
+     dump "count =", count, nElem
+     db_get_max_elem_id(i_max_id)
+
+     sys_allocate_array(ia_elem_id, 1, i_max_id)
+     sys_allocate_array(ia_shape_id, 1, i_max_id)
+     sys_allocate_array(ia_node_id, 1, i_max_id, 1, 4)
+     sys_allocate_array(ra_cxyz, 1, i_max_id,1,3)
+     sys_allocate_array(ia_elem_edge_id, 1, i_max_id, 1, 4, 1, 2)
+
+     integer idx, i
+     integer i_node(4), nNode
+     for(idx = 1 to nElem)
+          ia_elem_id(i_eid(idx))= i_eid(idx)
+          ia_shape_id(i_eid(idx))= ia_shape(idx)
+          db_get_elem_nodes(i_eid(idx), nNode, i_node)
+          ia_node_id(i_eid(idx),1:4) = i_node
+          for(i=1 to nNode)
+               ia_elem_edge_id(i_eid(idx), i, 1) = i_node(i)
+               ia_elem_edge_id(i_eid(idx), i, 2) = i_node(mth_mod(i, nNode)+1)
+          end for
+          ra_cxyz(i_eid(idx),1:3) = ra_xyz(idx,1:3)
+     end for
+
+     return nElem
+end function
+
+function get_elem_edge(s_Elems, ia_elem_id, ia_shape_id, ia_node_id, ia_elem_edge_id)
+
+     string s_Elems[]
+     integer ia_elem_id()
+     integer ia_shape_id()
+     integer ia_node_id()
+     integer ia_elem_edge_id()
+
+
+     integer nElem, status
+     nElem = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_Elems, false, status)
+
+     sys_allocate_array(ia_elem_id, 1, nElem)
+     fem_u_get_id_list(LP_SUBLIST_ELEMENT, s_Elems, nElem, true, ia_elem_id)
+
+	sys_allocate_array(ia_shape_id, 1, nElem)
+	db_get_elem_shape_for_id(nElem, ia_elem_id, ia_shape_id)
+
+     sys_allocate_array(ia_node_id, 1, nElem, 1, 4)
+     sys_allocate_array(ia_elem_edge_id, 1, nElem, 1, 4, 1, 2)
+
+     integer idx, i
+     integer i_node(4), nNode
+     for(idx = 1 to nElem)
+          db_get_elem_nodes(ia_elem_id(idx), nNode, i_node)
+          ia_node_id(idx,1:4) = i_node
+          for(i=1 to nNode)
+               ia_elem_edge_id(idx, i, 1) = i_node(i)
+               ia_elem_edge_id(idx, i, 2) = i_node(mth_mod(i, nNode)+1)
+          end for
+     end for
+
+     return nElem
+end function
+
+FUNCTION nodes_center(nNode, ia_node_id, s_node_list)
+   /* =========================================
+      if nnode = 0 then s_node_list is used
+      if nnode != 0 then ia_node_id is used
+      ========================================= */
+        integer nNode
+        integer ia_node_id()
+        string s_node_list[]
+
+        integer status
+        if(nNode == 0) then
+               $ LP_SUBLIST_NODE
+               nNode= fem_u_count_id_list(512, s_node_list, TRUE, status)
+               sys_allocate_array(ia_node_id,1,nNode)
+               fem_u_get_id_list(512, s_node_list, nNode, TRUE, ia_node_id)
+        end if
+
+        integer ia_ref_coord(virtual), ia_analy_coord(virtual)
+        real ra_xyz(virtual)
+        sys_allocate_array(ia_ref_coord,1,nNode)
+        sys_allocate_array(ia_analy_coord,1,nNode)
+        sys_allocate_array(ra_xyz,1,nNode,1,3)
+
+        db_get_nodes(nNode,ia_node_id, ia_ref_coord, ia_analy_coord, ra_xyz)
+
+        integer idx
+        real r_sum(3)
+        for(idx=1 to nNode)
+            r_sum(1) += ra_xyz(idx, 1)
+            r_sum(2) += ra_xyz(idx, 2)
+            r_sum(3) += ra_xyz(idx, 3)
+        end for
+
+        real r_cxyz(3)
+
+            r_cxyz(1) = r_sum(1) / nNode
+            r_cxyz(2) = r_sum(2) / nNode
+            r_cxyz(3) = r_sum(3) / nNode
+
+     return r_cxyz
+   END FUNCTION
+
+FUNCTION get_fem_field_elem_vector(field_id, i_ElemId)
+integer field_id
+integer i_ElemId
+
+string field_name[63]
+integer field_var
+
+db_get_field_name ( field_id, field_name, field_var )
+
+integer i_obj, nvals, ival1, ival2, ival3
+db_get_field_attrs(field_id, field_name, i_obj, nvals, ival1, ival2, ival3)
+
+integer iv_method(virtual), iv_eid(virtual), iv_eface(virtual), iv_eedge(virtual), iv_npos(virtual), iv_n_id(virtual)
+real rv_vals(virtual)
+
+sys_allocate_array(iv_method, 1, nvals)
+sys_allocate_array(iv_eid, 1, nvals)
+sys_allocate_array(iv_eface, 1, nvals)
+sys_allocate_array(iv_eedge, 1, nvals)
+sys_allocate_array(iv_npos, 1, nvals)
+sys_allocate_array(iv_n_id, 1, nvals)
+sys_allocate_array(rv_vals, 1, nvals,1 , 3)
+
+db_get_field_dfem(field_id, nvals, iv_method, iv_eid, iv_eface, iv_eedge, iv_npos, iv_n_id, rv_vals)
+
+integer idx
+real return_vector(3)
+
+for(idx=1 to nvals)
+    if(i_ElemId == iv_eid(idx)) then
+        xfem_vector.unit2(rv_vals(idx,1:3), return_vector)
+        return return_vector
+    end if
+end for
+
+END FUNCTION
+
+function db_node_ids(nid)
+
+integer count
+db_count_nodes(count)
+
+integer ia_node_id(virtual)
+sys_allocate_array(ia_node_id, 1, count)
+db_get_node_ids(count, ia_node_id)
+
+integer max_id
+db_get_max_node_id(max_id)
+
+integer nid()
+sys_allocate_array(nid, 1, max_id)
+
+integer i, idx
+
+for(i=1 to count)
+     idx = ia_node_id(i)
+     nid(idx) = idx 
+end for
+
+return count
+end function
+
+function db_elem_ids(eid)
+
+integer count
+db_count_elems(count)
+
+integer ia_elem_id(virtual)
+sys_allocate_array(ia_elem_id, 1, count)
+db_get_node_ids(count, ia_elem_id)
+
+integer max_id
+db_get_max_elem_id(max_id)
+
+integer eid()
+sys_allocate_array(eid, 1, max_id)
+
+integer i, idx
+
+for(i=1 to count)
+     idx = ia_elem_id(i)
+     eid(idx) = idx 
+end for
+
+return count
+end function
+
+function Beam2Shell(s_elem_list, numElemDiv)
+    string s_elem_list[]
+    integer numElemDiv
+$    string selected_element[virtual]
+    uil_primary_file.db_save()
+
+    integer nElem, i_status
+	nElem = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_elem_list, TRUE, i_status)
+	if(nElem == 0) then return -1
+	
+     integer ia_ElemId(virtual)
+	sys_allocate_array(ia_ElemId, 1, nElem)
+	fem_u_get_id_list(LP_SUBLIST_ELEMENT, s_elem_list, nElem, TRUE, ia_ElemId)
+     
+     integer mat_id(virtual), reg_id(virtual), sec_id(virtual), opt_id(virtual)
+	real orv(virtual), ofv1(virtual), ofv2(virtual)
+     PropFx.elem_bar_beam_prop(nElem, ia_ElemId, reg_id, opt_id, mat_id, sec_id, orv, ofv1, ofv2)
+
+     INTEGER  idx
+
+     REAL dim(virtual)
+     INTEGER ndim, entyp
+     INTEGER nprop
+     REAL r_prop(30)
+     INTEGER i_data_types(virtual), i_field_ids(virtual)
+
+FOR ( idx = 1 TO nElem )
+
+    	integer nrec, bytes_per_rec
+     string sec_shape[5], sec_name[32]
+     db_get_beam_section(sec_id(idx), sec_shape, sec_name, nrec, bytes_per_rec)
+
+	ndim = blgetnumdimension(sec_shape)
+	IF(ndim !=0) THEN	sys_allocate_array(i_data_types, 1, ndim)
+	IF(ndim !=0) THEN	sys_allocate_array(i_field_ids, 1 , ndim)
+	IF(ndim !=0) THEN	sys_allocate_array(dim, 1, ndim)
+	bl_get_std_beam_section_data (sec_id(idx), ndim, i_data_types, dim, i_field_ids)
+	blgetprop(entyp, sec_shape, dim, ndim, r_prop , nprop)
+
+	dump orv(idx, 1:3)
+
+     if(sec_shape == "L") then
+		orv(idx,1) = -1*orv(idx,1)*dim(2)
+          orv(idx,2) = -1*orv(idx,2)*dim(2)
+          orv(idx,3) = -1*orv(idx,3)*dim(2)
+     else
+          orv(idx,1) = orv(idx,1)*dim(2)
+          orv(idx,2) = orv(idx,2)*dim(2)
+          orv(idx,3) = orv(idx,3)*dim(2)
+     end if
+
+            string s_orv[128]
+            s_orv = "< " // str_from_real(orv(idx,1)) // "," @
+            			// str_from_real(orv(idx,2)) // "," @
+            			// str_from_real(orv(idx,3)) // " >"
+            
+            INTEGER nNode
+            INTEGER fem_sweep_elems_n_elems_created
+            STRING fem_sweep_elems_ex_created_nids[VIRTUAL]
+            STRING fem_sweep_elems_ex_created_eids[VIRTUAL]
+            integer eid(1)
+
+            string s_ElemList[32]
+
+            s_ElemList = "Element " // str_from_integer(ia_ElemId(idx))
+
+            string mesh_control[10](6)
+            mesh_control(1) = "3"
+            mesh_control(2) = "1.5"
+            mesh_control(3) = "0.1"
+            mesh_control(4) = "0.2"
+            mesh_control(5) = "0.5"
+            mesh_control(6) = str_from_integer(numElemDiv)
+
+            fem_sweep_extrude_1( "#", "#", "Coord 0", s_orv, str_from_real(dim(2)), "0.0 ", 3, s_ElemList, 10, @
+            ["Bar2", "Quad4", "Quad8", "Quad12", "Wedge6", "Wedge15", "Wedge24", "Hex8", "Hex20", "Hex32"], @
+            "Coord 0", "Coord 0", "Uniform: Number of Elements", mesh_control, @
+            nNode, fem_sweep_elems_n_elems_created, fem_sweep_elems_ex_created_nids, fem_sweep_elems_ex_created_eids )
+
+		  integer iv_NodeID(virtual)
+		  sys_allocate_array(iv_NodeID, 1, nNode)
+		
+		  fem_u_get_id_list(LP_SUBLIST_NODE, "Node " // fem_sweep_elems_ex_created_nids, nNode, TRUE, iv_NodeID)
+		
+		  string s_NodeID[126]
+		  s_NodeID = "Node " // str_from_integer(iv_NodeID(nNode-1)) // " " @
+		  				 // str_from_integer(iv_NodeID(nNode))
+
+            real thk, secArea
+		  string reg_name[64], s_eid[16], mat_name[32]
+		  db_get_material_name_from_id(mat_id(idx), mat_name)
+            switch(sec_shape)
+                case("Bar");
+                      	thk = dim(1)
+                    	reg_name = str_from_real(thk)//mat_name
+                    	PropFx.create_shell_property(reg_name, mat_name, thk, "Elem " // fem_sweep_elems_ex_created_eids)
+                case("L");
+          	          thk = dim(4)
+                    	reg_name = str_from_real(thk)//mat_name
+                    	PropFx.create_shell_property(reg_name, mat_name, thk, "Elem " // fem_sweep_elems_ex_created_eids)
+
+	                    SecArea = dim(1)*dim(3)
+               		
+					s_eid = FemFx.nodes_BAR2(s_NodeID)
+                      	reg_name = "ROD"//str_from_real(SecArea)//"_"//mat_name	  
+					PropFx.create_rod_property(reg_name, mat_name, SecArea, "Elem" // s_eid)
+                case("T");
+          	          thk = dim(4)
+                    	reg_name = str_from_real(thk)//mat_name
+                    	PropFx.create_shell_property(reg_name, mat_name, thk, "Elem " // fem_sweep_elems_ex_created_eids)
+
+                      	SecArea = dim(1)*dim(3)
+                    	
+					s_eid = FemFx.nodes_BAR2(s_NodeID)
+                      	reg_name = "ROD"//str_from_real(SecArea)//"_"//mat_name	  
+					PropFx.create_rod_property(reg_name, mat_name, SecArea, "Elem" // s_eid)
+                default;
+                        dump sec_shape
+                        return -1
+            end switch
+     END FOR
+end function
+
+FUNCTION CHECK_EDGE(nElem, ShapeID, ElemID)
+integer nElem, ShapeID(), ElemID()
+integer idx, i, j, k
+
+logical l_confirm
+integer i_wm_opt
+real r_tol
+
+pref_global_get( l_confirm, i_wm_opt, r_tol )
+
+integer ia_regID(virtual)
+sys_allocate_array(ia_regID, 1, nElem)
+db_get_region_for_elements(nElem, ElemID, ia_regID)
+
+
+real NodeiXYZ(3), NodejXYZ(3), mag
+string fem_deleted_element[virtual], node_list[virtual],  sNode[63](4)
+integer nNode, NodeID(8), e_id, e_id2(1)
+string fem_create_elemen_elems_created[virtual], fem_renum_elem_new_ids[virtual]
+for(idx = 1 to nElem)
+    db_get_elem_nodes(ElemID(idx), nNode, NodeID)
+     dump ElemID(idx)
+     dump nNode
+     dump "======================="
+	
+
+     for(i = 1 to nNode)
+          db_get_node(NodeID(i), NodeiXYZ)
+          j = mth_mod(i, nNode) + 1
+          db_get_node(NodeID(j), NodejXYZ)
+          mag = mth_sqrt((NodeiXYZ(1)-NodejXYZ(1))**2 + (NodeiXYZ(2)-NodejXYZ(2))**2 + (NodeiXYZ(3)-NodejXYZ(3))**2)
+          dump i, j
+          dump NodeID(i)
+          dump NodeID(j)
+          dump mag
+          dump r_tol
+
+          IF(mag <= r_tol) THEN
+               if(nNode <= 3) THEN
+	               fem_delete_element("Element " // str_from_integer(ElemID(idx)), fem_deleted_element)
+                    ui_write("  >>> "// fem_deleted_element // " 1 was deleted")
+               else if(nNode == 4 )THEN
+                    NodeID(i) = NodeID(j)
+                    fem_delete_element("Element " // str_from_integer(ElemID(idx)), fem_deleted_element)
+                    ui_write("  >>> " // fem_deleted_element // " was deleted")
+
+                    for(k = 1 to 4)
+                         sNode(k) = "Node " // str_from_integer(NodeID(k))
+		               list_create_boolean_list(node_list, sNode(k), "or" ,node_list)
+	               end for
+                    
+                    dump "NodeList = " // node_list
+
+                    fem_create_elemen_elems_created = FemFx.nodes_TRI3(node_list)
+
+                    fem_renum_elem_1( "Elm " // fem_create_elemen_elems_created, str_from_integer(ElemID(idx)), 2, fem_renum_elem_new_ids )
+
+                    dump "fem_create_elemen_elems_created " // fem_create_elemen_elems_created
+
+                    
+		          db_associate_element_to_region (ElemID(idx), ia_regID(idx))
+
+               end if
+          end IF
+     end for
+     
+     node_list = ""
+
+end for
+
+repaint_graphics()
+return
+
+END FUNCTION
+
+END CLASS
+

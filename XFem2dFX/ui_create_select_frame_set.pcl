@@ -1,0 +1,48 @@
+#include "appforms.p"
+#include "lpenums.i"
+
+function ui_create_select_frame_set(parent, select_frame, select_dbox, yloc, data_type, frame_label, frame_callback, sdbox_label, sdbox_callback)
+
+      widget parent
+      widget select_frame, select_dbox
+      string frame_callback[], sdbox_callback[], frame_label[], sdbox_label[], data_type[]
+      real yloc, sframe_hgt
+
+      select_frame = ui_selectframe_create(                        @
+      /*  parent  */                       parent,                 @
+      /* callback */                       frame_callback,         @
+      /*     x    */                       FORM_L_MARGIN,          @
+      /*     y    */                       yloc,                   @
+      /*   width  */                       SFRAME_WID_SINGLE,      @
+      /*  height  */                       SFRAME_1SDB_HGT_LABOVE, @
+      /*   label  */                       frame_label,            @
+      /*  recycle */                       TRUE)
+
+      select_dbox = ui_selectdatabox_create(                       @
+      /*    parent    */                    select_frame,          @
+      /*   callback   */                    sdbox_callback,        @
+      /*       x      */                    SFRAME_L_MARGIN,       @
+      /*       y      */                    SDBOX_Y_LOC1_LABOVE ,  @
+      /* label_length */                    0.0,                   @
+      /*  box_length  */                    SDBOX_WID_SINGLE,      @
+      /*     label    */                    sdbox_label,           @
+      /*     value    */                    "",                    @
+      /*  label_above */                    TRUE,                  @
+      /*   datatype   */                    data_type,             @
+      /*    prompt    */                    sdbox_label)
+
+
+      ui_wid_get(select_frame,"HEIGHT", sframe_hgt)
+/*
+      sframe_hgt = SFRAME_T_MARGIN +                @
+                        SFRAME_1SDB_HGT_LABOVE +    @
+                        SFRAME_B_MARGIN +           @
+                        INTER_WIDGET_SPACE +        @
+                        SFRAME_1EDGE
+*/
+      yloc += sframe_hgt + LABEL_HGT
+
+return 0
+
+end function
+

@@ -1,0 +1,962 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME RESULT_REPORT_TOOLS
+#define CLASS_STR "RESULT_REPORT_TOOLS"
+
+class CLASSNAME
+
+classwide widget form_id, opt_Action, btn_Apply, btn_Exit
+classwide widget image_capture_frame, opt_Object
+classwide widget listbox_ResultCases, listbox_GroupName
+classwide widget btn_result_option, btnAdd, btnRemove
+
+classwide real r_viewport_size(2)
+classwide string s_COORDTF[12]
+classwide string s_result_quantity[12]
+classwide string s_result_layer[12]
+classwide string s_ResultOption[32](3)
+classwide string s_FringeOption[32](12)
+  
+function init()
+
+    real y_loc = 0.
+
+   form_id = ui_form_create(CLASS_STR,       @
+          /* x location */  FORM_X_LOC ,     @
+          /* y location */  FORM_Y_LOC,"ul", @
+          /* width      */  FORM_WID_SML,    @
+          /* height     */  FORM_HGT_TALL,   @
+          /* label      */  CLASS_STR,       @
+                            "")
+
+    opt_Action = ui_optionmenu_create(  form_id,            @
+                                        "cb_Action",        @
+                                        AOM_MENU_X_LOC,     @
+                                        ACTION_MENU_Y_LOC,  @
+                                        AOM_MENU_LABEL_LEN, @
+                                        "ACTION",           @
+                                        FALSE )
+
+    ui_item_create(	opt_Action, "RESULT", "Result", TRUE)
+    ui_item_create(	opt_Action, "IMAGE", "Image", TRUE)
+    ui_item_create(	opt_Action, "REPORT", "Report", TRUE)
+
+    opt_Object = ui_optionmenu_create(  form_id,            @
+                                        "",        @
+                                        AOM_MENU_X_LOC,     @
+                                        OBJECT_MENU_Y_LOC,  @
+                                        AOM_MENU_LABEL_LEN, @
+                                        "OBJECT",           @
+                                        FALSE )
+
+    ui_item_create(	opt_Object, "RESULT_CHECK", "Result Check", TRUE)
+
+    y_loc += OBJECT_MENU_Y_LOC + OPT_MENU_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+    
+    ui_separator_create (   form_id, "",           @
+                            0.0,                   @
+                            y_loc,   @
+                            FORM_WID_SML,          @
+                            TRUE )
+
+      y_loc +=  LINE_THICKNESS + INTER_WIDGET_SPACE
+
+     btn_result_option = ui_button_create(                  @
+      /*   parent  */           form_id,             @
+      /*  callback */           "cb_result_option",          @
+      /*     x     */           FORM_L_MARGIN,  @
+      /*     y     */           y_loc,               @
+      /*   width   */           BUTTON_WID_FULL,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Result Option",     @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           TRUE)
+    
+      
+      y_loc += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+      
+      CLASSNAME.ui_image_capture_frame(y_loc)
+
+      y_loc += INTER_WIDGET_SPACE
+      
+      btn_Apply = ui_button_create(                  @
+      /*   parent  */           form_id,             @
+      /*  callback */           "cb_Apply",          @
+      /*     x     */           BUTTON_HALF_X_LOC1,  @
+      /*     y     */           y_loc,               @
+      /*   width   */           BUTTON_WID_HALF,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Apply",             @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           TRUE)
+
+      btn_Exit = ui_button_create(                    @
+      /*   parent  */            form_id,             @
+      /*  callback */            "cb_Exit",           @
+      /*     x     */            BUTTON_HALF_X_LOC2,  @
+      /*     y     */            y_loc,               @
+      /*   width   */            BUTTON_WID_HALF,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Exit",              @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+
+       ui_exec_function("RESULT_OPTION", "init")
+end function
+
+function ui_image_capture_frame(y_loc)
+      real y_loc
+      real yloc_frame
+
+      image_capture_frame = ui_frame_create(form_id,"", @
+								 FRAME_X_LOC_COL1, @
+								 y_loc, @
+								 FRAME_WID_SINGLE, @
+								 0, @
+								 "")
+
+      yloc_frame = FRAME_T_MARGIN
+
+      listbox_ResultCases=ui_listbox_create(                  @
+      /*     parent     */                image_capture_frame,          @
+      /*    callback    */                "cb_ResultCases",               @
+      /*        x       */                FORM_L_MARGIN,    @
+      /*        y       */                yloc_frame,        @
+      /*      width     */                LBOX_WID_SINGLE,  @
+      /*    num_rows    */                8,               @
+      /*      label     */                "Result Cases",     @
+      /* selection_type */                "EXTEND",       @
+      /*      sort      */                TRUE)
+
+      yloc_frame += LBOX_8L_HGT_LABOVE + INTER_WIDGET_SPACE
+
+      listbox_GroupName=ui_listbox_create(                  @
+      /*     parent     */                image_capture_frame,          @
+      /*    callback    */                "cb_GroupView",    @
+      /*        x       */                FORM_L_MARGIN,    @
+      /*        y       */                yloc_frame,        @
+      /*      width     */                LBOX_WID_SINGLE,  @
+      /*    num_rows    */                15,               @
+      /*      label     */                "Group View",     @
+      /* selection_type */                "EXTEND",       @
+      /*      sort      */                TRUE)
+
+      yloc_frame += LBOX_HGT_LABOVE_INCR * 15 + INTER_WIDGET_SPACE
+
+        btnAdd = ui_button_create(image_capture_frame,"cb_Add", @
+                                    BUTTON_HALF_X_LOC1, @
+                                    yloc_frame, @
+                                    BUTTON_WID_HALF, @
+                                    BUTTON_DEFAULT_HGT, @
+                                    "Add", @
+                                    TRUE,FALSE)
+
+     	btnRemove = ui_button_create(image_capture_frame,"cb_Remove", @
+                                    BUTTON_HALF_X_LOC2, @
+                                    yloc_frame, @
+                                    BUTTON_WID_HALF, @
+                                    BUTTON_DEFAULT_HGT, @
+                                    "Remove", @
+                                    TRUE,FALSE)
+
+
+
+
+        yloc_frame += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE      
+      
+      ui_wid_set(image_capture_frame, "HEIGHT", yloc_frame)
+
+      y_loc += yloc_frame + INTER_WIDGET_SPACE
+
+end function
+
+function cb_Add
+
+    integer group_id
+    db_get_current_group_id(group_id)
+    
+    string group_name[63]
+    db_get_group_name(group_id,group_name)
+    
+    real angx, angy, angz
+    ga_view_aa_get("", angx, angy, angz)
+    
+    real r_zf
+    ga_view_zoom_get("", r_zf)
+
+    real r_vcx, r_vcy
+    > ga_view_center_get("", r_vcx, r_vcy)
+    
+    string group_view_name[1023]
+    integer i_angx, i_angy, i_angz
+    i_angx = mth_round(angx,0)
+    i_angy = mth_round(angy,0)
+    i_angz = mth_round(angz,0)
+    r_zf = mth_round(r_zf, 0)
+    r_vcx = mth_round(r_vcx, 0)
+    r_vcy = mth_round(r_vcy, 0)
+    group_view_name = group_name //"," // @
+                    str_from_integer(i_angx) //","// @
+                    str_from_integer(i_angy) //","// @
+                    str_from_integer(i_angz) //","// @
+                    str_from_integer(r_zf) //","// @
+                    str_from_integer(r_vcx) //","// @
+                    str_from_integer(r_vcy)
+                     
+    ui_item_create(listbox_GroupName, group_view_name, group_view_name, FALSE)
+    
+    CLASSNAME.file_save_group_view()
+
+end function
+
+function cb_Remove
+
+ui_item_deleteselected(listbox_GroupName)
+
+CLASSNAME.file_save_group_view()
+
+end function
+
+function cb_GroupView(i_count, sa_selected)
+integer i_count
+string sa_selected[]()
+
+CLASSNAME.sel_group_view(sa_selected(1))
+
+end function
+
+function sel_group_view(selectedItem)
+
+string selectedItem[]
+string group_name[64](1)
+real angx, angy, angz
+real zf
+real r_vcx, r_vcy
+
+group_name(1) = str_token(selectedItem, ",", 1)
+angx = str_to_real(str_token(selectedItem, ",", 2))
+angy = str_to_real(str_token(selectedItem, ",", 3))
+angz = str_to_real(str_token(selectedItem, ",", 4))
+zf = str_to_real(str_token(selectedItem, ",", 5))
+r_vcx = str_to_real(str_token(selectedItem, ",", 6)) 
+r_vcy = str_to_real(str_token(selectedItem, ",", 7))
+
+uil_viewport_post_groups.posted_groups( "default_viewport", 1, group_name)
+ga_view_aa_set(angx, angy, angz)
+gu_fit_view()
+ga_view_zoom_set(zf)
+ga_view_center_set(r_vcx, r_vcy)
+
+end function
+/* ====================  ResultCases Button Callback Function ===========================
+*/
+function cb_ResultCases(i_count, sa_selected)
+integer i_count
+string sa_selected[]()
+
+CLASSNAME.sel_ResultCases(sa_selected(1))
+    
+end function
+
+function sel_ResultCases(selectedItem)
+
+string selectedItem[]
+
+string loadcase_name[128], subcase_name[128]
+
+	loadcase_name = str_token(selectedItem,",",1)
+	subcase_name = str_token(selectedItem,",",2)
+
+    CLASSNAME.Fringe_Result(selectedItem,  loadcase_name, subcase_name)
+
+end function    
+
+/* ============================================================================ 
+*/
+
+function display()
+
+    ui_form_display(CLASS_STR)
+    ui_resultcases_list(listbox_ResultCases)
+    CLASSNAME.file_read_group_view()
+    CLASSNAME.file_read_result_option()
+
+end function
+
+function cb_Apply()
+
+    string s_Action[virtual], s_Object[virtual]
+
+    ui_wid_get_vstring(opt_Action, "VALUE", s_Action)
+    ui_wid_get_vstring(opt_Object, "VALUE", s_Object)
+
+    switch(s_Action)
+        case("IMAGE"); CLASSNAME.Result_Image_capture()
+        case("REPORT");
+            switch(s_Object)
+                case("REPORT");  CLASSNAME.RESULT_REPORT()
+                case("ELEMENT"); CLASSNAME.RESULT_ELEMENT()
+            end switch
+    end switch
+
+end function
+
+function cb_Exit()
+
+    ui_form_hide(CLASS_STR)
+    ui_form_delete("RESULT_OPTION")
+    ui_form_delete(CLASS_STR)
+end function
+
+function cb_Action(s_item)
+string s_item[]
+
+    ui_item_deleteall(opt_Object)
+    
+    switch(s_item)
+        case("RESULT");
+           ui_item_create(	opt_Object, "RESULT_CHECK", "Result Check", TRUE)
+        case("IMAGE");
+           ui_item_create(	opt_Object, "CAPTURE", "Capture", TRUE)
+        case("REPORT");
+           ui_item_create(	opt_Object, "REPORT", "Report", TRUE)
+           ui_item_create(	opt_Object, "ELEMENT", "Element", TRUE)
+    end switch
+end function
+
+function cb_result_option()
+
+    RESULT_OPTION.display()
+
+end function
+
+function Result_Image_capture()
+
+	ga_viewport_location_set( "default_viewport", 0.0, 0.0, 1 )
+	ga_viewport_size_set( "default_viewport", r_viewport_size(1), r_viewport_size(2), 1 )
+
+    string result_case[255](virtual), sa_groups[128](virtual)
+    integer nRes, ngrp
+
+    uil_utils_listbox.get_selected(listbox_ResultCases, result_case, nRes)
+    uil_utils_listbox.get_selected(listbox_GroupName, sa_groups, ngrp)
+
+    integer fid
+    text_open("imagefiles.lst","now", 0,0, fid)
+
+    integer idx, i_cnt
+    string image_name[256]
+    for(idx = 1 to nRes)
+        CLASSNAME.sel_ResultCases(result_case(idx))
+        for(i_cnt = 1 to ngrp)
+            CLASSNAME.sel_group_view(sa_groups(i_cnt))
+            image_name = str_token(result_case(idx),",", 1) // "_" // str_token(sa_groups(i_cnt),",", 1) //"_"// s_result_quantity // ".png"
+            text_write_string(fid, image_name)
+            > gm_write_image( "PNG", image_name, "Increment", 0., 0., 1., 1., 0,  "Viewport" )
+        end for
+    end for
+
+    text_close(fid,"")
+
+end function
+
+function Fringe_Result(sa_result_case, loadcase_name, subcase_name)
+string sa_result_case[]
+string loadcase_name[]
+string subcase_name[]
+
+    string viewport_name[31]
+	ga_viewport_current_get(viewport_name)
+
+    loadcase_name=str_token(sa_result_case,",",1)
+	subcase_name=str_token(sa_result_case,",",2)
+
+    display_cleanup(  )
+
+    string result_layer[12]
+    string s_title[256](1)
+         
+    switch(s_result_layer)
+        case("Average");
+                result_layer = "At Z1"
+                s_title(1) = "$POFF@@@$PT: @@@$LCN, @@@$SCN, @@@$PRN, @@@$SRN, @@@$DRVL, @@@Average of Layers" 
+        case("Maximum");
+                result_layer = "At Z1"
+                s_title(1) = "$POFF@@@$PT: @@@$LCN, @@@$SCN, @@@$PRN, @@@$SRN, @@@$DRVL, @@@Maximum of Layers"
+        default;
+                result_layer = s_result_layer
+                s_title(1) = "$POFF@@@$PT: @@@$LCN, @@@$SCN, @@@$PRN, @@@$SRN, @@@$DRVL, @@@$LN"
+    end switch
+
+    > res_data_load_dbresult( 0, "ENodal", "Scalar", loadcase_name, subcase_name, "Stress Tensor", "", result_layer, @
+                            s_result_quantity, s_COORDTF, s_ResultOption(2), s_ResultOption(1), s_ResultOption(3), "", 0. )
+    > res_data_title( 0, "ENodal", "Scalar", 1, s_title )
+
+    string lc[64](1), sc[64](1)
+
+    lc(1) = loadcase_name
+    sc(1) = subcase_name
+
+    switch(s_result_layer)
+        case("Average");
+               > res_data_dbres_list( 0, "ENodal", "Scalar", 1, lc, sc, ["Stress Tensor"], [""], ["At Z2"] )
+               > res_data_list_average( 0, "ENodal", "Scalar" )
+
+        case("Maximum");
+               > res_data_dbres_list( 0, "ENodal", "Scalar", 1, lc, sc, ["Stress Tensor"], [""], ["At Z2"] )
+               > res_data_list_max( 0, "ENodal", "Scalar", "Algebraic", s_result_quantity )
+    end switch
+
+    > res_display_fringe_create( "", "FreeFaces", 0, [""], 12, s_FringeOption, TRUE )
+    > res_display_fringe_post( "", 0, "ENodal", TRUE, TRUE )
+
+end function
+
+/* ====================================================================== */
+
+function file_read_group_view()
+
+string fname[256]
+
+db_name_get(fname)
+file_get_bfname(fname, fname)
+
+fname = fname // ".gvw"
+
+	if(file_exists(fname, "") == FALSE) then
+		dump fname // " is not exist."
+		return
+	end if
+    
+integer f_id
+text_open( fname , "or", 0,0, f_id)
+
+integer i_count
+real r_temp
+text_read(f_id,"%I%", i_count, r_temp, "" )
+
+string sa_items[256](virtual)
+sys_allocate_array(sa_items, 1, i_count)
+
+integer idx, length
+for(idx = 1 to i_count)
+    text_read_string(f_id, sa_items(idx), length)
+end for
+text_close(f_id,"")
+
+ui_listbox_items_delete(listbox_GroupName)
+ui_listbox_items_create(listbox_GroupName, sa_items, sa_items, i_count, "")
+    
+end function
+/* ====================================================================== */
+function file_save_group_view()
+
+    string fname[256]
+    integer f_id
+    
+    db_name_get(fname)
+    
+    file_get_bfname(fname, fname)
+
+    fname = fname // ".gvw"
+
+    text_open( fname ,"now", 0,0, f_id)
+
+    integer n_items
+    ui_wid_get(listbox_GroupName, "NITEMS", n_items)
+    
+    string sa_items[256](virtual)
+    real r_temp
+    sys_allocate_array(sa_items, 1, n_items)
+    text_write(f_id,"%I%", n_items, r_temp, "")
+
+    ui_wid_get(listbox_GroupName, "ITEMS", sa_items)
+    
+    integer idx
+    for(idx=1 to n_items)
+    text_write_string(f_id, sa_items(idx))
+    end for
+    
+    text_close(f_id, "")
+
+end function
+
+function file_read_result_option()
+global string XFEM2D_HOME[64]
+     
+integer idx
+
+    string fname[64]
+    fname = XFEM2D_HOME // "ResultOption.INI"
+
+    integer f_id
+	text_open( fname,"or", 0,0, f_id)
+
+    integer string_length
+    string viewport_size_label[17]    
+    text_read_string(f_id, viewport_size_label, string_length)
+
+    integer i_temp
+    string s_temp[1]
+
+    text_read(f_id, "%2F%", i_temp, r_viewport_size, s_temp )
+
+    string COORDTF_Label[30]    
+    text_read_string(f_id, COORDTF_Label, string_length)
+    text_read_string(f_id, s_COORDTF, string_length)    
+        
+    string quantity_label[19]
+    text_read_string(f_id, quantity_label, string_length)
+    text_read_string(f_id, s_result_quantity, string_length)
+    
+    string s_layer_label[20]
+	text_read_string(f_id, s_layer_label, string_length)
+
+    text_read_string(f_id, s_result_layer, string_length)
+    
+    string result_option_label[30]
+    text_read_string(f_id, result_option_label, string_length)
+   
+    for(idx = 1 to 3)
+		text_read_string(f_id, s_ResultOption(idx), string_length)
+	end for
+
+    string fringe_option_label[30]
+        text_read_string(f_id, fringe_option_label, string_length)
+        
+    for(idx = 1 to 12)
+		text_read_string(f_id, s_FringeOption(idx), string_length)
+	end for
+    
+    text_close(f_id, "")
+
+end function
+
+FUNCTION RESULT_REPORT()
+integer nNodes
+integer nElems
+
+db_count_nodes(nNodes)
+db_count_elems(nElems)
+
+integer e_id(virtual)
+sys_allocate_array(e_id, 1, nElems)
+db_get_elem_ids(nElems, e_id)
+
+integer s_id(virtual)
+sys_allocate_array(s_id, 1, nElems)
+db_get_elem_shape_for_id(nElems, e_id, s_id)
+
+integer etop_code(virtual)
+sys_allocate_array(etop_code, 1, nElems)
+db_get_elem_etop(nElems, e_id, etop_code)
+
+
+
+integer MaxID
+db_get_max_elem_id(MaxID)
+
+integer ivElemID(virtual), ivShapeID(virtual), ivEtopCode(virtual), ivCheck(virtual)
+sys_allocate_array(ivElemID, 1, MaxID)
+sys_allocate_array(ivShapeID, 1, MaxID)
+sys_allocate_array(ivEtopCode, 1, MaxID)
+sys_allocate_array(ivCheck, 1, MaxID)
+
+integer idx
+for(idx=1 to nElems)
+
+    ivElemID(e_id(idx)) = e_id(idx)
+    ivShapeID(e_id(idx)) = s_id(idx)
+    ivEtopCode(e_id(idx)) = etop_code(idx)
+    ivCheck(e_id(idx)) =  1   
+    
+end for
+
+integer nShape(8), ivEtop(8)
+string ShapeLabel[12](8) = ["POINT", "BAR", "TRI", "QUAD", "TETRA", "", "WEDGE", "HEXA" ]
+
+
+
+for(idx=1 to nElems)
+    switch(ivShapeID(e_id(idx)))
+        case(1); nShape(1) += 1
+        case(2); nShape(2) += 1
+        case(3); nShape(3) += 1
+        case(4); nShape(4) += 1
+        case(5); nShape(5) += 1
+        case(7); nShape(7) += 1
+        case(8); nShape(8) += 1                                                                                                        
+    end switch
+end for
+
+integer f_id
+string f_name[125]
+
+    db_name_get(f_name)
+    file_get_bfname(f_name, f_name)
+    f_name = f_name // ".REPORT"
+text_open(f_name, "now", 0, 0, f_id)
+text_write_string(f_id, "****** Finite Element Model Information : ")
+text_write(f_id, "%A20% : %I%", nNodes, 0., "Number of Nodes" )
+text_write(f_id, "%A20% : %I%", nElems, 0., "Number of Elements")
+
+for(idx=1 to 8)
+    if(nShape(idx) != 0)then
+        text_write(f_id, "%A20% : %I%", nShape(idx), 0., ShapeLabel(idx))
+    end if
+end for
+
+/* ============================================================================= */
+text_write_string(f_id,"")
+text_write_string(f_id, "******  Maximum Stress of Load Cases : ")
+    string result_case[255](virtual), sa_groups[128](virtual)
+    integer nRes, ngrp
+
+    uil_utils_listbox.get_selected(listbox_ResultCases, result_case, nRes)
+
+    if(nRes == 0) then return -1
+    
+    integer dtype, nresults, count, resloc
+    real result(virtual)
+    string svElemList[virtual]
+    string lc_title[125],sc_title[125]    
+    integer result_id(5), ErrCode, elem_id(virtual)
+    real max_stress(virtual)
+    integer max_idx(virtual)
+    integer shell_id(virtual)
+    integer nShell = 0
+
+    sys_allocate_array(max_stress, 1, nRes)
+    sys_allocate_array(max_idx, 1, nRes)
+    sys_allocate_array(shell_id, 1, 1)
+    
+    for(idx=1 to nElems)
+        if(ivShapeID(e_id(idx)) == 3 || ivShapeID(e_id(idx)) == 4)then
+            nShell += 1
+            sys_reallocate_array(shell_id, 1, nShell)
+            shell_id(nShell) = e_id(idx)
+        end if
+    end for
+        
+    string svShellElemList[virtual]
+    
+    app_int_array_to_vstring("Element", nShell, shell_id, svShellElemList)
+ 
+    for(idx=1 to nRes)
+    
+        ErrCode = CLASSNAME.get_elem2d_stress(result_case(idx), svShellElemList, count, elem_id, result)
+       
+        max_idx(idx) = xmth_max_array(result, max_stress(idx))        
+        
+        text_write(f_id, "%A30% : %I% - %F%", elem_id(max_idx(idx)), max_stress(idx), result_case(idx))
+    end for
+    
+    integer max_case
+    real max_case_stress
+        
+        max_case = xmth_max_array(max_stress, max_case_stress)
+        text_write_string(f_id, "*** Maximum Stress ****")    
+        text_write(f_id, "%A30% : %I% - %F%", elem_id(max_idx(max_case)), max_case_stress, result_case(max_case))
+        text_write_string(f_id, "")
+    
+    sys_free_array(shell_id)
+/* ========================================================================================================================== */
+    uil_utils_listbox.get_selected(listbox_GroupName, sa_groups, ngrp)
+    
+    integer gelem_id(virtual), i_group_id, i
+    
+    for(idx = 1 to ngrp)
+        sa_groups(idx) = str_token(sa_groups(idx),",", 1)
+        db_get_group_id(sa_groups(idx), i_group_id)
+		db_count_elems_in_group(i_group_id, count)
+		sys_allocate_array(gelem_id, 1, count)
+		db_get_elem_ids_in_group(count, i_group_id, gelem_id)
+                
+        text_write_string(f_id, "***" // sa_groups(idx) // "***")
+        nShell = 0
+        sys_allocate_array(shell_id, 1, 1)
+        for(i=1 to count)
+          if(ivShapeID(gelem_id(i)) == 3 || ivShapeID(gelem_id(i)) == 4 )then
+              nShell += 1
+              sys_reallocate_array(shell_id, 1, nShell)
+              shell_id(nShell) = gelem_id(i)
+          end if
+        end for
+        
+        app_int_array_to_vstring("Element", nShell, shell_id, svShellElemList)
+        
+        for(i= 1 to nRes)
+            ErrCode = CLASSNAME.get_elem2d_stress(result_case(i), svShellElemList, count, elem_id, result)
+
+            max_idx(i) = xmth_max_array(result, max_stress(i))
+            text_write(f_id, "%A30% : %I% - %F%", elem_id(max_idx(i)), max_stress(i), result_case(i))
+        end for
+        
+        max_case = xmth_max_array(max_stress, max_case_stress)
+        text_write_string(f_id, "** Maximum Stress *")    
+        text_write(f_id, "%A30% : %I% - %F%", elem_id(max_idx(max_case)), max_case_stress, result_case(max_case))
+        text_write_string(f_id,"")
+    end for                    
+       
+
+
+text_close(f_id, "")
+
+END FUNCTION
+
+FUNCTION RESULT_ELEMENT()
+integer nElems
+
+db_count_elems(nElems)
+
+integer e_id(virtual)
+sys_allocate_array(e_id, 1, nElems)
+db_get_elem_ids(nElems, e_id)
+
+integer s_id(virtual)
+sys_allocate_array(s_id, 1, nElems)
+db_get_elem_shape_for_id(nElems, e_id, s_id)
+
+integer etop_code(virtual)
+sys_allocate_array(etop_code, 1, nElems)
+db_get_elem_etop(nElems, e_id, etop_code)
+
+
+
+integer MaxID
+db_get_max_elem_id(MaxID)
+
+integer ivElemID(virtual), ivShapeID(virtual), ivEtopCode(virtual), ivCheck(virtual)
+sys_allocate_array(ivElemID, 1, MaxID)
+sys_allocate_array(ivShapeID, 1, MaxID)
+sys_allocate_array(ivEtopCode, 1, MaxID)
+sys_allocate_array(ivCheck, 1, MaxID)
+
+integer idx
+for(idx=1 to nElems)
+
+    ivElemID(e_id(idx)) = e_id(idx)
+    ivShapeID(e_id(idx)) = s_id(idx)
+    ivEtopCode(e_id(idx)) = etop_code(idx)
+    ivCheck(e_id(idx)) =  1   
+    
+end for
+
+integer nShape(4), nShell
+integer shell_id(virtual)
+
+sys_allocate_array(shell_id, 1, 1)
+
+nShell = 0
+for(idx=1 to nElems)
+    if(ivShapeID(e_id(idx)) == 3 || ivShapeID(e_id(idx)) == 4)then
+        nShell += 1
+        sys_reallocate_array(shell_id,1 , nShell)
+        shell_id(nShell) = e_id(idx)
+    end if 
+end for
+
+string svElemList[virtual]
+
+app_int_array_to_vstring("Element", nShell, shell_id, svElemList)
+
+string result_case[255](virtual)
+integer nRes, ErrCode, elem_id(virtual)
+real result(virtual) 
+
+uil_utils_listbox.get_selected(listbox_ResultCases, result_case, nRes)
+
+real result_elem(virtual)
+sys_allocate_array(result_elem, 1, nRes, 1, nShell)
+
+for(idx = 1 to nRes)
+    ErrCode = CLASSNAME.get_elem2d_stress(result_case(idx), svElemList, nShell, elem_id, result)
+    result_elem(idx, 1:nShell) = result
+end for
+
+integer f_id
+string f_name[125]
+
+    db_name_get(f_name)
+    file_get_bfname(f_name, f_name)
+    f_name = f_name // ".ELEMENT"
+text_open(f_name, "now", 0, 0, f_id)
+
+real result_dummy(virtual)
+sys_allocate_array(result_dummy, 1, nRes)
+
+real max_stress(virtual)
+integer max_idx(virtual)
+sys_allocate_array(max_stress, 1, nShell)
+sys_allocate_array(max_idx, 1, nShell)
+
+integer i
+for(idx=1 to nShell)
+    for(i=1 to nRes)
+        result_dummy(i) = result_elem(i, idx)
+    end for
+    max_idx(idx) = xmth_max_array(result_dummy(1:nRes), max_stress(idx))
+    text_write(f_id, "%I8%-%F10.3% : %A%", shell_id(idx),result_elem(max_idx(idx), idx),result_case(max_idx(idx)))
+end for
+
+dump "************* complete *********************"
+text_close(f_id, "")
+
+END FUNCTION
+
+function get_elem2d_stress(result_case, svElemList, nElem, ia_ElemId, result)
+string result_case[], svElemList[]
+integer nElem, ia_ElemId()
+real result()
+string s_layer[12]
+
+    string lc_title[64], sc_title[64]
+    
+    lc_title = str_token(result_case,",", 1)
+    sc_title = str_token(result_case,",", 2)
+
+    
+    integer  result1_id(5), result2_id(5)
+ 
+    get_result_id(lc_title, sc_title, "Stress Tensor", "", "At Z1", result1_id)
+    get_result_id(lc_title, sc_title, "Stress Tensor", "", "At Z2", result2_id)
+
+    integer ErrCode, dtype, resloc, minloc(2,6), maxloc(2,6), nresults(virtual)
+    real ResultAtZ1(virtual), ResultAtZ2(virtual)
+    
+            ErrCode=res_utl_extract_elem_results(result1_id,svElemList, @
+                                                        s_result_quantity,@
+                                                        "C", @
+                                                        s_COORDTF, @ 
+                                      /* 1=scalar 2=vector 3=tensor */       dtype, @
+                                      /* 1=centroid 2=nodal 3=multiple */    resloc, @
+                                      /* The number of elements selected */  nElem, @
+                                      /* The list of element ids */          ia_ElemId, @
+                                      /* The number of results per elm */    nresults, @
+                                      /* result value */ ResultAtZ1, @
+                                                         minloc, @
+                                                         maxloc)
+
+            sys_free_array(ia_ElemId)
+        
+            ErrCode=res_utl_extract_elem_results(result2_id,svElemList, @
+                                                        s_result_quantity,@
+                                                        "C", @
+                                                        s_COORDTF, @ 
+                                                        dtype, @
+                                                        resloc, @
+                                                        nElem, @
+                                                        ia_ElemId, @
+                                                        nresults, @
+                                                        ResultAtZ2, @
+                                                        minloc, @
+                                                        maxloc)
+                                                                                                                
+            
+    sys_allocate_array(result, 1, nElem)
+
+    integer idx
+    switch(s_result_layer)
+        case("Average");
+            for(idx =1 to nElem)
+                result(idx) = (ResultAtZ1(idx) + ResultAtZ2(idx))/2
+            end for
+        case("Maximum");
+            for(idx =1 to nElem)
+                result(idx) = mth_max(ResultAtZ1(idx),ResultAtZ2(idx))
+            end for
+        case("Minimum");
+            for(idx =1 to nElem)
+                result(idx) = mth_min(ResultAtZ1(idx),ResultAtZ2(idx))
+            end for
+        case("At Z1");
+                result = ResultAtZ1
+        case("At Z2");
+                result = ResultAtZ2                
+    end switch
+
+    return ErrCode
+end function
+
+end class
+
+
+function get_result_id(loadcase_title, subcase_title, pri_label, sec_label, result_layer, result_id)
+string loadcase_title[], subcase_title[], pri_label[], sec_label[], result_layer[]
+integer loadcase_id, subcase_id, pri_id, sec_id, result_id()
+     
+    db_get_load_case_id (loadcase_title, loadcase_id)
+	db_get_sub_case_id (loadcase_id, subcase_title, subcase_id)
+	db_get_primary_res_id(pri_label, pri_id) 
+	db_get_secondary_res_id(pri_id, sec_label, sec_id)
+	$ res_data_get_layerpos_id(layer_label, layer_id)
+	
+	result_id(1)=loadcase_id
+   	result_id(2)=subcase_id
+	result_id(3)=pri_id
+	result_id(4)=sec_id
+
+    integer nlayer, layer_id(virtual)
+    string layer_label[16](VIRTUAL)
+    res_utl_get_result_layers(result_id(1:4),nlayer,layer_id, layer_label)
+	
+    integer idx
+    integer result_layer_id
+    
+    for(idx=1 to nlayer)
+        if(layer_label(idx) == result_layer)then
+            result_layer_id = layer_id(idx)
+            break
+        end if
+    end for    
+
+    result_id(5) = result_layer_id
+    
+end function
+
+
+function xmth_max_array(array_value, max_value)
+
+real array_value()
+real max_value
+integer max_array_id
+
+integer nArray
+nArray =  SYS_ARRAY_HBOUND(array_value, 1)
+
+integer idx
+
+max_value = array_value(1)
+max_array_id = 1
+for(idx = 1 to nArray)
+    if(array_value(idx) > max_value)then
+        max_value = array_value(idx)
+        max_array_id = idx
+    end if
+end for
+
+return max_array_id
+end function
+
+function xmth_min_array(array_value, min_value)
+
+real array_value()
+real min_value
+integer min_array_id
+
+integer nArray
+nArray =  SYS_ARRAY_HBOUND(array_value, 1)
+
+integer idx
+
+min_value = array_value(1)
+min_array_id = 1
+for(idx = 1 to nArray)
+    if(array_value(idx) < min_value)then
+        min_value = array_value(idx)
+        min_array_id = idx
+    end if
+end for
+
+return min_array_id
+end function

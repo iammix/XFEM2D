@@ -1,0 +1,12 @@
+pref_env_set_integer( "graphics_colors", 120 )
+pref_env_set_logical( "show_cycle_picking_form", TRUE )
+pref_env_set_logical( "patran_metadata_tools", FALSE )
+pref_env_set_string( "ABAQUS_VERSION", "V6.X" )
+$ Uncomment to use dat instead of bdf for Nastran input
+$ suffix.
+$ pref_env_set_string( "NASTRAN_MODFIL_SUFFIX", ".dat" )
+$
+$ Settings for controlling the results range spectrum number format
+pref_env_set_integer( "RANGE_NUMBER_SIG_DIGITS", 0 )
+pref_env_set_logical( "RANGE_NUMBER_LEADING_ZERO", TRUE )
+pref_env_set_logical( "RANGE_NUMBER_USE_EXP_ON_SMALL", TRUE )

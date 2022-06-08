@@ -1,0 +1,195 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME FRAME_CREATE_ELEM_BEAMTOSHL
+#define CLASS_STR "FRAME_CREATE_ELEM_BEAMTOSHL"
+
+class CLASSNAME
+
+classwide widget frame_03, sframe_03, wa_sdbox_03(1), dbox_Elem_Num
+
+/*******************************************************************************
+ 	Action-Delete, Object-Element 
+ *******************************************************************************/
+ function UI_FRAME_CREATE_ELEM_BEAMTOSHL(form_id, Y_LOC)
+ widget form_id
+ real Y_LOC
+   
+      widget frame_wid
+      
+      frame_wid=ui_frame_create(                   @
+      /* parent */             form_id,           @
+      /*  name  */             "",                @
+      /*    x   */             FRAME_X_LOC_COL1,  @
+      /*    y   */             Y_LOC,         @
+      /*  width */             FRAME_L_MARGIN + FRAME_WID_SINGLE + FRAME_R_MARGIN,  @
+      /* height */             0.0,               @
+      /*  label */             "Beam To Shell")
+
+      REAL Y_LOCF = 0
+ 	
+		 Y_LOCF = FRAME_T_MARGIN
+
+		sframe_03 = ui_select_frame_set(				@
+		/* parent widget id(input) 	*/	frame_wid,		@
+		/*	select frame callback	*/	CLASS_STR // ".Apply_Click",	@	
+		/* 	select frame label		*/	"Autoexec",	@
+		/*		x				*/	FORM_L_MARGIN,	@	
+		/*		y				*/	Y_LOCF, 		@
+		/*	select databax array	*/	wa_sdbox_03,	@
+		/* 	data type	array		*/	["BEAMELEM"],		@
+		/* 	select databox label array	*/ 	["Select Beam Elements"],	@
+		/*	select databox collback array	*/ 	[""], @
+		/*	label avove logical	*/			TRUE)	             
+		  
+      
+            Y_LOCF += INTER_WIDGET_SPACE
+
+            dbox_Elem_Num = ui_databox_create(                   @
+            /*    parent    */          frame_wid,          @
+            /*   callback   */          "",                @
+            /*       x      */          FORM_L_MARGIN,     @
+            /*       y      */          Y_LOCF,     @
+            /* label_length */          DBOX_WID_SINGLE*2/3, @
+            /*  box_length  */          DBOX_WID_SINGLE/3,   @
+            /*     label    */          "Number of Element",  @
+            /*     value    */          1,                @
+            /*  label_above */          FALSE,              @
+            /*   datatype   */          "INTEGER",         @
+            /*   num_vals   */          1)
+        
+            Y_LOCF += DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+           
+            ui_wid_set(frame_wid, "HEIGHT", Y_LOCF)
+        
+            Y_LOC += Y_LOCF + INTER_WIDGET_SPACE
+      
+   return frame_wid                
+end function
+ 
+function Apply_Click()
+    uil_primary_file.db_save()
+    string selected_element[virtual]
+    ui_wid_get_vstring(wa_sdbox_03(1), "value", selected_element)
+
+    integer numElemDiv
+    ui_wid_get(dbox_Elem_Num, "VALUE", numElemDiv)
+
+    integer nElem, i_status
+	nElem = fem_u_count_id_list(LP_SUBLIST_ELEMENT, selected_element, TRUE, i_status)
+	if(nElem == 0) then return -1
+	
+     integer ia_ElemId(virtual)
+	sys_allocate_array(ia_ElemId, 1, nElem)
+	fem_u_get_id_list(LP_SUBLIST_ELEMENT, selected_element, nElem, TRUE, ia_ElemId)
+     
+$	db_get_region_for_elements( nElem, ia_ElemId, reg_id)
+
+     integer mat_id(virtual), reg_id(virtual), sec_id(virtual), opt_id(virtual)
+	real orv(virtual), ofv1(virtual), ofv2(virtual)
+     PropFx.elem_bar_beam_prop(nElem, ia_ElemId, reg_id, opt_id, mat_id, sec_id, orv, ofv1, ofv2)
+
+     INTEGER  idx
+
+     REAL dim(virtual)
+     INTEGER ndim, entyp
+     INTEGER nprop
+     REAL r_prop(30)
+     INTEGER i_data_types(virtual), i_field_ids(virtual)
+
+FOR ( idx = 1 TO nElem )
+
+    	integer nrec, bytes_per_rec
+     string sec_shape[5], sec_name[32]
+     db_get_beam_section(sec_id(idx), sec_shape, sec_name, nrec, bytes_per_rec)
+
+	ndim = blgetnumdimension(sec_shape)
+	IF(ndim !=0) THEN	sys_allocate_array(i_data_types, 1, ndim)
+	IF(ndim !=0) THEN	sys_allocate_array(i_field_ids, 1 , ndim)
+	IF(ndim !=0) THEN	sys_allocate_array(dim, 1, ndim)
+	bl_get_std_beam_section_data (sec_id(idx), ndim, i_data_types, dim, i_field_ids)
+	blgetprop(entyp, sec_shape, dim, ndim, r_prop , nprop)
+
+	dump orv(idx, 1:3)
+
+     if(sec_shape == "L") then
+		orv(idx,1) = -1*orv(idx,1)*dim(2)
+          orv(idx,2) = -1*orv(idx,2)*dim(2)
+          orv(idx,3) = -1*orv(idx,3)*dim(2)
+     else
+          orv(idx,1) = orv(idx,1)*dim(2)
+          orv(idx,2) = orv(idx,2)*dim(2)
+          orv(idx,3) = orv(idx,3)*dim(2)
+     end if
+
+            string s_orv[128]
+            s_orv = "< " // str_from_real(orv(idx,1)) // "," @
+            			// str_from_real(orv(idx,2)) // "," @
+            			// str_from_real(orv(idx,3)) // " >"
+            
+            INTEGER nNode
+            INTEGER fem_sweep_elems_n_elems_created
+            STRING fem_sweep_elems_ex_created_nids[VIRTUAL]
+            STRING fem_sweep_elems_ex_created_eids[VIRTUAL]
+            integer eid(1)
+
+            string s_ElemList[32]
+
+            s_ElemList = "Element " // str_from_integer(ia_ElemId(idx))
+
+            string mesh_control[10](6)
+            mesh_control(1) = "3"
+            mesh_control(2) = "1.5"
+            mesh_control(3) = "0.1"
+            mesh_control(4) = "0.2"
+            mesh_control(5) = "0.5"
+            mesh_control(6) = str_from_integer(numElemDiv)
+
+            fem_sweep_extrude_1( "#", "#", "Coord 0", s_orv, str_from_real(dim(2)), "0.0 ", 3, s_ElemList, 10, @
+            ["Bar2", "Quad4", "Quad8", "Quad12", "Wedge6", "Wedge15", "Wedge24", "Hex8", "Hex20", "Hex32"], @
+            "Coord 0", "Coord 0", "Uniform: Number of Elements", mesh_control, @
+            nNode, fem_sweep_elems_n_elems_created, fem_sweep_elems_ex_created_nids, fem_sweep_elems_ex_created_eids )
+
+		  integer iv_NodeID(virtual)
+		  sys_allocate_array(iv_NodeID, 1, nNode)
+		
+		  fem_u_get_id_list(LP_SUBLIST_NODE, "Node " // fem_sweep_elems_ex_created_nids, nNode, TRUE, iv_NodeID)
+		
+		  string s_NodeID[126]
+		  s_NodeID = "Node " // str_from_integer(iv_NodeID(nNode-1)) // " " @
+		  				 // str_from_integer(iv_NodeID(nNode))
+
+            real thk, secArea
+		  string reg_name[64], s_eid[16], mat_name[32]
+		  db_get_material_name_from_id(mat_id(idx), mat_name)
+            switch(sec_shape)
+                case("Bar");
+                      	thk = dim(1)
+                    	reg_name = str_from_real(thk)//mat_name
+                    	PropFx.create_shell_property(reg_name, mat_name, thk, "Elem " // fem_sweep_elems_ex_created_eids)
+                case("L");
+          	          thk = dim(4)
+                    	reg_name = str_from_real(thk)//mat_name
+                    	PropFx.create_shell_property(reg_name, mat_name, thk, "Elem " // fem_sweep_elems_ex_created_eids)
+
+	                    SecArea = dim(1)*dim(3)
+               		
+					s_eid = FemFx.nodes_BAR2(s_NodeID)
+                      	reg_name = "ROD"//str_from_real(SecArea)//"_"//mat_name	  
+					PropFx.create_rod_property(reg_name, mat_name, SecArea, "Elem" // s_eid)
+                case("T");
+          	          thk = dim(4)
+                    	reg_name = str_from_real(thk)//mat_name
+                    	PropFx.create_shell_property(reg_name, mat_name, thk, "Elem " // fem_sweep_elems_ex_created_eids)
+
+                      	SecArea = dim(1)*dim(3)
+                    	
+					s_eid = FemFx.nodes_BAR2(s_NodeID)
+                      	reg_name = "ROD"//str_from_real(SecArea)//"_"//mat_name	  
+					PropFx.create_rod_property(reg_name, mat_name, SecArea, "Elem" // s_eid)
+                default;
+                        dump sec_shape
+                        return -1
+            end switch
+     END FOR
+end function
+END CLASS

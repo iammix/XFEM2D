@@ -1,0 +1,145 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME Information
+#define CLASS_STR "Information"
+#define MY_APP "Information"
+
+class CLASSNAME
+
+classwide widget form_id, opt_Action, sframe_01, wa_sdbox_point(2), btn_Apply, btn_Exit
+
+function init()
+    real yloc = 0
+
+	form_id = ui_form_create(CLASS_STR,      @
+          /* x location */  FORM_X_LOC ,     @
+          /* y location */  FORM_Y_LOC,"ul", @
+          /* width      */  FORM_WID_SML,    @
+          /* height     */  FORM_HGT_TALL,   @
+          /* label      */  MY_APP,          @
+                            "")
+
+	yloc += ACTION_MENU_Y_LOC
+	opt_Action = ui_optionmenu_create(  form_id,            @
+                                        "cb_Action",        @
+                                        AOM_MENU_X_LOC,     @
+                                        ACTION_MENU_Y_LOC,  @
+                                        AOM_MENU_LABEL_LEN, @
+                                        "ACTION",           @
+                                        FALSE )
+
+	ui_item_create(opt_Action, "POINTLOC", "Location", TRUE)
+	ui_item_create(opt_Action, "POINTDIST", "Distance", TRUE)
+
+	yloc += OPT_MENU_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+	
+    ui_separator_create (  form_id, "",           @
+                            0.0,                   @
+                            yloc,   @
+                            FORM_WID_SML,          @
+                            TRUE )
+
+    yloc += INTER_WIDGET_SPACE
+
+        string sa_data_type[16](2) = ["POINT", "POINT"]
+        string sa_label[16](2) = ["Point-1", "Point-2"]
+        string sa_call_back[32](2) = ["", ""]
+
+    sframe_01 = ui_select_frame_set(				@
+		/* parent widget id(input) 	*/	form_id,		@
+		/*	select frame callback	*/	CLASS_STR // ".cb_Apply",	@	
+		/* 	select frame label		*/	"Autoexec",	@
+		/*		x				*/	FORM_L_MARGIN,	@	
+		/*		y				*/	yloc, 		@
+		/*	select databax array	*/	wa_sdbox_point,	@
+		/* 	data type	array		*/	sa_data_type,		@
+		/* 	select databox label array	*/ 	sa_label,	@
+		/*	select databox collback array	*/ 	sa_call_back, @
+		/*	label avove logical	*/	TRUE)	             
+		  
+    yloc += INTER_WIDGET_SPACE * 2
+   
+	btn_Apply = ui_button_create(                  		@
+      /*   parent  */           form_id,             	@
+      /*  callback */           "cb_Apply",          	@
+      /*     x     */           BUTTON_HALF_X_LOC1,  	@
+      /*     y     */           yloc,               	@
+      /*   width   */           BUTTON_WID_HALF,     	@
+      /*   height  */           BUTTON_DEFAULT_HGT,  	@
+      /*   label   */           "Apply",             	@
+      /*    TRUE   */           TRUE,                	@
+      /* highlight */           TRUE)
+
+      btn_Exit = ui_button_create(                    	@
+      /*   parent  */            form_id,             	@
+      /*  callback */            "cb_Exit",           	@
+      /*     x     */            BUTTON_HALF_X_LOC2,  	@
+      /*     y     */            yloc,               	@
+      /*   width   */            BUTTON_WID_HALF,     	@
+      /*   height  */            BUTTON_DEFAULT_HGT,  	@
+      /*   label   */            "Exit",              	@
+      /*    TRUE   */            TRUE,                	@
+      /* highlight */            FALSE)
+
+end function
+
+function display()
+
+    ui_exec_function(CLASS_STR, "init")
+    ui_form_display(CLASS_STR)
+
+end function
+
+function cb_Action(s_item)
+	string s_item[]
+	
+
+end function
+
+function cb_Apply()
+
+    string act_item[virtual]
+    ui_wid_get_vstring(opt_Action, "VALUE", act_item)
+
+    string s_pnt_1[virtual]
+    ui_wid_get_vstring(wa_sdbox_point(1), "VALUE", s_pnt_1)
+    
+    integer i_node_1(1)
+    fem_u_get_id_list(LP_SUBLIST_NODE, s_pnt_1, 1, TRUE, i_node_1)
+
+    real r_xyz_1(3)
+    db_get_node(i_node_1(1), r_xyz_1)
+
+    if(act_item == "POINTLOC")then
+        dump r_xyz_1    
+    else if(act_item == "POINTDIST")then
+        string s_pnt_2[virtual]
+        ui_wid_get_vstring(wa_sdbox_point(2), "VALUE", s_pnt_2)
+    
+        integer i_node_2(1)
+        fem_u_get_id_list(LP_SUBLIST_NODE, s_pnt_2, 1, TRUE, i_node_2)
+
+        real r_xyz_2(3)
+        db_get_node(i_node_2(1), r_xyz_2)
+    
+        real vct(3)
+
+        vct(1) = r_xyz_1(1)-r_xyz_2(1)
+        vct(2) = r_xyz_1(2)-r_xyz_2(2)
+        vct(3) = r_xyz_1(3)-r_xyz_2(3)
+
+        real mag
+        mag =mth_sqrt( vct(1)*vct(1) + vct(2)*vct(2) + vct(3)*vct(3) )
+        dump mag
+    end if
+
+end function
+
+function cb_Exit()
+
+    ui_form_hide(CLASS_STR)
+    ui_form_delete(CLASS_STR)
+
+end function
+
+end class

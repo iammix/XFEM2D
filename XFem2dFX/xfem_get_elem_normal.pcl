@@ -1,0 +1,37 @@
+FUNCTION xfem_get_elem_normal(i_ElemID, nvct)
+INTEGER i_ElemID
+REAL	xyzs(4,3), mag, nvct()
+REAL	vct1(3), vct2(3), vct(3)
+INTEGER nNode, NodeID(4)
+INTEGER i
+
+db_get_elem_nodes(i_ElemID, nNode, NodeID)
+
+FOR(i=1 TO nnode)
+	db_get_node(NodeID(i), xyzs(i,1:3))
+END FOR
+
+  vct1(1) = xyzs(2, 1) - xyzs(1, 1)
+  vct1(2) = xyzs(2, 2) - xyzs(1, 2)
+  vct1(3) = xyzs(2, 3) - xyzs(1, 3)
+      
+  vct2(1) = xyzs(3, 1) - xyzs(2, 1)
+  vct2(2) = xyzs(3, 2) - xyzs(2, 2)
+  vct2(3) = xyzs(3, 3) - xyzs(2, 3)
+ 
+  xfem_vector.cross_product( vct1, vct2, vct )
+      
+  mag = mth_sqrt(vct(1)*vct(1) + vct(2)*vct(2) + vct(3)*vct(3) )
+  
+  if(mag == 0) then 
+     dump i_ElemID
+     return i_ElemID
+  end if
+                
+  nvct(1) = vct(1)/mag
+  nvct(2) = vct(2)/mag
+  nvct(3) = vct(3)/mag
+  
+  return 0
+                                 
+END FUNCTION

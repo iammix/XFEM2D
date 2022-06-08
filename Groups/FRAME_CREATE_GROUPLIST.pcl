@@ -1,0 +1,152 @@
+#include "appforms.p"
+#include "lpenums.i"
+#include "widget_space.p"
+#define CLASSNAME FRAME_CREATE_GROUPLIST
+#define CLASS_STR "FRAME_CREATE_GROUPLIST"
+
+class CLASSNAME
+
+CLASSWIDE WIDGET form_id, opt_Action, opt_Object, sframe_position, sdbox_position, sframe_XYZ, sframe_BOX
+CLASSWIDE WIDGET sdbox_start, dbox_start, dbox_rstep, dbox_count, dbox_step, dbox_space, label_XYZ, label_C1BOX, label_C2BOX
+CLASSWIDE WIDGET btn_Add, btn_Modify, btn_Remove, btn_Apply, btn_Exit, listbox_group_list, dbox_group_name
+CLASSWIDE WIDGET listbox_frame, btn_ProfileList, sdbox_corner1_box(3), sdbox_corner2_box(3)
+CLASSWIDE WIDGET wa_sdbox_point1(5), wa_sdbox_point2(2)
+
+function UI_FRAME_CREATE_GROUPLIST(parent_wid, Y_LOC)
+    widget parent_wid
+    real Y_LOC
+    
+    Y_LOC += INTER_WIDGET_SPACE
+
+    widget frame_wid
+        
+    frame_wid=ui_frame_create(                   @
+        /* parent */             parent_wid,           @
+        /*  name  */             "",                @
+        /*    x   */             -0.05,  @
+        /*    y   */             y_loc,         @
+        /*  width */             FORM_WID_SML,  @
+        /* height */             0.0,               @
+        /*  label */             "")
+
+    real Y_LOCF
+    Y_LOCF = FORM_T_MARGIN + LABEL_HGT
+
+    dbox_group_name = ui_databox_create(                   @
+      /*    parent    */            frame_wid,    @
+      /*   callback   */            "",                     @
+      /*       x      */            FORM_L_MARGIN,     @
+      /*       y      */            Y_LOCF,             @
+      /* label_length */            0.0, @
+      /*  box_length  */            DBOX_WID_SINGLE,      @
+      /*     label    */            "GROUP NAME:",                  @
+      /*     value    */            "",                    @
+      /*  label_above */            TRUE,                  @
+      /*   datatype   */            "STRING",                 @
+      /*   num_vals   */            1.0)
+
+    Y_LOCF += DBOX_HGT_LABOVE + INTER_WIDGET_SPACE
+
+    sframe_XYZ = CLASSNAME.UI_SFRAME_SELECT_XYZ(frame_wid, Y_LOCF)
+    sframe_BOX = CLASSNAME.UI_SFRAME_SELECT_BOX(frame_wid, Y_LOCF)
+    ui_wid_set(sframe_BOX, "VISIBLE", FALSE)
+
+    Y_LOCF += INTER_WIDGET_SPACE
+
+      btn_Add = ui_button_create(                  @
+      /*   parent  */           frame_wid,             @
+      /*  callback */           "cb_Add",          @
+      /*     x     */           BUTTON_HALF_X_LOC1,  @
+      /*     y     */           Y_LOCF,               @
+      /*   width   */           BUTTON_WID_HALF,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Add",             @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           TRUE)
+
+      btn_Modify = ui_button_create(                    @
+      /*   parent  */            frame_wid,             @
+      /*  callback */            "cb_Modify",           @
+      /*     x     */            BUTTON_HALF_X_LOC2,  @
+      /*     y     */            Y_LOCF,               @
+      /*   width   */            BUTTON_WID_HALF,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Modify",              @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+
+      btn_Remove = ui_button_create(                    @
+      /*   parent  */            frame_wid,             @
+      /*  callback */            "cb_Remove",           @
+      /*     x     */            BUTTON_HALF_X_LOC2+BUTTON_HALF_X_LOC2,  @
+      /*     y     */            Y_LOCF,               @
+      /*   width   */           BUTTON_WID_HALF,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Remove",              @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+        
+      Y_LOCF += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+      
+      ui_wid_set(frame_wid, "HEIGHT", Y_LOCF)
+
+      Y_LOC += Y_LOCF + INTER_WIDGET_SPACE
+            
+     return frame_wid
+end function
+
+FUNCTION UI_SFRAME_SELECT_XYZ(parent_id, Y_LOCF)
+WIDGET parent_id
+REAL X_LOC, box_length, label_length, Y_LOCF
+WIDGET sframe_id, sdbox_entity
+
+    
+    string sa_datatype[8](5) = ["NODE", "VECTOR", "", "", ""]
+    string sa_label[32](5) = ["START", "SPACE", "COUNT", "START NO.", "STEP"]
+    string sa_callback[8](5) = ["", "", "", "", ""]
+
+    sframe_id = ui_select_frame_set(				@
+		/* parent widget id(input) 	*/	parent_id,		@
+		/*	select frame callback	*/	CLASS_STR // ".Apply_Click",	@	
+		/* 	select frame label		*/	"",	@
+		/*		x				*/	FRAME_L_MARGIN,	@	
+		/*		y				*/	Y_LOCF, 		@
+		/*	select databax array	*/	wa_sdbox_point1,	@
+		/* 	data type	array		*/	sa_datatype,		@
+		/* 	select databox label array	*/ 	sa_label,	@
+		/*	select databox collback array	*/ 	sa_callback, @
+		/*	label avove logical	*/			FALSE)	             
+		  
+        Y_LOCF += INTER_WIDGET_SPACE
+
+    return sframe_id
+END FUNCTION
+
+FUNCTION UI_SFRAME_SELECT_BOX(parent_id, Y_LOCF)
+  WIDGET parent_id
+  REAL Y_LOCF, X_LOC, box_length, label_length
+  WIDGET sframe_id, sdbox_entity
+
+  string sa_datatype[8](2) = ["NODE", "NODE"]
+  string sa_label[32](2) = ["START", "END"]
+  string sa_callback[8](2) = ["", ""]
+
+  sframe_id = ui_select_frame_set(				@
+		/* parent widget id(input) 	*/	parent_id,		@
+		/*	select frame callback	*/	CLASS_STR // ".Apply_Click",	@	
+		/* 	select frame label		*/	"",	@
+		/*		x				*/	FRAME_L_MARGIN,	@	
+		/*		y				*/	Y_LOCF, 		@
+		/*	select databax array	*/	wa_sdbox_point2,	@
+		/* 	data type	array		*/	sa_datatype,		@
+		/* 	select databox label array	*/ 	sa_label,	@
+		/*	select databox collback array	*/ 	sa_callback, @
+		/*	label avove logical	*/			TRUE)	             
+		  
+  Y_LOCF += INTER_WIDGET_SPACE
+
+  return sframe_id    
+    
+END FUNCTION
+
+END CLASS /* GROUP_UTILITY */

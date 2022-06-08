@@ -1,0 +1,229 @@
+function xfem_get_result_stress(nrc, s_res_name, s_ElemIDs)
+
+    integer nrc
+    string s_res_name[](), s_component[], s_ElemIDs[]
+    
+    string sa_lbc_name[64](virtual), sa_sbc_name[64](virtual)
+
+	integer MaxElemID, nElem, ElemID(virtual)
+	string ElemIDs[virtual]
+
+	sys_allocate_array(sa_lbc_name,1,nrc)
+	sys_allocate_array(sa_sbc_name, 1,nrc)
+
+	integer i
+	for(i=1 to nrc)
+		sa_lbc_name(i)=str_token(sa_res_name(i),",",1)
+	    sa_sbc_name(i)=str_token(sa_res_name(i),",",2)
+	end for
+
+	integer ia_res_id(virtual)
+    sys_allocate_array(ia_res_id, 1, nrc, 1, 5)
+
+	for(i=1 to nrc)
+        xfem_get_result_id(sa_lbc_name(i), sa_sbc_name(i), "Stress Tensor", "",ia_res_id(i, 1:4))
+	end for
+		
+	integer nlayer, ia_layer_id(VIRTUAL)
+	string sa_layer_label[16](VIRTUAL)
+
+	res_utl_get_result_layers(ia_res_id, nlayer, ia_layer_id, sa_layer_label)
+
+    integer j, ErrCode
+    
+    
+    for (i=1 to nrc)
+       	for (j=1 to nlayer)
+        	ia_res_id(i, 5) = ia_layer_id(j)
+        	ErrCode=res_utl_extract_elem_results(res_id(i,1:5),sa_ElemIDs,Res_Dev,"C",coord_id, @ 
+	            	                  /* 1=scalar 2=vector 3=tensor */       data_type, @
+	                	              /* 1=centroid 2=nodal 3=multiple */    ResLoc, @
+	                    	          /* The number of elements selected */  nEids, @
+	                        	      /* The list of element ids */          Eids, @
+	                            	  /* The number of results per elm */    nresult, @
+	                              	  /* result value */ 					 result, @
+	                                                 					     minloc, @
+	                                                 					     maxloc)
+	
+$					text_write_string(ftmp_id, "result " // lay_label(j))
+					cnt = 0
+					for(k=1 to nEids)
+						if(nresult(k) != 0) then
+							cnt = cnt+1
+							if(mth_abs(result(cnt)) > mth_abs(MaxLayRes(i,k))) then
+								MaxLayRes(i,k) = result(cnt)
+								LayChk(i, k) = lay_id(j)
+								LayLabel(i, k) = lay_label(j)
+							end if
+						end if
+					end for
+					
+$					for(k=1 to nEids)		
+$						text_write(ftmp_id,"%I%%F%%A%", Eids(k), MaxLayRes(i,k), LayLabel(i, k))
+$					end for
+
+$					dump "nResult", nresult
+$					DUMP result
+			end for
+       end for
+       
+		
+		$ string Res_Dev[]() = ["XX", "YY", "XY"]
+		string Res_Dev[8] = "XX"
+		string coord_id[8]=""
+		integer data_type, ResLoc, nEids, Eids(virtual), nresult(virtual), minloc(12),maxloc(12)
+		real result(virtual)
+	    string ftmp[32]
+	    integer ftmp_id, i_tmp, j, k, cnt
+	    ftmp = "debug_temp.txt"
+	    text_open(ftmp,"NOWV", 0,0, ftmp_id)
+        
+		integer LayChk(virtual)
+		real MaxLayRes(virtual)
+		string LayLabel[32](virtual)
+		
+		sys_allocate_array(MaxLayRes, 1, nrc, 1, nElem)
+		sys_allocate_array(LayChk, 1, nrc, 1, nElem)
+		sys_allocate_array(LayLabel, 1, nrc, 1, nElem)
+		
+        for (i=1 to nrc)
+        	for (j=1 to lay_num)
+	        	res_id(i, 5) = lay_id(j)
+	        	ErrCode=res_utl_extract_elem_results(res_id(i,1:5),ElemIDs,Res_Dev,"C",coord_id, @ 
+	            	                  /* 1=scalar 2=vector 3=tensor */       data_type, @
+	                	              /* 1=centroid 2=nodal 3=multiple */    ResLoc, @
+	                    	          /* The number of elements selected */  nEids, @
+	                        	      /* The list of element ids */          Eids, @
+	                            	  /* The number of results per elm */    nresult, @
+	                              	  /* result value */ 					 result, @
+	                                                 					     minloc, @
+	                                                 					     maxloc)
+	
+$					text_write_string(ftmp_id, "result " // lay_label(j))
+					cnt = 0
+					for(k=1 to nEids)
+						if(nresult(k) != 0) then
+							cnt = cnt+1
+							if(mth_abs(result(cnt)) > mth_abs(MaxLayRes(i,k))) then
+								MaxLayRes(i,k) = result(cnt)
+								LayChk(i, k) = lay_id(j)
+								LayLabel(i, k) = lay_label(j)
+							end if
+						end if
+					end for
+					
+$					for(k=1 to nEids)		
+$						text_write(ftmp_id,"%I%%F%%A%", Eids(k), MaxLayRes(i,k), LayLabel(i, k))
+$					end for
+
+$					dump "nResult", nresult
+$					DUMP result
+			end for
+       end for
+real MaxRes(virtual)
+string MaxLay[32](virtual)
+string MaxLC[64](virtual)
+
+sys_allocate_array(MaxRes, 1, nElem)
+sys_allocate_array(MaxLay, 1, nElem)
+sys_allocate_array(MaxLC, 1, nElem)
+
+	FOR(i=1 to nrc)
+		for(j=1 to nElem)
+			if(mth_abs(MaxLayRes(i,j)) > mth_abs(MaxRes(j))) then
+				MaxRes(j) = MaxLayRes(i, j)
+				MaxLay(j) = LayLabel(i,j)
+				MaxLC(j) = result_case_name(i)
+			end if
+		end for
+	end for
+
+string s_data[64](2)	
+	for(i=1 to nEids)
+		s_data(1) = MaxLay(i)
+		s_data(2) = MaxLC(i)
+		text_write(ftmp_id,"%I10%%F10.5%%2A20%", Eids(i), MaxRes(i), s_data)
+	end for
+
+/*
+db_create_load_case ( <load_case_name>, <load_case_type>, <load_case_description>, <num_loads>, <load_ids>, <dynamic_case_name>, <evaluation_point>, <load_priorities>, <load_case_id> ) 
+ 
+
+  
+
+ Input:        
+CHARACTER STRING     
+   <load_case_name>  The external name of this load case.  
+INTEGER  <load_case_type>  A flag specifying the type of load case:
+1 = static load case
+2 = time dependent load case
+3 = frequency dependent load case  
+CHARACTER STRING     
+   <load_case_description>  
+      A character string containing a description of this load case.  
+INTEGER  <num_loads>  The number of loads associated with this load case.  
+INTEGER ARRAY     
+   <load_ids>  The <num_loads> IDs of all the loads associated with this load case.  
+CHARACTER STRING     
+   <dynamic_case_name>  
+      The name of the dynamic load case from which this static load 
+case was derived. A blank string if not applicable.  
+REAL  <evaluation_point>  The time or frequency value at which the dynamic load case was evaluated in order to create this static load case. Zero if not applicable.  
+INTEGER ARRAY     
+   <load_priorities>  <num_loads> flags associated with all the loads in this load case specifying the priority of the load over other loads: 
+0 = no priority. The corresponding load will be overwritten by any load with priority whenever there is a conflict (multiple loads on the same node, for example). If all loads have ¡°no priority¡± then the values from all the loads are simply combined. 
+1 = highest priority. This load will overwrite all other loads whenever a conflict occurs. Only one load should have priority 1 in a given load case. 
+2 = second highest priority. When a conflict occurs, this load will overwrite all other loads except for the load with priority 1. Only one load should have priority 2 in a given load case. 
+3 = third highest priority, etc. 
+   
+Output:        
+INTEGER  <load_case_id>  The internal ID assigned to this load case by MSC Patran.  
+INTEGER  <Return Value>  This function returns a value of 0 when executed successfully and a non zero value to indicate a change in status or an error.  
+
+
+
+
+	integer max_res_id(5)
+	db_create_load_case("Maximum Result", 1,"", 0, [1], "", 0., [0], max_res_id(1))
+	db_create_sub_case(res_id(1), s_SubTitle(i) ,res_id(2) , res_id(3))
+	dbt_create_sect_pos(1,"", 0,[0., 0., 0., 0.], sect_id)
+	dbt_create_layers(1, 0, sect_id, res_id(5))
+
+	status = res_utl_create_elem_result(res_id, "Buckling", sec_title(j), count, i_Elem,"", 1, "C", nRes, r_res)
+*/
+/*
+	res_utl_create_elem_result ( resultids, primary_title, secondary_title, cnt, ids, cidlist,
+								datatype, location, nresults, results)
+								Description:
+								This function creates new result case and writes to the database. The new result case can be
+								displayed in the viewport. The primary results id and secondary results ids are created newly
+								by passing some input value to the function.
+								Input:
+								INTEGER resultids(5) Array of the results case ids i.e. load case id, subcase id,
+								primary case id, secondary case id and layer case id.
+								The primary id and secondary id are not used as inputs by
+								this function. This value is used as both as input and an
+								outputs to the function and would be passed by the calling
+								function as a single argument.
+								STRING primary_title[] This value specifies the primary result title.
+								STRING secondary_title[] This value specifies the secondary result title.
+								INTEGER cnt Number of Element results returned.
+								INTEGER ids(VIRTUAL) Array of the extracted elem ids.
+								STRING cidlist[] List format of a coordinate system for vector and tensor
+								transformations. NULL string will be interpreted as no
+								transformation.
+								INTEGER datatype This value returns the datatype i.e.
+								Scalar =1, Vector = 2, Tensor =3
+								STRING location[] This value specifies the location of the coordinate frame
+								identifier. ¡°A[sis]¡±, ¡°C[entroid], ¡°N[odal] or ¡°¡° = ¡°A[sis]¡±
+								INTEGER nresults(VIRTUAL) Array of the results per element.
+								REAL results(VIRTUAL) Array of the extracted results.
+								Output:
+
+	if(status !=0) then
+		write("Error createing results")
+		return status
+	end if
+*/			
+    text_close(ftmp_id,"")                              
+end function 

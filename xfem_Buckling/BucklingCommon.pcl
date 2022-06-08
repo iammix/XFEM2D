@@ -1,0 +1,433 @@
+#define PI 3.14159265358979
+
+$ StartClass BucklingFunction
+CLASS BucklingFunction
+$ StartFunction stress_reduction
+FUNCTION stress_reduction(sigxy, sigyx)
+real sigxy, sigyx
+
+return (sigxy - 0.3 * sigyx) / 0.91
+
+END FUNCTION
+$ EndFunction
+
+$ StartFunction Buckling_Factor_ksx
+FUNCTION Buckling_Factor_ksx(C1, kapa)
+real C1, kapa
+real ks
+
+if(kapa <= 1 && kapa >= 0) then
+    ks = 8.4 / (kapa + 1.1)
+else if(kapa < 0 && kapa > -1) then
+    ks = 7.63 - 6.4 * kapa + 10 * kapa**2
+END if
+
+return C1 * ks
+
+END FUNCTION
+$ EndFunction
+
+$ StartFunction Buckling_Factor_ksy
+FUNCTION Buckling_Factor_ksy(span, space, C2, kapa)
+real span, space, C2, kapa
+real alpha, ks
+
+alpha = span / space
+
+if (kapa < 1 / 3 && alpha >= 1 && alpha <= 2) then
+    ks = (1.0875 * (1 + 1 / alpha**2)**2 - 18 / alpha**2) * (1 + kapa) + 24 / alpha**2
+else if (kapa < 1 / 3 && alpha > 2) then
+    ks = (1.0875 * (1 + 1 / alpha**2)**2 - 9 / alpha**2) * (1 + kapa) + 12 / alpha**2
+else if (kapa >= 1 / 3) then
+    ks = (1 + 1 / alpha**2)**2 * (1.675 - 0.675 * kapa)
+END if
+    
+return ks * C2
+
+END FUNCTION
+$ EndFunction
+
+$ StartFunction Buckling_Factor_kst
+FUNCTION Buckling_Factor_kst(span, space, C1)
+real span, space, C1
+real ks
+
+    ks = (4 * (space / span)**2 + 5.34)
+
+return C1 * ks
+
+END FUNCTION
+$ EndFunction
+
+$ StartFunction Elastic_Buckling_Stress
+FUNCTION Elastic_Buckling_Stress(ELAS, PoiR, ks, tnet, space)
+real ELAS, PoiR, ks, tnet, space
+
+    return ks * (((PI**2 * ELAS) / (12 * (1 - PoiR**2))) * (tnet / space)**2)
+
+END FUNCTION
+$ EndFunction
+
+$ StartFunction Critical_Buckling_Stress
+FUNCTION Critical_Buckling_Stress(ReH, Pr, EBS)
+real ReH, Pr, EBS, CBS
+
+if(EBS <= Pr * ReH) then
+    CBS = EBS
+else if(EBS > Pr * ReH) then
+    CBS = ReH * (1 - Pr * (1 - Pr) * ReH / EBS)
+END if
+
+return CBS
+
+END FUNCTION
+$ EndFunction
+
+$ StartFunction Buckling_Factor_ksbL
+FUNCTION Buckling_Factor_ksbL(C1)
+real C1    
+    return 24 * C1
+
+END FUNCTION
+$ EndFunction
+
+$ StartFunction Buckling_Factor_ksbT
+FUNCTION Buckling_Factor_ksbT(span, space, C2)
+real span, space, C2
+real alpha
+real ks
+    
+    alpha = space / span
+    
+    if (span / space >= 1.0 && span / space <= 2.0) then
+        ks = 24 * alpha**2 * C2
+    else if (span / space > 2.0) then
+        ks = 12 * alpha * C2
+    END if
+    
+    return ks
+
+END FUNCTION
+$ EndFunction
+END CLASS
+$ EndClass
+
+FUNCTION EulerStress(s,ct,k)
+global real E, NU
+real s,k,ct,result
+	
+	option.terminal_00()
+
+	result=3.14159**2.*E/(12*(1-NU**2.))*(ct/s)**2.*k
+
+return result
+END FUNCTION
+
+$
+FUNCTION sig_c(sigf, l, s, ct, nbc, c, sigec, sigpc)
+integer nbc(), i
+real k(3),l,s,ct,c,alpha,sigec(),sigpc(),sigf,tauf
+
+	FOR (i=1 TO 3)
+		k(i) = b_boundary_fac(nbc(i),l,s)
+	END FOR
+		
+		sigec(1) = EulerStress(s,ct,k(1))
+		sigpc(1) = sig_f_plastic(sigf,sigec(1))
+
+		sigec(2) = c*EulerStress(s,ct,k(2))
+		sigpc(2) = sig_f_plastic(sigf,sigec(2))
+
+		sigec(3) = EulerStress(s,ct,k(3))
+		tauf = sigf / sqrt(3.)
+		sigpc(3) = sig_f_plastic(tauf,sigec(3))
+
+return 0
+END FUNCTION
+
+$ 
+FUNCTION sig_f_plastic(sigf,sige)
+real sige,sigp,sigf
+
+	IF (sige > 0.5*sigf) THEN
+		sigp=sigf*(1.-sigf/(4.*sige))
+    ELSE
+        sigp=sige
+    END IF
+	
+return sigp
+END FUNCTION
+
+$ 
+FUNCTION LLOYD(sigf, l, s, ct, c, sig, sigpc, e_p_sigc, sf)
+
+integer nbc(3), i
+real sigf, l, s, ct, c(), sig(), sigpc(), sf()
+real R(3), e_sig, sigec(3), alpha, e_e_sigc, e_p_sigc, P
+
+	nbc(1)=1
+	nbc(2)=3
+	nbc(3)=2
+	
+	
+	sig_c(sigf, l, s, ct, nbc, c, sigec, sigpc)
+		
+	FOR (i=1 TO 3)
+		sf(i) = sig(i) / sigpc(i)	
+		R(i) = sig(i) / sigec(i)
+	END FOR
+
+	alpha = l/s
+
+	e_sig=sqrt(sig(1)**2+sig(2)**2-sig(1)*sig(2)+3*sig(3)**2)
+	
+	IF (1 <= alpha && alpha < 3.5) THEN
+		P=0.6+0.4*alpha
+    ELSE IF( alpha > 3.5) THEN
+		P=2.0
+    END IF
+            
+    e_e_sigc=NewtonRampson(R,P,e_sig)
+          
+    e_p_sigc=sig_f_plastic(sigf,e_e_sigc)
+
+	sf(4) = 0.0
+	sf(5) = e_sig/e_p_sigc
+
+return 0
+
+END FUNCTION
+
+$ 
+/*
+		bc1(1:3) = i_data(3:5)
+		sigf = r_data(1)
+		thk = r_data(2)
+		l = r_data(3)
+		s = r_data(4)
+		cut_c = r_data(5)
+		cut_d = r_data(6)
+		bc2 = r_data(7)
+		sighx = r_data(8)
+		sig(1:3) = r_data(9:11)
+*/
+
+FUNCTION DNV1()
+global real E, NU
+integer i, i_tmp, j, i_data(5), maxi_data(virtual),group_id
+real a, n, c, beta, K, q, sf(5),sf1(3),r_data(11), maxr_data(virtual)
+real sigpc(3), sigec(3), fac(4), out_data(16)
+string s_data1[50](4),s_data2[50](6),group_name[32],fname_inp[32],fname_out[32]
+integer finp_id, fopt_id, fout_id, nlc, npnl
+logical LOGICAL_HG, LOGICAL_LS
+
+text_open("dnv_buckling.opt","OR", 0,0, fopt_id)
+
+	text_read_string(fopt_id,s_data1(1),i_tmp)
+	text_read_string(fopt_id,s_data1(2),i_tmp)
+	text_read_string(fopt_id,s_data1(3),i_tmp)
+	text_read_string(fopt_id,s_data1(4),i_tmp)
+
+FOR(i=1 TO 4)
+	fac(i) = str_to_real(str_token(s_data1(i),":",2))
+END FOR
+
+text_close(fopt_id,"")
+
+db_get_current_group_id(group_id)
+db_get_group_name(group_id,group_name)
+fname_inp=group_name//".inp"
+fname_out=group_name//".buc"
+
+text_open(fname_inp,"OR", 0,0, finp_id)
+text_read_string(finp_id,s_data2(1),i_tmp)
+text_read_string(finp_id,s_data2(2),i_tmp)
+text_read_string(finp_id,s_data2(3),i_tmp)
+text_read_string(finp_id,s_data2(4),i_tmp)
+text_read_string(finp_id,s_data2(5),i_tmp)
+text_read_string(finp_id,s_data2(6),i_tmp)
+
+E = str_to_real(str_token(s_data2(1),":",2))
+NU = str_to_real(str_token(s_data2(2),":",2))
+LOGICAL_HG = str_to_logical(str_token(s_data2(3),":",2))
+LOGICAL_LS = str_to_logical(str_token(s_data2(4),":",2))
+nlc = str_to_integer(s_data2(5))
+npnl = str_to_integer(s_data2(6))
+
+text_open(fname_out,"NOWV", 0,0, fout_id)
+
+text_write_string(fout_id, "Modulus of elasticity          : " // str_from_real(E))
+text_write_string(fout_id, "Poisson's Ratio                : " // str_from_real(NU))
+text_write_string(fout_id, "Included hull girder stress    : " // str_token(s_data2(3),":",2))
+text_write_string(fout_id, "Included local stress sigma-xx : " // str_token(s_data2(4),":",2))
+text_write_string(fout_id, "")
+text_write_string(fout_id, "DNV Rule Pt.3 Ch.1 Sec. 13")
+text_write_string(fout_id, "eta_sig                     : " // str_from_real(fac(1)))
+text_write_string(fout_id, "eta_tau                     : " // str_from_real(fac(2)))
+text_write_string(fout_id, "eta_xy                      : " // str_from_real(fac(3)))
+text_write_string(fout_id, "Plate part of double bottom : " // str_from_real(fac(4)))
+text_write_string(fout_id, "")
+text_write_string(fout_id,"=================================================================================================================================")
+text_write_string(fout_id,"  PID  lcid   sigf  net_t   span   space    c     sigx    sigy    taus   sigcx   sigcy   taucs   sf-x   sf-y   sf-s   sf-1   sf-2")
+text_write_string(fout_id,"=================================================================================================================================")
+
+sys_allocate_array(maxi_data,1,npnl,1,2)
+sys_allocate_array(maxr_data,1,npnl,1,16)
+
+FOR(i=1 TO npnl)
+	
+	maxr_data(i,16)=0.0
+
+	FOR(j =1 TO nlc)
+		text_read(finp_id,"%5I%%11F%",i_data,r_data,"")
+		
+		IF(LOGICAL_LS==TRUE && LOGICAL_HG==TRUE) THEN
+			r_data(9) = r_data(9) + r_data(8)
+		ELSE IF(LOGICAL_LS==FALSE && LOGICAL_HG==TRUE) THEN
+			r_data(9) = r_data(8)
+		END IF
+
+		sig_c(r_data(1), r_data(3), r_data(4), r_data(2), i_data(3:5), r_data(7), sigec, sigpc)
+
+		sigpc(2) = sigpc(2)*fac(4)
+
+		sf(1) = r_data(9) / (sigpc(1)*fac(1))
+		sf(2) = r_data(10) / (sigpc(2)*0.8)
+		sf(3) = r_data(11) / (sigpc(3)*fac(2))
+
+	IF(1.0 < r_data(3)/r_data(4) && r_data(3)/r_data(4) < 1.5) THEN
+		c=0.78
+		a=-0.12
+		n=1.0
+	ELSE IF(1.5 <= r_data(3)/r_data(4) && r_data(3)/r_data(4) < 8) THEN
+		c=0.8
+		a=0.04
+		n=1.2
+	END IF
+
+	beta = r_data(4)/r_data(2)*sqrt(r_data(1)/E)
+	K=c*beta**a
+
+		sf1(1) = r_data(9) / (sigpc(1)*fac(3))
+		sf1(2) = r_data(10) / (sigpc(2)*fac(3))
+		sf1(3) = r_data(11) / sigpc(3)
+
+	sf(4) = sf1(1)-K*sf1(1)*sf1(2)+sf1(2)**n
+
+	IF( sf(3) > 1.0) THEN
+		sf(5)= sf(3)
+	ELSE	
+		q = 1 - sf1(3)**2
+
+		sf(5)= sf1(1)/q - K*sf1(1)*sf1(2)/q + (sf1(2)/q)**n
+	END IF
+
+	out_data(1:4) = r_data(1:4)
+	out_data(5)= r_data(7)
+	out_data(6:8) = r_data(9:11)
+	out_data(9:11) = sigpc(1:3)
+	out_data(12:16) = sf(1:5)
+
+$	text_write(fout_id,"%2I5%%F8.1%%F6.1%%2F8.1%%F6.2%%6F8.1%%5F7.2%",i_data,out_data,"")
+
+	if(out_data(16) > maxr_data(i,16)) then
+		maxi_data(i,1:2) = i_data(1:2)
+		maxr_data(i,1:16)= out_data(1:16)
+	end if
+	END FOR
+
+	text_write(fout_id,"%2I5%%F8.1%%F6.1%%2F8.1%%F6.2%%6F8.1%%5F7.2%",maxi_data(i,1:2),maxr_data(i,1:16),"")
+
+END FOR
+
+text_close(finp_id,"")
+text_close(fout_id,"")
+
+sys_free_array(maxi_data)
+sys_free_array(maxr_data)
+
+return 0
+END FUNCTION
+
+$ 
+FUNCTION DNV2(sigf, l, s, ct, nbc, cc, sig, sigpc, e_sigc, sf)
+
+integer nbc(), i
+real sigf, tauf, l, s, ct, cc(), sig(), sigpc(), sf(), lamdae2
+real R(3),e_sig, sigec(3), e_sigc, c
+
+
+	sig_c(sigf, l, s, ct, nbc, cc, sigec, sigpc)
+
+	FOR (i=1 TO 3 )
+		IF(i==3) THEN
+			tauf = sigf / sqrt(3.)
+			sigpc(i) = tauf / sqrt(1+(tauf/sigec(i))**2)
+		ELSE 
+			sigpc(i) = sigf / sqrt(1+(sigf/sigec(i))**2)
+		END IF
+
+		sf(i) = sig(i) / sigpc(i)
+		R(i)=sig(i)/sigec(i)
+	END FOR
+
+	e_sig=sqrt(sig(1)**2+sig(2)**2-sig(1)*sig(2)+3*sig(3)**2)
+
+	c= 2- s/l
+
+	lamdae2 = (sigf/e_sig)*(R(1)**c + R(2)**c + R(3)**c)**(1/c)
+	e_sigc=sigf/sqrt(1+lamdae2**2)
+
+	sf(4)=0.0
+	sf(5)=e_sig/e_sigc
+
+END FUNCTION
+
+$ 
+FUNCTION b_boundary_fac(cond,l,s)
+integer cond
+real l,s, c
+	
+	SWITCH(cond)
+		CASE(1)
+			c=4.0
+		CASE(2)
+			c=5.34+4*(s/l)**2
+		CASE(3)
+			c=(1+(s/l)**2)**2
+		case(4)
+			c=9.0+5.6*(s/l)**2-2.0*(s/l)**3
+		case(5)
+			c=5.3+2.3*s/l-3.4*(s/l)**2+8.4*(s/l)**3
+		case(6)
+			c=9.0+5.6*(s/l)**2
+		case(7)
+			c=7.0
+		case(8)
+			c=1.0+2.5*(s/l)**2+5.0*(s/l)**4
+		DEFAULT
+	END SWITCH
+return c	
+END FUNCTION
+
+$ 
+FUNCTION NewtonRampson(R,P,sig)
+real R(),P,sig,K1,K2,X1,X2,f1x,f2x,fx
+	K1=R(3)**2.0
+    K2=R(1)**P+R(2)**P
+
+    X1=0
+    X2=1000.0
+
+    REPEAT
+        X1=X2
+        f1x=K1*X1**2.0+K2*X1**P-1
+        f2x=2*K1*X1+P*K2*X1**(P-1)
+
+        X2=X1-f1x/f2x
+    UNTIL(mth_abs(X2-X1)<0.001)
+
+    fx=sig*X2
+
+return fx
+END FUNCTION

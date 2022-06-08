@@ -1,0 +1,225 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME PROFILE_LIST
+#define CLASS_STR "PROFILE_LIST"
+
+ /* =======================================================================
+                  Profile List Class
+    ======================================================================= */
+
+ CLASS CLASSNAME
+
+    classwide widget form_id, lbox_ProfileList, btn_apply, btn_exit, btn_report
+    classwide widget beam_icon, lbl_beam_size, btn_profile_create
+    classwide string s_class[63], s_widget[63]
+
+    function init()
+
+        real y_loc
+
+        form_id = ui_form_create(                          @
+             /* callback */         "",                    @
+             /*     x    */         FORM_X_LOC_SML,        @
+             /*     y    */         FORM_Y_LOC,            @
+             /* position */         "UL",                  @
+             /*   width  */         FORM_WID_SML,          @
+             /*  height  */         FORM_HGT_TALL,         @
+             /*   label  */         "Profile List",        @
+             /*  unused  */         "")
+
+        y_loc = FORM_T_MARGIN
+
+        lbox_ProfileList = ui_listbox_create(form_id,           @
+                                         "cb_ProfileList",      @
+                                        FRAME_L_MARGIN,     @
+                                        y_loc,              @
+                                        LBOX_WID_SINGLE,    @
+                                        32,                 @
+                                        "Profile List",     @
+                                        "SINGLE", @
+                                        TRUE)
+
+          y_loc += LBOX_8L_HGT_NO_LABOVE*4 + INTER_WIDGET_SPACE
+
+    	  btn_profile_create = ui_button_create(form_id,"cb_profile_create",        @
+     									   BUTTON_FULL_X_LOC1,      @
+     									   y_loc,                   @
+     									   BUTTON_WID_FULL,         @
+     									   BUTTON_DEFAULT_HGT,      @
+     									   "Profile Create",        @
+     									   true, false)        
+       
+        y_loc += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+
+        lbl_beam_size = ui_label_create(form_id, "", FORM_L_MARGIN, y_loc, "")
+
+        y_loc += LABEL_HGT + INTER_WIDGET_SPACE
+
+        string ficon[64]
+
+        blgetlabelicon ("L", ficon)
+        beam_icon = ui_labelicon_create(form_id, "", INFO_INDENT + INTER_WIDGET_SPACE, y_loc, ficon)
+
+        y_loc += INTER_WIDGET_SPACE * 10
+
+    	  btn_report = ui_button_create(form_id,"cb_Report",     @
+     									   BUTTON_FULL_X_LOC1, @
+     									   y_loc,               @
+     									   BUTTON_WID_FULL,    @
+     									   BUTTON_DEFAULT_HGT, @
+     									   "Report",            @
+     									   true, false)
+
+          y_loc += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+
+     	  btn_apply = ui_button_create(form_id,"cb_Apply",     @
+     									   BUTTON_HALF_X_LOC1, @
+     									   y_loc,               @
+     									   BUTTON_WID_HALF,    @
+     									   BUTTON_DEFAULT_HGT, @
+     									   "Apply",            @
+     									   true, false)
+
+     	  btn_exit = ui_button_create(form_id,"cb_Exit",       @
+     									  BUTTON_HALF_X_LOC2,  @
+     									  y_loc,                @
+     									  BUTTON_WID_HALF,     @
+     									  BUTTON_DEFAULT_HGT,  @
+     									  "Exit",              @
+     									  true, false)
+
+    end function
+
+    function display()
+        ui_exec_function(CLASS_STR, "init")
+        ui_form_display(CLASS_STR)
+        ui_profile_list(lbox_ProfileList)
+    end function
+
+    function cb_Exit()
+        ui_form_hide(CLASS_STR)
+        ui_form_delete(CLASS_STR)
+    end function
+
+    function cb_Apply()
+
+        string items[64](virtual)
+        integer nitem
+
+        uil_utils_listbox.get_selected(lbox_ProfileList, items, nitem)
+
+        widget wsec
+        wsec = sys_class_get(s_class, s_widget)
+        ui_wid_set(wsec, "VALUE", items(1))
+
+        ui_form_hide(CLASS_STR)
+        ui_form_delete(CLASS_STR)
+    end function
+
+    function cb_ProfileList(count, sel_items)
+	INTEGER count
+	STRING	sel_items[]()
+
+        integer sec_id
+        db_get_beam_section_id(sel_items(1), sec_id)
+
+        integer ndim, rec
+        string s_shape[5], sec_name[31]
+        db_get_beam_section(sec_id, s_shape, sec_name, ndim, rec)
+
+        string ficon[125]
+        blgetlabelicon (s_shape, ficon)
+        ui_wid_set(beam_icon, "ICON", ficon)
+
+        integer field_id(virtual), i_data_type(virtual)
+        real r_dim(virtual)
+        sys_allocate_array(i_data_type, 1, ndim)
+        sys_allocate_array(field_id, 1 , ndim)
+        sys_allocate_array(r_dim, 1, ndim)
+        bl_get_std_beam_section_data(sec_id, ndim, i_data_type, r_dim, field_id)
+
+        string beam_label[5](virtual)
+
+        sys_allocate_array(beam_label, 1, ndim)
+        blgetlabels(s_shape, beam_label)
+
+        string fmt[255], beam_size[63]
+        integer i
+        fmt = ""
+        for(i=1 to ndim)
+            fmt = fmt // "%A% : %F%  "
+        end for
+        string_write ( fmt, 0, r_dim, beam_label, beam_size )
+
+        ui_wid_set(lbl_beam_size, "LABEL", beam_size)
+
+    end function
+
+    function cb_profile_create
+      
+		if(ui_form_exists("PROFILE_DEFINITION") == FALSE) then
+			ui_exec_function("PROFILE_DEFINITION", "init")
+		end if
+		
+		ui_exec_function("PROFILE_DEFINITION", "display")
+                  
+    end function
+    
+function cb_Report()
+
+     string items[64](virtual)
+     integer nitem
+
+     uil_utils_listbox.get_selected(lbox_ProfileList, items, nitem)
+
+     string sec_name[63]
+
+     sec_name = items(1)
+
+     integer sec_id
+     db_get_beam_section_id(sec_name, sec_id)
+
+     integer nrec, bytes_per_rec
+     string s_shape[5]
+     db_get_beam_section(sec_id, s_shape, sec_name, nrec, bytes_per_rec)
+
+     integer entyp, ndim, i_data_types(virtual), i_field_ids(virtual)
+     integer nprop
+     real  	r_prop(31), r_shear_center(2), r_centroid(2), r_dimen(virtual)
+     string labels[31](31)
+
+        entyp = 1   /* CBAR */
+
+       	ndim = blgetnumdimension(s_shape)
+>		IF(ndim !=0) THEN	sys_allocate_array(i_data_types, 1, ndim)
+>		IF(ndim !=0) THEN	sys_allocate_array(i_field_ids, 1 , ndim)
+>		IF(ndim !=0) THEN	sys_allocate_array(r_dimen, 1, ndim)
+   	    bl_get_std_beam_section_data (sec_id, ndim, i_data_types, r_dimen, i_field_ids)
+        blgetproplabels(entyp, labels)
+    	blgetprop(entyp, s_shape, r_dimen, ndim, r_prop , nprop)
+		blgetcenters(entyp, s_shape, r_dimen, r_prop, r_centroid, r_shear_center)
+
+		sys_free_array(i_data_types)
+		sys_free_array(i_field_ids)
+
+        integer fid, i, i_temp
+
+        text_open("section_report.rpt","nowv",0,0,fid)
+
+        text_write_string(fid, sec_name)
+        text_write_string(fid, s_shape)
+
+        text_write(fid, "%" // str_from_integer(ndim) // "F%" , i_temp, r_dimen, "")
+
+        for(i=1 to 31)
+            text_write_string(fid, str_from_integer(i) // ". " // labels(i) // " = " // str_from_real(r_prop(i)))
+        end for
+
+        text_write(fid, "%2F%", i_temp, r_centroid, "")
+        text_write(fid, "%2F%", i_temp, r_shear_center, "")
+
+        text_close(fid, "")
+
+end function
+
+ END CLASS

@@ -1,0 +1,320 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME MODIFY_PROPERTY
+#define CLASS_STR "MODIFY_PROPERTY"
+
+ /* =======================================================================
+                  Property List Class
+    ======================================================================= */
+
+ CLASS CLASSNAME
+
+    classwide widget form_id, lbox_PropertyList, btn_apply, btn_exit, btn_report
+    classwide widget beam_icon, lbl_beam_size, btn_profile_create
+    classwide string s_class[63], s_widget[63]
+    classwide widget Application_Region_frame, selfrm_Element, seldbox_Element
+    classwide widget btn_Add, btn_Remove, App_txtBox
+    function init()
+
+        real y_loc
+
+        form_id = ui_form_create(                          @
+             /* callback */         "",                    @
+             /*     x    */         FORM_X_LOC_SML,        @
+             /*     y    */         FORM_Y_LOC,            @
+             /* position */         "UL",                  @
+             /*   width  */         FORM_WID_SML,          @
+             /*  height  */         FORM_HGT_TALL,         @
+             /*   label  */         "Modify Property",        @
+             /*  unused  */         "")
+
+        y_loc = FORM_T_MARGIN
+
+        lbox_PropertyList = ui_listbox_create(form_id,           @
+                                         "cb_PropertyList",      @
+                                        FRAME_L_MARGIN,     @
+                                        y_loc,              @
+                                        LBOX_WID_DOUBLE,    @
+                                        32,                 @
+                                        "Property List",     @
+                                        "SINGLE", @
+                                        TRUE)
+
+          y_loc += LBOX_8L_HGT_NO_LABOVE*3 + LBOX_2L_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+
+        
+       real yloc_frame
+
+     Application_Region_frame = ui_frame_create(form_id,"", @
+								 0, @
+								 y_loc, @
+								 FORM_WID_SML, @
+								 2, @
+								 "Application Region")
+                                        
+        
+      yloc_frame = FRAME_T_MARGIN
+      
+      selfrm_Element = ui_selectframe_create(                        @
+      /*  parent  */                       Application_Region_frame,                 @
+      /* callback */                       "",         @
+      /*     x    */                       FORM_L_MARGIN,          @
+      /*     y    */                       yloc_frame,                   @
+      /*   width  */                       SFRAME_WID_SINGLE,      @
+      /*  height  */                       SFRAME_1SDB_HGT_LABOVE, @
+      /*   label  */                       "",            @
+      /*  recycle */                       TRUE)
+
+      seldbox_Element = ui_selectdatabox_create(                       @
+      /*    parent    */                    selfrm_Element,          @
+      /*   callback   */                    "",        @
+      /*       x      */                    SFRAME_L_MARGIN,       @
+      /*       y      */                    SDBOX_Y_LOC1_LABOVE ,  @
+      /* label_length */                    0.0,                   @
+      /*  box_length  */                    SDBOX_WID_SINGLE,      @
+      /*     label    */                    "Select Elements",     @
+      /*     value    */                    "",                    @
+      /*  label_above */                    TRUE,                  @
+      /*   datatype   */                    "ELEM2D",             @
+      /*    prompt    */                    "Select Elements")
+    
+    real sframe_hgt
+    ui_wid_get(selfrm_Element,"HEIGHT", sframe_hgt)
+    yloc_frame += sframe_hgt + INTER_WIDGET_SPACE
+    
+    btn_Add = ui_button_create(Application_Region_frame,    @
+                                "cb_add",     @
+     									   BUTTON_HALF_X_LOC1, @
+     									   yloc_frame,               @
+     									   BUTTON_WID_HALF,    @
+     									   BUTTON_DEFAULT_HGT, @
+     									   "ADD",            @
+     									   true, false)
+
+    btn_Remove = ui_button_create(Application_Region_frame, @
+                                    "cb_remove",       @
+     									  BUTTON_HALF_X_LOC2,  @
+     									  yloc_frame,                @
+     									  BUTTON_WID_HALF,     @
+     									  BUTTON_DEFAULT_HGT,  @
+     									  "REMOVE",              @
+     									  true, false)
+     
+     yloc_frame += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+     
+     real wid                                   
+     wid = DBOX_WID_SINGLE - DBOX_LABEL_LEN_DOUBLE
+
+     App_txtBox= ui_text_create(Application_Region_frame,   @
+                    "",      @
+                    FRAME_L_MARGIN,      @
+                    yloc_frame,      @
+                    TBOX_WID_SINGLE,  @
+                    3, @
+                    "Application Region",      @
+                    "",       @
+                    TRUE,   @
+                    FALSE   )
+     
+
+      yloc_frame += TBOX_3L_HGT_LABOVE + INTER_WIDGET_SPACE
+      
+      ui_wid_set(Application_Region_frame, "HEIGHT", yloc_frame)
+    
+      y_loc += yloc_frame   + INTER_WIDGET_SPACE      
+
+     	  btn_apply = ui_button_create(form_id,"cb_Apply",     @
+     									   BUTTON_HALF_X_LOC1, @
+     									   y_loc,               @
+     									   BUTTON_WID_HALF,    @
+     									   BUTTON_DEFAULT_HGT, @
+     									   "Apply",            @
+     									   true, false)
+
+     	  btn_exit = ui_button_create(form_id,"cb_Exit",       @
+     									  BUTTON_HALF_X_LOC2,  @
+     									  y_loc,                @
+     									  BUTTON_WID_HALF,     @
+     									  BUTTON_DEFAULT_HGT,  @
+     									  "Exit",              @
+     									  true, false)
+
+    end function
+
+    function display()
+        ui_exec_function(CLASS_STR, "init")
+        ui_form_display(CLASS_STR)
+        ui_region_list(lbox_PropertyList)
+    end function
+
+    function cb_Exit()
+        ui_form_hide(CLASS_STR)
+        ui_form_delete(CLASS_STR)
+    end function
+
+    function cb_Apply()
+
+        string items[64](virtual)
+        integer nitem
+
+        integer nreg
+        db_count_region_ids(nreg)
+    
+        integer iv_rid(virtual)
+        string sv_name[64](virtual)
+       
+        SYS_ALLOCATE_ARRAY(iv_rid,1,nreg) 
+        SYS_ALLOCATE_ARRAY(sv_name,1,nreg)
+    
+        db_get_region_ids_and_names( nreg,  @
+                                        iv_rid,     @
+                                        sv_name )
+	   INTEGER idx
+
+       uil_utils_listbox.get_selected(lbox_PropertyList, items, nitem)
+    
+       integer reg_id
+	   FOR(idx=1 TO nreg)
+			 IF(items(1) == sv_name(idx)) THEN
+					reg_id = iv_rid(idx)
+			 END IF
+	   END FOR
+
+$       notemessage.text("info", items(1))
+$       notemessage.text("info", str_from_integer(reg_id))
+       
+       string elem_list[virtual]
+        ui_wid_get_vstring(App_txtBox, "value", elem_list) 
+       PropFx.ideasf_modify_property(items(1), reg_id, elem_list)
+        
+        string data_type[virtual]
+        ui_wid_get_vstring(seldbox_Element, "DATATYPE", data_type)
+    
+$        notemessage.text("info", data_type)
+    
+       if(data_type == "elem2d") then
+              thick_FringePlot()
+        else if(data_type == "beamelem") then
+                SectionName_FringePlot()
+        end if
+        
+$        srid[15]
+$        ui_wid_get(items(1), "NAME", srid)
+
+$        widget wsec
+$        wsec = sys_class_get(s_class, s_widget)
+$        ui_wid_set(wsec, "VALUE", items(1))
+
+$        ui_form_hide(CLASS_STR)
+$        ui_form_delete(CLASS_STR)
+    end function
+
+    function cb_PropertyList(count, sel_item)
+	INTEGER count
+	STRING	sel_item[]()
+
+ui_wid_set(seldbox_Element, "value", "")
+ui_wid_set(App_txtBox, "value", "")
+
+$        user_message("ACK",2,"Information",sel_item(1)
+$        notemessage.text("info", sel_item(1))
+$        db_get_beam_section_id(sel_items(1), reg_id)
+       
+        integer nreg
+        db_count_region_ids(nreg)
+    
+        integer iv_rid(virtual)
+        string sv_name[64](virtual)
+       
+        SYS_ALLOCATE_ARRAY(iv_rid,1,nreg) 
+        SYS_ALLOCATE_ARRAY(sv_name,1,nreg)
+    
+        db_get_region_ids_and_names( nreg,  @
+                                        iv_rid,     @
+                                        sv_name )
+	   INTEGER idx
+
+       integer reg_id
+	   FOR(idx=1 TO nreg)
+			 IF(sel_item(1) == sv_name(idx)) THEN
+					reg_id = iv_rid(idx)
+			 END IF
+	  END FOR
+
+        integer nelem
+        db_count_elements_in_region (reg_id, nelem)
+		
+        if(nelem == 0) then return -1
+        
+        integer elem_id(virtual)
+    
+        sys_allocate_array(elem_id,1,nelem)
+    
+		db_get_elements_in_region(nelem, reg_id, elem_id)
+        
+        string elem_list[virtual]
+				
+		app_int_array_to_vstring("Element", nelem, elem_id, elem_list)
+		        
+        ui_wid_set(App_txtBox, "value", elem_list)
+
+ INTEGER  gener_elem_type, dof_set_flag, condense_flag
+ INTEGER  geom_flag, form_flag, lam_flag, layer_count
+ INTEGER  mat_id, material_lin, material_dir
+ STRING   reg_name[63]
+ 
+       
+      db_get_region_definition(                          @
+       /* region ID        */  reg_id,                  @
+       /* set name         */  reg_name,                    @
+       /* element type ID  */  gener_elem_type,          @
+       /* dof set flag     */  dof_set_flag,             @
+       /* condense flag    */  condense_flag,            @
+       /* geom flag        */  geom_flag,                @
+       /* form flag        */  form_flag,                @
+       /* lam_flag         */  lam_flag,                 @
+       /* layer count      */  layer_count,              @
+       /* material id      */  mat_id,                   @
+       /* material linear  */  material_lin,             @
+       /* material direct  */  material_dir)
+    
+    if(gener_elem_type == 11 || gener_elem_type == 18) then
+        ui_wid_set(seldbox_Element, "DATATYPE", "BEAMELEM")
+    ELSE IF(gener_elem_type == 51 || gener_elem_type == 57) then 
+        ui_wid_set(seldbox_Element, "DATATYPE", "ELEM2D")
+    END IF
+        
+    end function
+
+function cb_Add()
+String listc[VIRTUAL],lista[VIRTUAL],listb[VIRTUAL]
+
+ui_wid_get_vstring(seldbox_Element, "value", lista)
+ui_wid_get_vstring(App_txtBox, "value", listb)
+
+integer status
+
+status = list_create_boolean_list(lista,listb,"or",listc)
+
+ui_wid_set(App_txtBox, "value", listc)
+
+ui_wid_set(seldbox_Element, "value", "")
+return status
+end function
+
+function cb_Remove()
+String listc[VIRTUAL],lista[VIRTUAL],listb[VIRTUAL]
+
+ui_wid_get_vstring(seldbox_Element, "value", lista)
+ui_wid_get_vstring(App_txtBox, "value", listb)
+
+integer status
+
+status = list_create_boolean_list(lista,listb,"b-a",listc)
+
+ui_wid_set(App_txtBox, "value", listc)
+ui_wid_set(seldbox_Element, "value", "")
+return status
+end function
+
+ END CLASS

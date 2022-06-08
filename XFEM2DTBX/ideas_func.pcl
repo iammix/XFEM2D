@@ -1,0 +1,108 @@
+CLASS IDEASF
+FUNCTION get_3nds_normal(nodeID)
+
+	    INTEGER nodeID()
+	    REAL    NVector(3)
+
+	    REAL    value(VIRTUAL)
+	    REAL    vector(VIRTUAL)
+	    REAL    scalar
+	    REAL    xyz(VIRTUAL)
+	    INTEGER idx
+
+	    sys_allocate_array(xyz, 1, 3)
+	    sys_allocate_array(value, 1, 3, 1, 3)
+	    sys_allocate_array(vector, 1, 2, 1, 3)
+
+	    FOR (idx = 1 TO 3 BY 1)
+		db_get_node(nodeID(idx), xyz)
+		value(idx, 1) = xyz(1)
+		value(idx, 2) = xyz(2)
+		value(idx, 3) = xyz(3)
+	    END FOR
+
+	    FOR (idx = 1 TO 3 BY 1)
+		vector(1, idx) = value(1, idx) - value(2, idx)
+		vector(2, idx) = value(3, idx) - value(2, idx)
+	    END FOR
+
+	    NVector(1) = vector(1, 2) * vector(2, 3) - vector(1, 3) * vector(2, 2)
+	    NVector(2) = vector(1, 3) * vector(2, 1) - vector(1, 1) * vector(2, 3)
+	    NVector(3) = vector(1, 1) * vector(2, 2) - vector(1, 2) * vector(2, 1)
+
+	    scalar = mth_sqrt( Nvector(1)**2 + NVector(2)**2 + NVector(3)**2 )
+
+            if( scalar == 0) then return -1
+
+	    NVector(1) = NVector(1) / scalar
+	    NVector(2) = NVector(2) / scalar
+	    NVector(3) = NVector(3) / scalar
+
+         RETURN NVector
+
+END FUNCTION
+
+FUNCTION angle_btw_vecs(Vector1, Vector2)
+     REAL    Vector1(), Vector2()
+     REAL    retAngles
+     REAL    Num, Dividor
+
+$	 Num=0.0
+$	 Dividor=0.0
+$    retAngles=0.0
+
+	 Dividor = mth_sqrt( Vector1(1) ** 2 + Vector1(2) ** 2 + Vector1(3) ** 2 ) @
+      * mth_sqrt( Vector2(1) ** 2 + Vector2(2) ** 2 + Vector2(3) ** 2 )
+
+     Num = Vector1(1)*Vector2(1) + Vector1(2)*Vector2(2) + Vector1(3)*Vector2(3)
+
+     retAngles = Num / Dividor
+
+     IF (retAngles > 1.0) THEN
+		retAngles = 0.9999
+     ELSE IF (retAngles < -1.0) THEN
+		retAngles = -0.9999
+     END IF
+
+     RETURN  mth_acosd(retAngles)
+END FUNCTION
+
+FUNCTION elem_normal(i_ElemID, nvct)
+INTEGER i_ElemID
+REAL	xyzs(4,3), mag, nvct()
+REAL	vct1(3), vct2(3), vct(3)
+INTEGER nNode, NodeID(4)
+INTEGER i
+
+db_get_elem_nodes(i_ElemID, nNode, NodeID)
+
+FOR(i=1 TO nnode)
+	db_get_node(NodeID(i), xyzs(i,1:3))
+END FOR
+
+  vct1(1) = xyzs(2, 1) - xyzs(1, 1)
+  vct1(2) = xyzs(2, 2) - xyzs(1, 2)
+  vct1(3) = xyzs(2, 3) - xyzs(1, 3)
+
+  vct2(1) = xyzs(3, 1) - xyzs(2, 1)
+  vct2(2) = xyzs(3, 2) - xyzs(2, 2)
+  vct2(3) = xyzs(3, 3) - xyzs(2, 3)
+
+  xfem_vector.cross_product( vct1, vct2, vct )
+
+  mag = mth_sqrt(vct(1)*vct(1) + vct(2)*vct(2) + vct(3)*vct(3) )
+
+  if(mag == 0) then
+     dump i_ElemID
+     return i_ElemID
+  end if
+
+  nvct(1) = vct(1)/mag
+  nvct(2) = vct(2)/mag
+  nvct(3) = vct(3)/mag
+
+  return 0
+
+END FUNCTION
+
+END CLASS

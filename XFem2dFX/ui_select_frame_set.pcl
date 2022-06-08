@@ -1,0 +1,104 @@
+#include "appforms.p"
+#include "lpenums.i"
+
+/* ============================================================================================
+*
+	ui_select_frame_set(						@
+	// parent widget id(input) 	//	parent,		@
+	//	select frame callback	//	select_frame_callback @	
+	// 	select frame label		//	select_frame_label,		@
+	//		x				//	x_loc,			@	
+	//		y				//	y_loc, 			@
+	//	select databax array	//	wa_select_dbox,	@
+	// 	data type	array		//	sa_data_type,		@
+	// 	select databox label array	// 	sa_sdbox_label,	@
+	//	select databox collback array	// 	sa_sdbox_callback,	@
+	//	label avove logical	//			label_above)
+
+  ============================================================================================*/
+
+function ui_select_frame_set(parent, select_frame_callback, select_frame_label, x_loc, y_loc, @
+						wa_select_dbox, sa_data_type, sa_sdbox_label, sa_sdbox_callback, label_above)
+
+widget parent
+string select_frame_callback[]
+string select_frame_label[]
+real x_loc, y_loc
+widget wa_select_dbox()
+string sa_data_type[]()
+string sa_sdbox_label[]()
+string sa_sdbox_callback[]()
+logical label_above
+     
+	widget select_frame_id
+	real select_frame_height
+
+     integer nbox
+      nbox = sys_array_hbound( wa_select_dbox , 1 )
+
+	 real SFRAME_WIDTH
+	 SFRAME_WIDTH = FRAME_WID_SINGLE - FRAME_L_MARGIN - FRAME_R_MARGIN
+	 
+      select_frame_id = ui_selectframe_create(						@
+      /*  parent  */                       parent,                	@
+      /* callback */                       select_frame_callback,	@
+      /*     x    */                       x_loc,          	@
+      /*     y    */                       y_loc,                   	@
+      /*   width  */                       SFRAME_WID_SINGLE,      	@
+      /*  height  */                       SFRAME_1SDB_HGT_LABOVE, 	@
+      /*   label  */                       select_frame_label,		@
+      /*  recycle */                       TRUE)
+
+
+      integer idx
+      real incr_box, box_length, label_length
+
+      if(label_above == TRUE)then
+            incr_box = SDBOX_Y_LABOVE_INCR
+            label_length = 0.0
+            box_length =  SDBOX_WID_SINGLE - SFRAME_R_MARGIN
+      else if(label_above == FALSE) then
+            incr_box = SDBOX_Y_NO_LABOVE_INCR
+            label_length = SDBOX_LABEL_LEN_SINGLE
+            box_length =  SDBOX_WID_SINGLE / 2
+      end if
+
+      real SDBOX_INTER_WIDGET
+
+      SDBOX_INTER_WIDGET = INTER_WIDGET_SPACE
+
+      for(idx =1 to nbox)
+
+            wa_select_dbox(idx) = ui_selectdatabox_create(                       @
+           /*    parent    */                    select_frame_id,          @
+           /*   callback   */                    sa_sdbox_callback(idx),        @
+           /*       x      */                    SFRAME_L_MARGIN,       @
+           /*       y      */                    SDBOX_INTER_WIDGET ,  @
+           /* label_length */                    label_length,                   @
+           /*  box_length  */                    box_length,      @
+           /*     label    */                    sa_sdbox_label(idx),           @
+           /*     value    */                    "",                    @
+           /*  label_above */                    label_above,           @
+           /*   datatype   */                    sa_data_type(idx),            @
+           /*    prompt    */                    sa_sdbox_label(idx))
+
+            SDBOX_INTER_WIDGET += incr_box
+
+      end for
+
+      select_frame_height = SDBOX_INTER_WIDGET
+
+      ui_wid_set(select_frame_id,"HEIGHT", select_frame_height)
+/*
+      sframe_hgt = SFRAME_T_MARGIN +                @
+                        SFRAME_1SDB_HGT_LABOVE +    @
+                        SFRAME_B_MARGIN +           @
+                        INTER_WIDGET_SPACE +        @
+                        SFRAME_1EDGE
+*/
+      y_loc += select_frame_height + INTER_WIDGET_SPACE
+
+return select_frame_id
+
+end function
+

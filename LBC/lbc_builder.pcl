@@ -1,0 +1,699 @@
+#include "appforms.p"
+
+Class lbc_builder
+
+/* Classwide Variables */
+   CLASSWIDE WIDGET form_id, lstLoadCaseList, fraFEMField
+   CLASSWIDE WIDGET dboxSX, dboxEX, dboxSY, dboxEY, dboxSZ, dboxEZ
+   CLASSWIDE WIDGET btnFieldPrefix, dboxFieldPrefix, lstFieldList
+   CLASSWIDE WIDGET btnCreateField, fraLoadCase, sfraBoundNode
+   CLASSWIDE WIDGET dboxLoadCasePrefix, sdboxSelNode 
+   CLASSWIDE WIDGET dboxGroupName
+   CLASSWIDE WIDGET btnApply, btnCancel
+
+ Function init()
+      REAL box_length=0.0
+      REAL yloc_main, xloc_dboxFieldPrefix
+      REAL yloc_fraFEMField=0., yloc_fraLoadCase=0.
+
+      form_id=ui_form_create(                     @
+      /* callback */         "",                  @
+      /*     x    */         FORM_X_LOC_SML,      @
+      /*     y    */         FORM_Y_LOC,          @
+      /* position */         "UL",                @
+      /*   width  */         FORM_WID_SML,        @
+      /*  height  */         FORM_HGT_TALL,       @
+      /*   label  */         "LoadCase Builder",  @
+      /*  unused  */         "")
+
+      yloc_main = FORM_T_MARGIN
+
+      lstLoadCaseList=ui_listbox_create(                  @
+      /*     parent     */              form_id,          @
+      /*    callback    */              "", @
+      /*        x       */              FORM_L_MARGIN,    @
+      /*        y       */              yloc_main,        @
+      /*      width     */              LBOX_WID_SINGLE,  @
+      /*    num_rows    */              5,                @
+      /*      label     */              "LoadCase List",  @
+      /* selection_type */              "EXTEnd",         @
+      /*      sort      */              TRUE)
+
+      yloc_main += LBOX_5L_HGT_LABOVE  + @
+                   INTER_WIDGET_SPACE
+
+      fraFEMField=ui_frame_create(                               @
+      /* parent */                form_id,                       @
+      /*  name  */                "",                            @
+      /*    x   */                FRAME_X_LOC_COL1,              @
+      /*    y   */                yloc_main,                     @
+      /*  width */                FRAME_WID_SINGLE,              @
+      /* height */                1.0,                           @
+      /*  label */                "FEM Field for Displacement")
+
+      yloc_fraFEMField = FRAME_T_MARGIN + INTER_WIDGET_SPACE
+
+	  btnFieldPrefix=ui_button_create(                     @
+      /*   parent  */                 fraFEMField,         @
+      /*  callback */                 "cbkFieldPrefix",    @
+      /*     x     */                 BUTTON_HALF_X_LOC1,  @
+      /*     y     */                 yloc_fraFEMField,    @
+      /*   width   */                 BUTTON_WID_HALF,     @
+      /*   height  */                 BUTTON_DEFAULT_HGT,  @
+      /*   label   */                 "Field Prefix",            @
+      /*    TRUE   */                 TRUE,                @
+      /* highlight */                 TRUE)
+
+      xloc_dboxFieldPrefix = BUTTON_HALF_X_LOC1 +  BUTTON_WID_HALF + @
+						FORM_L_MARGIN
+
+      box_length = DBOX_WID_SINGLE  - @
+                   xloc_dboxFieldPrefix
+
+	  dboxFieldPrefix=ui_databox_create(                   @
+      /*    parent    */           fraFEMField,       @
+      /*   callback   */           "",                @
+      /*       x      */           xloc_dboxFieldPrefix,     @
+      /*       y      */           yloc_fraFEMField,  @
+      /* label_length */           0.0,               @
+      /*  box_length  */           box_length,        @
+      /*     label    */           "",              @
+      /*     value    */           "",             @
+      /*  label_above */           FALSE,             @
+      /*   datatype   */           "STRING",          @
+      /*   num_vals   */           1)
+
+      yloc_fraFEMField += DBOX_HGT_NO_LABOVE  + @
+                          INTER_WIDGET_SPACE
+
+      lstFieldList=ui_listbox_create(                   @
+      /*     parent     */           fraFEMField,       @
+      /*    callback    */           "",                @
+      /*        x       */           FORM_L_MARGIN,     @
+      /*        y       */           yloc_fraFEMField,  @
+      /*      width     */           LBOX_WID_SINGLE,   @
+      /*    num_rows    */           3,                 @
+      /*      label     */           "",      @
+      /* selection_type */           "SINGLE",          @
+      /*      sort      */           TRUE)
+
+      yloc_fraFEMField += LBOX_3L_HGT_NO_LABOVE  + @
+                          INTER_WIDGET_SPACE
+
+      btnCreateField=ui_button_create(                     @
+      /*   parent  */                 fraFEMField,         @
+      /*  callback */                 "cbkCreateFEMField", @
+      /*     x     */                 BUTTON_FULL_X_LOC1,  @
+      /*     y     */                 yloc_fraFEMField,    @
+      /*   width   */                 BUTTON_WID_FULL-FORM_L_MARGIN,     @
+      /*   height  */                 BUTTON_DEFAULT_HGT,  @
+      /*   label   */                 "Create Field",      @
+      /*    TRUE   */                 TRUE,                @
+      /* highlight */                 FALSE)
+
+      yloc_fraFEMField += BUTTON_DEFAULT_HGT  + @
+                          INTER_WIDGET_SPACE
+
+	  ui_wid_set(fraFEMField,"HEIGHT",yloc_fraFEMField)
+
+      yloc_main += FRAME_2EDGE         + @
+                   FRAME_LABEL_HGT     + @
+                   INTER_WIDGET_SPACE  + @
+                   yloc_fraFEMField
+
+      fraLoadCase=ui_frame_create(                     @
+      /* parent */                form_id,             @
+      /*  name  */                "",                  @
+      /*    x   */                FRAME_X_LOC_COL1,    @
+      /*    y   */                yloc_main,           @
+      /*  width */                FRAME_WID_SINGLE,    @
+      /* height */                1.0,                 @
+      /*  label */                "LoadCase Builder")
+
+      yloc_fraLoadCase = FRAME_T_MARGIN
+
+      box_length = DBOX_WID_SINGLE  - @
+                   1.
+
+      dboxLoadCasePrefix =ui_databox_create(                    @
+      /*    parent    */                    fraLoadCase,        @
+      /*   callback   */                    "",                 @
+      /*       x      */                    FORM_L_MARGIN,      @
+      /*       y      */                    yloc_fraLoadCase,   @
+      /* label_length */                    1.,                 @
+      /*  box_length  */                    box_length,         @
+      /*     label    */                    "LoadCase Prefix",  @
+      /*     value    */                    "LOC",              @
+      /*  label_above */                    FALSE,              @
+      /*   datatype   */                    "STRING",           @
+      /*   num_vals   */                    1)
+
+      yloc_fraLoadCase += DBOX_HGT_NO_LABOVE  + @
+                          INTER_WIDGET_SPACE
+
+      box_length = DBOX_WID_SINGLE  - @
+                   1.0
+	 
+      dboxGroupName=ui_databox_create(                   @
+      /*    parent    */              fraLoadCase,       @
+      /*   callback   */              "",                @
+      /*       x      */              FORM_L_MARGIN,     @
+      /*       y      */              yloc_fraLoadCase,  @
+      /* label_length */              1.0,               @
+      /*  box_length  */              box_length,        @
+      /*     label    */              "Group Name",      @
+      /*     value    */              "",                @
+      /*  label_above */              FALSE,             @
+      /*   datatype   */              "STRING",          @
+      /*   num_vals   */              1)
+
+      yloc_fraLoadCase += DBOX_HGT_NO_LABOVE  + @
+                          INTER_WIDGET_SPACE
+      
+      box_length = DBOX_WID_SINGLE  - @
+                   1.0
+      
+      dboxSX=ui_databox_create(                   @
+      /*    parent    */       fraLoadCase,       @
+      /*   callback   */       "",                @
+      /*       x      */       FORM_L_MARGIN,     @
+      /*       y      */       yloc_fraLoadCase,  @
+      /* label_length */       1.,                @
+      /*  box_length  */       box_length,        @
+      /*     label    */       "SX",              @
+      /*     value    */       0.,                @
+      /*  label_above */       FALSE,             @
+      /*   datatype   */       "REAL",            @
+      /*   num_vals   */       1)
+
+      yloc_fraLoadCase += DBOX_HGT_NO_LABOVE  + @
+                          INTER_WIDGET_SPACE
+
+      box_length = DBOX_WID_SINGLE  - @
+                   1.
+
+      dboxEX=ui_databox_create(                   @
+      /*    parent    */       fraLoadCase,       @
+      /*   callback   */       "",                @
+      /*       x      */       FORM_L_MARGIN,     @
+      /*       y      */       yloc_fraLoadCase,  @
+      /* label_length */       1.,                @
+      /*  box_length  */       box_length,        @
+      /*     label    */       "EX",              @
+      /*     value    */       0.,                @
+      /*  label_above */       FALSE,             @
+      /*   datatype   */       "REAL",            @
+      /*   num_vals   */       1)
+
+      yloc_fraLoadCase += DBOX_HGT_NO_LABOVE  + @
+                          INTER_WIDGET_SPACE
+
+      box_length = DBOX_WID_SINGLE  - @
+                   1.
+
+      dboxSY=ui_databox_create(                   @
+      /*    parent    */       fraLoadCase,       @
+      /*   callback   */       "",                @
+      /*       x      */       FORM_L_MARGIN,     @
+      /*       y      */       yloc_fraLoadCase,  @
+      /* label_length */       1.,                @
+      /*  box_length  */       box_length,        @
+      /*     label    */       "SY",              @
+      /*     value    */       0.,                @
+      /*  label_above */       FALSE,             @
+      /*   datatype   */       "REAL",            @
+      /*   num_vals   */       1)
+
+      yloc_fraLoadCase += DBOX_HGT_NO_LABOVE  + @
+                          INTER_WIDGET_SPACE
+
+      box_length = DBOX_WID_SINGLE  - @
+                   1.
+
+      dboxEY=ui_databox_create(                   @
+      /*    parent    */       fraLoadCase,       @
+      /*   callback   */       "",                @
+      /*       x      */       FORM_L_MARGIN,     @
+      /*       y      */       yloc_fraLoadCase,  @
+      /* label_length */       1.,                @
+      /*  box_length  */       box_length,        @
+      /*     label    */       "EY",              @
+      /*     value    */       0.,                @
+      /*  label_above */       FALSE,             @
+      /*   datatype   */       "REAL",            @
+      /*   num_vals   */       1)
+
+      yloc_fraLoadCase += DBOX_HGT_NO_LABOVE  + @
+                          INTER_WIDGET_SPACE
+
+      box_length = DBOX_WID_SINGLE  - @
+                   1.
+
+      dboxSZ=ui_databox_create(                   @
+      /*    parent    */       fraLoadCase,       @
+      /*   callback   */       "",                @
+      /*       x      */       FORM_L_MARGIN,     @
+      /*       y      */       yloc_fraLoadCase,  @
+      /* label_length */       1.,                @
+      /*  box_length  */       box_length,        @
+      /*     label    */       "SZ",              @
+      /*     value    */       0.,                @
+      /*  label_above */       FALSE,             @
+      /*   datatype   */       "REAL",            @
+      /*   num_vals   */       1)
+
+      yloc_fraLoadCase += DBOX_HGT_NO_LABOVE  + @
+                          INTER_WIDGET_SPACE
+
+      box_length = DBOX_WID_SINGLE  - @
+                   1.
+
+      dboxEZ=ui_databox_create(                   @
+      /*    parent    */       fraLoadCase,       @
+      /*   callback   */       "",                @
+      /*       x      */       FORM_L_MARGIN,     @
+      /*       y      */       yloc_fraLoadCase,  @
+      /* label_length */       1.,                @
+      /*  box_length  */       box_length,        @
+      /*     label    */       "EZ",              @
+      /*     value    */       0.,                @
+      /*  label_above */       FALSE,             @
+      /*   datatype   */       "REAL",            @
+      /*   num_vals   */       1)
+      
+      yloc_fraLoadCase += DBOX_HGT_NO_LABOVE  + @
+                          INTER_WIDGET_SPACE
+      
+      sfraBoundNode=ui_selectframe_create(fraLoadCase,"", @
+				         				  SFRAME_X_LOC_COL1, @
+										  yloc_fraLoadCase, @
+										  SFRAME_WID_SINGLE, @
+										  SFRAME_1SDB_HGT_LABOVE, @
+										  "", @
+										  false)
+
+      sdboxSelNode= ui_selectdatabox_create(sfraBoundNode,		@
+											"",					@
+	      									SFRAME_L_MARGIN,	@
+											0,					@
+											SDBOX_LABEL_LEN_SINGLE, @
+											SDBOX_WID_SINGLE, @
+											"Select Boundary Node",@
+											"",true, @
+											"NODE", "" )
+
+     yloc_fraLoadCase += TOGGLE_HGT + SFRAME_1SDB_HGT_LABOVE + INTER_WIDGET_SPACE
+    
+      ui_wid_set(fraLoadCase,"HEIGHT",yloc_fraLoadCase)
+
+      yloc_main += FRAME_2EDGE         + @
+                   FRAME_LABEL_HGT     + @
+                   INTER_WIDGET_SPACE  + @
+                   yloc_fraLoadCase
+
+      btnApply=ui_button_create(                     @
+      /*   parent  */           form_id,             @
+      /*  callback */           "cbkApply",                  @
+      /*     x     */           BUTTON_HALF_X_LOC1,  @
+      /*     y     */           yloc_main,           @
+      /*   width   */           BUTTON_WID_HALF,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Apply",             @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           FALSE)
+
+      btnCancel=ui_button_create(                     @
+      /*   parent  */            form_id,             @
+      /*  callback */            "cbkCancel",         @
+      /*     x     */            BUTTON_HALF_X_LOC2,  @
+      /*     y     */            yloc_main,           @
+      /*   width   */            BUTTON_WID_HALF,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Cancel",            @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+
+      yloc_main += BUTTON_DEFAULT_HGT  + @
+                   INTER_WIDGET_SPACE
+
+      ui_wid_set(form_id,"HEIGHT",yloc_main)
+	
+   End Function /* init */
+
+   Function display()
+   INTEGER grp_id
+   STRING grp_name[64]
+
+	 ui_form_display("lbc_builder")
+ 	 udf_load_result_cases(lstLoadCaseList)
+	 lbc_builder.Load_Field_List()
+ 	 db_get_current_group_id(grp_id)
+	 db_get_group_name(grp_id,grp_name)
+	 ui_wid_set(dboxGroupName,"VALUE",grp_name)
+
+   End Function /* display */
+
+	
+	Function cbkCancel()
+		ui_form_hide("lbc_builder")
+	End Function
+
+	
+	Function cbkFieldPrefix()
+		lbc_builder.Load_Field_List()
+	End Function
+	
+	
+	Function cbkCreateFEMField()
+	STRING LoadCase_Name[64](VIRTUAL), SubCase_Name[64](VIRTUAL),fld_name[64](VIRTUAL),grp_name[64], @
+		  lc_list[63](VIRTUAL), FieldPrefix[64]
+	INTEGER nlc, i,grp_id
+	
+		ui_wid_get(lstLoadCaseList,"nselected",nlc)
+		sys_allocate_array(lc_list,1,nlc)
+		ui_wid_get(lstLoadCaseList,"value",lc_list)
+
+		sys_allocate_array(LoadCase_Name,1,nlc)
+		sys_allocate_array(SubCase_Name,1,nlc)
+		sys_allocate_array(fld_name,1,nlc)
+		
+		ui_wid_get(dboxFieldPrefix, "VALUE", FieldPrefix)
+
+		FOR(i=1 TO nlc)
+			LoadCase_Name(i) = str_token(lc_list(i),",",1)
+			SubCase_Name(i) = str_token(lc_list(i),",",2)
+			IF(str_find_match(LoadCase_Name(i),":") != 0 ) THEN
+				fld_name(i) = FieldPrefix // str_token(LoadCase_Name(i),":",2)
+			ELSE
+				fld_name(i) = FieldPrefix // LoadCase_Name(i)
+			End IF
+		End FOR
+
+		db_get_current_group_id(grp_id)
+		db_get_group_name(grp_id,grp_name)
+
+		lbc_builder.Create_FEM_Field(grp_name, nlc, LoadCase_Name, SubCase_Name, fld_name)
+
+$		ui_listbox_items_create(lstFieldList,fld_name,fld_name,nlc,"")
+		lbc_builder.Load_Field_List()
+
+	End Function
+	
+	Function cbkApply()
+
+		lbc_builder.Create_LoadCase()
+		
+$		lbc_builder.Transfer_Load()
+
+		ui_form_hide("lbc_builder")
+	End Function
+   
+	Function Load_Field_List()
+	integer field_id(100), status, cnt, lstcnt, nlc, i
+	string field_name[64](100), FieldPrefix[64], field_list[64](virtual), LoadCase_Name[64](virtual), @
+		  loadcase_list[63](virtual),SubCase_Name[64](virtual)
+
+		ui_listbox_items_delete(lstFieldList)	
+		
+		ui_wid_get(dboxFieldPrefix, "VALUE", FieldPrefix)
+
+		ui_wid_get(lstLoadCaseList, "NITEMS", nlc)
+		sys_allocate_array(loadcase_list, 1, nlc)
+		sys_allocate_array(LoadCase_Name, 1, nlc)
+		sys_allocate_array(SubCase_Name, 1, nlc)
+		ui_wid_get(lstLoadCaseList, "ITEMS", loadcase_list)
+
+		FOR(i=1 TO nlc)
+			LoadCase_Name(i) = str_token(loadcase_list(i),",",1)
+			SubCase_Name(i) = str_token(loadcase_list(i),",",2)
+			IF(str_find_match(LoadCase_Name(i),":") != 0 ) THEN
+				LoadCase_Name(i) = str_token(LoadCase_Name(i),":",2)
+			End IF
+		End FOR
+
+		db_get_all_field_names (0)
+
+		status = 0
+		cnt=0
+		lstcnt = 0
+		WHILE(status == 0)
+			cnt +=1
+			status = db_get_next_field_name(field_id(cnt),field_name(cnt))
+			FOR(i=1 TO nlc)
+				IF(field_name(cnt) == str_strip_trail(str_strip_lead(FieldPrefix)) // LoadCase_Name(i)) THEN
+					lstcnt += 1
+					sys_reallocate_array(field_list,1,lstcnt)
+					field_list(lstcnt) = field_name(cnt)
+				End IF
+			End FOR
+		End WHILE
+		
+		ui_listbox_items_create(lstFieldList,field_list,field_list,lstcnt,"")
+ 	End Function
+ 
+   Function Create_FEM_Field(Group_Name, nrc, LoadCase_Name, SubCase_Name, Field_Name)
+   STRING LoadCase_Name[](), SubCase_Name[](), Group_Name[], Field_Name[]()
+   INTEGER i, nrc
+ 
+	FOR(i=1 TO nrc)
+		res_data_load_dbresult(		/* register */				0, @ 
+								/* location */			"Nodal", @
+								/* result_type */		"Vector", @ 
+								/* load_case */		LoadCase_Name(i),  @
+								/* subcase */			SubCase_Name(i), @
+								/* primary_result */	"Displacements", @
+								/* secondary_result */	"Translational", @
+								/* layer */			"(NON-LAYERED)", @
+								/* derivation */		"",  @
+								/* coordinate */		"Coord 0", @
+								/* averaging_method */	"", @
+								/* averaging_domain */	"", @
+								/* extrapolation */		"", @
+								/* complex_form */		"", @
+								/* complex_angle */		0.)
+
+		$ register, location, register_type, count, titles
+		res_data_title( 0, "Nodal", "Vector", 1, [""])
+
+		$ plot_name, entity_type, ntargets, targets, nattribs, attributes, deformed_flag
+		res_display_vector_create( "", "Nodes", 0, [""], 16, @
+					[ "Range:Vec_default_Vector", @
+					"RangeOverwrite:ON", @
+					"VectorDisplay:Component",  @
+					"VectorComps:ON,ON,ON", @
+					"VectorColors:Spectrum",  @
+					"VectorScale:ScreenScaled=0.1", @
+					"VectorAttachment:Head", @
+					"HeadStyle:Single",  @
+					"VectorStyle:Solid", @
+					"TailDisplay:ON", @
+					"TitleDisplay:OFF", @ 
+					"MinMaxDisplay:OFF", @
+					"LabelStyle:Exponential, 12, White, 3", @
+					"ValueDisplay:ON", @
+					"Filter:None",  @
+					"ScaleFactor:1."], @
+					TRUE )
+
+		$ plot_name, register_id, register_location, range_flag, spectrum_flag
+		res_display_vector_post( "", 0, "Nodal", TRUE, FALSE )
+
+		fields_create_fem( Field_Name(i), Group_Name, "Vector", 2, "Coord 0", 0 )
+	End FOR		
+   
+   End Function
+   
+   Function Create_LoadCase()
+   integer nlc, i, j, LoadCase_Id, Local_LoadCase_Id,lbc_prior(virtual),new_lbc_prior(virtual),	@
+			  LoadCase_Type, nlbc, new_nlbc, lbc_id(virtual), new_lbc_id(virtual), lbc_type_id,	@
+			  app_type, elem_dim, cid, dyn_flag
+   string sel_loadcase_list[63](virtual), LoadCase_Name[64](virtual), SubCase_Name[64](virtual), @
+			 LoadCase_Prefix[10], Local_LoadCase_Name[64], lbc_name[64], LoadCase_Descrip[100],	@
+			 dyn_case_name[100]
+   real eval_point
+	
+		ui_wid_get(lstLoadCaseList,"nselected",nlc)
+		sys_allocate_array(sel_loadcase_list,1,nlc)
+		ui_wid_get(lstLoadCaseList,"value",sel_loadcase_list)
+
+		sys_allocate_array(LoadCase_Name,1,nlc)
+		sys_allocate_array(SubCase_Name,1,nlc)
+		
+		ui_wid_get(dboxLoadCasePrefix, "VALUE", LoadCase_Prefix)
+
+		FOR(i=1 TO nlc)
+			LoadCase_Name(i) = str_token(sel_loadcase_list(i),",",1)
+			SubCase_Name(i) = str_token(sel_loadcase_list(i),",",2)
+			IF(str_find_match(LoadCase_Name(i),":") != 0 ) THEN
+				LoadCase_Name(i) = str_token(LoadCase_Name(i),":",2)
+			End IF
+		End FOR
+
+		FOR(i=1 TO nlc)
+			db_count_lbc_by_load_case (LoadCase_Name(i), nlbc)
+			
+			sys_allocate_array(lbc_id, 1, nlbc)
+			sys_allocate_array(lbc_prior, 1, nlbc)
+
+			db_get_load_case (	/* load_case_name				*/ LoadCase_Name(i),	@
+										/*	load_case_id				*/ LoadCase_Id,		@
+										/*	load_case_type				*/	LoadCase_Type,		@
+										/*	load_case_description	*/	LoadCase_Descrip,	@
+										/* num_loads					*/	nlbc,					@
+										/*	load_ids						*/	lbc_id,				@
+										/*	dynamic_case_name			*/	dyn_case_name,		@
+										/*	evaluation_point			*/	eval_point,			@
+										/*	load_priorities			*/	lbc_prior			)
+			
+			new_nlbc = 0
+			FOR(j=1 TO nlbc)
+				db_get_lbc (	/* load_id				*/	lbc_id(j),	@
+									/*	load_name			*/	lbc_name,	@	
+									/*	load_type			*/	lbc_type_id,	@
+									/*	application_type	*/	app_type,	@
+									/*	elem_dimension		*/	elem_dim,	@
+									/*	coord_id				*/	cid,			@
+									/*	dynamic_flag		*/ dyn_flag		)
+				
+				IF(lbc_type_id != 6) THEN
+					new_nlbc += 1
+					sys_reallocate_array(new_lbc_id,1,new_nlbc)
+					sys_reallocate_array(new_lbc_prior,1,new_nlbc)
+
+					new_lbc_id(new_nlbc) = lbc_id(j)
+					new_lbc_prior(new_nlbc) = lbc_prior(j)
+				End IF
+			End FOR
+
+			new_nlbc += 1			
+			sys_reallocate_array(new_lbc_id,1,new_nlbc)
+			sys_reallocate_array(new_lbc_prior,1,new_nlbc)
+
+			lbc_builder.Local_Boundary_Builder(nlc, LoadCase_Name(i), new_lbc_id(new_nlbc))
+			
+			Local_LoadCase_Name = LoadCase_Prefix // "_" // LoadCase_Name(i)
+
+			db_create_load_case( /* load_case_name				*/	Local_LoadCase_Name,	@
+										/*	load_case_type				*/	LoadCase_Type,			@
+										/*	load_case_description	*/	LoadCase_Descrip,		@
+										/* num_loads					*/	new_nlbc,						@
+										/*	load_ids						*/	new_lbc_id,					@
+										/*	dynamic_case_name			*/	dyn_case_name,			@
+										/*	evaluation_point			*/	eval_point,				@
+										/*	load_priorities			*/	new_lbc_prior,				@
+										/*	load_case_id				*/	Local_LoadCase_Id		)		
+		
+		End FOR
+
+	End Function
+
+
+	
+	Function Local_Boundary_Builder(nlc, LoadCase_Name, lbc_id)
+	
+	integer nlc, nfield, i, j, lbc_id
+   string LoadCase_Name[], field_name[64](virtual), node_id_list[virtual](1), FieldPrefix[64], @
+		  fld_name[64](2), lbc_name[64], loc_field_name[64] 
+
+	ui_wid_get(lstFieldList, "NITEMS", nfield)
+	sys_allocate_array(field_name, 1, nfield)
+	ui_wid_get(lstFieldList, "ITEMS", field_name)
+
+	ui_wid_get(dboxFieldPrefix, "VALUE", FieldPrefix)
+
+	lbc_builder.Get_Model_Bound_Node(node_id_list)
+
+	FOR(i=1 TO nfield)
+		IF(FieldPrefix // LoadCase_Name == field_name(i)) THEN
+			loc_field_name = field_name(i)
+		End IF
+	End FOR
+
+	
+		lbc_name = "lbc_" // LoadCase_Name
+		fld_name(1) = "f:"// loc_field_name
+		fld_name(2) =""
+
+		loadsbcs_create2(	/* s_lbc_name			*/	lbc_name,			@
+						/* i_lbc_type			*/	"Displacement",	@
+						/* i_lbc_category		*/	"Nodal",			@
+						/* i_target_element		*/	"",				@
+						/* load_case_type		*/	"Static",			@
+						/* ap_list			*/	node_id_list,		@
+						/* i_geo_filter			*/	"FEM",			@
+						/* alt_coord_frame		*/	"Coord 0",		@
+						/* str_lbc_scale_factor	*/	"1.",			@
+						/* static_data			*/	fld_name,			@
+						/* dynamic_field_name	*/	["", ""] )
+
+		db_get_lbc_id(lbc_name, lbc_id)
+
+   End Function
+	
+	Function Get_Model_Bound_Node(node_id_list)
+	real SS(0:2), EE(0:2), TOR, nd_xyz(0:2)
+	integer nnode, node_id(virtual), i, j, k, cnt, scnt, id_len, @
+		    warn_message, elem_id(virtual), nelm, Group_id
+	string node_id_list[](), Group_Name[64], sel_node_list[100000]
+	logical conf
+
+		pref_global_get(conf,warn_message,TOR)
+
+		ui_wid_get(dboxGroupName, "VALUE", Group_Name)
+		db_get_group_id(Group_Name, Group_id)
+		db_count_elems_in_group(Group_id, nelm)
+		sys_allocate_array(elem_id, 1, nelm)
+		db_get_elem_ids_in_group(nelm, Group_id, elem_id)
+		db_get_node_ass_elem(nelm, elem_id, nnode, node_id)		
+		
+		
+		ui_wid_get(dboxSX,"value",SS(0))
+		ui_wid_get(dboxEX,"value",EE(0))
+		ui_wid_get(dboxSY,"value",SS(1))
+		ui_wid_get(dboxEY,"value",EE(1))
+		ui_wid_get(dboxSZ,"value",SS(2))
+		ui_wid_get(dboxEZ,"value",EE(2))
+
+		id_len = str_length("Node ")
+
+		sys_allocate_string(node_id_list, id_len)
+		
+		node_id_list(1) = "Node"
+		scnt = 0
+		FOR(cnt=1 TO nnode)
+			db_get_node(node_id(cnt),nd_xyz)
+			
+			FOR(i=0 TO 2)
+				IF(SS(i) - TOR < nd_xyz(i) && nd_xyz(i) < SS(i)+TOR) THEN
+					j = mth_mod(i+1,3)
+					k = mth_mod(i+2,3)
+					IF(SS(j)-TOR < nd_xyz(j) && nd_xyz(j) < EE(j)+TOR && @
+					   SS(k)-TOR < nd_xyz(k) && nd_xyz(k) < EE(k)+TOR) THEN
+						scnt += 1
+						id_len = id_len + str_length(str_from_integer(node_id(cnt))) + 1
+						sys_reallocate_string(node_id_list,id_len)
+						node_id_list(1) = node_id_list(1) // " " // str_from_integer(node_id(cnt))
+					End IF				
+				ELSE IF(EE(i) - TOR < nd_xyz(i) && nd_xyz(i) < EE(i)+TOR) THEN
+					j = mth_mod(i+1,3)
+					k = mth_mod(i+2,3)
+					IF(SS(j)-TOR < nd_xyz(j) && nd_xyz(j) < EE(j)+TOR && @
+					   SS(k)-TOR < nd_xyz(k) && nd_xyz(k) < EE(k)+TOR) THEN
+   					   scnt += 1
+					   id_len = id_len + str_length(str_from_integer(node_id(cnt))) + 1
+					   sys_reallocate_string(node_id_list,id_len)
+					   node_id_list(1) = node_id_list(1) // " " // str_from_integer(node_id(cnt))
+					End IF				
+				End IF
+			End FOR
+		End FOR
+
+		ui_wid_get(sdboxSelNode,"value",sel_node_list)
+		id_len = id_len + str_length(sel_node_list) + 1
+		sys_reallocate_string(node_id_list, id_len )
+
+		node_id_list(1) = node_id_list(1) // " " // sel_node_list
+		
+	End Function
+	
+End Class /* lbc_builder */

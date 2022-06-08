@@ -1,0 +1,105 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME FRAME_CREATE_MESH_SURFACE
+#define CLASS_STR "FRAME_CREATE_MESH_SURFACE"
+
+class CLASSNAME
+$ ui_main_frame
+classwide widget opt_Action, opt_Method
+classwide widget sframe_07, wa_sdbox_07(1), dbox_Input
+
+/*******************************************************************************
+ 	Action-Move/Copy, Object-Node, Method - Reference Node, Relative Value, Absolut Value 
+ *******************************************************************************/
+ 
+ function UI_FRAME_CREATE_MESH_SURFACE(form_id, Y_LOC)
+ widget form_id
+ real Y_LOC
+ 
+ 	widget frame_wid
+ 
+       frame_wid=ui_frame_create(                   @
+      /* parent */             form_id,           @
+      /*  name  */             "",                @
+      /*    x   */             FRAME_X_LOC_COL1,  @
+      /*    y   */             Y_LOC,         @
+      /*  width */             FRAME_WID_SINGLE,  @
+      /* height */             1.0,               @
+      /*  label */             "")
+
+      real Y_LOCF = 0
+	 Y_LOCF = FRAME_T_MARGIN
+	  
+      dbox_Input = ui_databox_create(                    @
+      /*    parent    */                    frame_wid,     @
+      /*   callback   */                    "",                 @
+      /*       x      */                    FRAME_L_MARGIN,      @
+      /*       y      */                    Y_LOCF,   @
+      /* label_length */                    (FRAME_WID_SINGLE-FRAME_L_MARGIN - FRAME_R_MARGIN)/2,        @
+      /*  box_length  */                    DBOX_WID_SINGLE,         @
+      /*     label    */                    "Standard Mesh Size",  @
+      /*     value    */                    0.0,              @
+      /*  label_above */                    TRUE,              @
+      /*   datatype   */                    "REAL",           @
+      /*   num_vals   */                    1)
+      
+       Y_LOCF += DBOX_HGT_LABOVE + INTER_WIDGET_SPACE	  
+	  
+	sframe_07 = ui_select_frame_set(				@
+	/* parent widget id(input) 	*/	frame_wid,		@
+	/*	select frame callback	*/	CLASS_STR // ".Apply_Click",	@	
+	/* 	select frame label		*/	"Autoexec",	@
+	/*		x				*/	FORM_L_MARGIN,	@	
+	/*		y				*/	Y_LOCF, 		@
+	/*	select databax array	*/	wa_sdbox_07,	@
+	/* 	data type	array		*/	["SURFACE"],	@
+	/* 	select databox label array	*/ 	["Surface List"],	@
+	/*	select databox collback array	*/ 	[""], @
+	/*	label avove logical	*/			TRUE)     
+	
+     Y_LOCF += LABEL_HGT + INTER_WIDGET_SPACE
+
+	ui_wid_set(frame_wid, "HEIGHT", Y_LOCF)
+     
+     Y_LOC += Y_LOCF + INTER_WIDGET_SPACE	  
+	  
+ return frame_wid
+ end function
+ 
+   FUNCTION Apply_Click()
+     uil_primary_file.db_save()
+     string surf_list[virtual]
+     ui_wid_get_vstring(wa_sdbox_07(1), "VALUE", surf_list)
+	
+	integer cnt, status
+	cnt = fem_u_count_id_list(LP_SUBLIST_SURFACE, surf_list, FALSE, status)
+	
+	integer iv_surf_id(virtual)
+	sys_allocate_array(iv_surf_id, 1, cnt)
+	fem_u_get_id_list(LP_SUBLIST_SURFACE, surf_list, cnt, TRUE, iv_surf_id)
+
+	integer i_list_size = 128
+	integer i_init_flag = 0
+	integer iv_num_nodes(virtual)
+	integer iv_node_id_list(virtual)
+	real rv_node_uv_list(virtual)
+
+	sys_allocate_array(iv_num_nodes, 1, 4)
+	sys_allocate_array(iv_node_id_list, 1, 128)
+	sys_allocate_array(rv_node_uv_list, 1, 256)
+
+	sgm_node_on_surface(10, cnt, iv_surf_id, i_list_size, i_init_flag, @
+					iv_num_nodes, iv_node_id_list, rv_node_uv_list)
+  
+	dump iv_num_nodes
+	dump iv_node_id_list
+	dump rv_node_uv_list
+	
+	sys_free_array(iv_surf_id)
+	sys_free_array(iv_num_nodes)
+	sys_free_array(iv_node_id_list)
+	sys_free_array(rv_node_uv_list)
+  	
+   END FUNCTION
+        
+   END CLASS

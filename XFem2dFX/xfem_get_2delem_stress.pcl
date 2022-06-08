@@ -1,0 +1,32 @@
+FUNCTION xfem_get_2delem_stress(i_ElemId, i_ResultId)
+
+string s_Layer[]
+integer i_ElemId, i_ResultId()
+
+        integer i
+        string pri_label[15], sec_label[15], ResDev[15], layer[7]
+        real ElemStress(virtual), StressAtZ1(virtual), StressAtZ2(virtual)
+        string lc_title[80], sc_title[80]
+              
+              db_get_load_case_title( i_ResultId(1), lc_title)
+              db_get_sub_case_title(i_ResultId(1), 1, sc_title)
+       
+                     pri_label = "Stress Tensor"
+                     sec_label = ""
+                     xfem_get_result_id(lc_title, sc_title, pri_label, sec_label, i_ResultId)
+              
+                     layer = "At Z1"
+                     i_ResultId(5) = xfem_get_layer_id(i_ResultId(1:4), layer)
+                     xfem_get_result_data(i_ResultId, "Coord 0", ResDev, "Elem " // str_from_integer(i_ElemId), StressAtZ1)
+                     
+                     layer = "At Z2"
+                     i_ResultId(5) = xfem_get_layer_id(i_ResultId(1:4), layer)
+                     xfem_get_result_data(i_ResultId, "Coord 0", ResDev, "Elem " // str_from_integer(i_ElemId), StressAtZ2)
+                     sys_allocate_array(ElemStress, 1, 1)
+                     
+                     ElemStress(1) = (StressAtZ1(1) + StressAtZ2(1))/2
+
+             
+        return ElemStress
+
+END FUNCTION

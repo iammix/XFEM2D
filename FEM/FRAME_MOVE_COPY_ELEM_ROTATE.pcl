@@ -1,0 +1,160 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME FRAME_MOVE_COPY_ELEM_ROTATE
+#define CLASS_STR "FRAME_MOVE_COPY_ELEM_ROTATE"
+#define INIT_FORM	UI_FRAME_MOVE_COPY_ELEM_ROTATE
+
+class CLASSNAME
+		$ ui_main_frame
+
+		classwide widget sframe_reference, wa_sdbox_reference(2), dbox_rotangle, dbox_offsetang
+		classwide widget sframe_elem, wa_sdbox_elems(1), dbox_times
+		/*******************************************************************************
+			Action-Move/Copy, Object-Node, Method - Reference Node, Relative Value, Absolut Value 
+		*******************************************************************************/
+		
+		function INIT_FORM(form_id, Y_LOC)
+			widget form_id
+			real Y_LOC
+		
+			widget frame_wid
+		
+			frame_wid=ui_frame_create(                   @
+				/* parent */             form_id,           @
+				/*  name  */             "",                @
+				/*    x   */             -0.05,  @
+				/*    y   */             Y_LOC,         @
+				/*  width */             FORM_WID_SML,  @
+				/* height */             1.0,               @
+				/*  label */             "")
+
+			real Y_LOCF = 0
+			Y_LOCF = FRAME_T_MARGIN
+
+			sframe_reference = ui_select_frame_set(				@
+				/* parent widget id(input) 	*/	frame_wid,		@
+				/*	select frame callback	*/	"",	@	
+				/* 	select frame label		*/	"Autoexec",	@
+				/*		x				*/	FRAME_L_MARGIN,	@	
+				/*		y				*/	Y_LOCF, 		@
+				/*	select databax array	*/	wa_sdbox_reference,	@
+				/* 	data type array		*/	["FRAME", "AXIS"],		@
+				/* 	select databox label array	*/ 	["Reference Coord. Frame", "Axis"],	@
+				/*	select databox collback array	*/ 	["", ""], @
+				/*	label avove logical	*/			TRUE)
+				
+				ui_wid_set(wa_sdbox_reference(1), "VALUE", "Coord 0")
+				ui_wid_set(wa_sdbox_reference(2), "VALUE", "Coord 0.3")
+
+			Y_LOCF += INTER_WIDGET_SPACE*2
+
+			dbox_rotangle = ui_databox_create(                    			@
+					/*    parent    */                  frame_wid,     		@
+					/*   callback   */                  "",                 @
+					/*       x      */                  FRAME_L_MARGIN,     @
+					/*       y      */                  Y_LOCF,   			@
+					/* label_length */                  DBOX_WID_SINGLE/2,  @
+					/*  box_length  */                  DBOX_WID_SINGLE/2,  @
+					/*     label    */                  "Rotation Angle",  		@
+					/*     value    */                  90.,              	@
+					/*  label_above */                  FALSE,              	@
+					/*   datatype   */                  "REAL",           	@
+					/*   num_vals   */                  1)
+					
+			Y_LOCF += DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE	  
+
+			dbox_offsetang = ui_databox_create(                    			@
+					/*    parent    */                  frame_wid,     		@
+					/*   callback   */                  "",                 @
+					/*       x      */                  FRAME_L_MARGIN,     @
+					/*       y      */                  Y_LOCF,   			@
+					/* label_length */                  DBOX_WID_SINGLE/2,  @
+					/*  box_length  */                  DBOX_WID_SINGLE/2,  @
+					/*     label    */                  "Offset Angle",  		@
+					/*     value    */                  0.,              	@
+					/*  label_above */                  FALSE,              	@
+					/*   datatype   */                  "REAL",           	@
+					/*   num_vals   */                  1)
+					
+			Y_LOCF += DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+
+			dbox_times = ui_databox_create(                    			@
+					/*    parent    */                  frame_wid,     		@
+					/*   callback   */                  "",                 @
+					/*       x      */                  FRAME_L_MARGIN,     @
+					/*       y      */                  Y_LOCF,   			@
+					/* label_length */                  DBOX_WID_SINGLE/2,  @
+					/*  box_length  */                  DBOX_WID_SINGLE/2,  @
+					/*     label    */                  "Times",  		@
+					/*     value    */                  1,              	@
+					/*  label_above */                  FALSE,              	@
+					/*   datatype   */                  "INTEGER",           	@
+					/*   num_vals   */                  1)
+
+			Y_LOCF += DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+
+			sframe_elem = ui_select_frame_set(				@
+				/* 	parent widget id(input) 	*/	frame_wid,		@
+				/*	select frame callback	*/		CLASS_STR // ".Apply_Click",	@	
+				/* 	select frame label		*/		"Autoexec",	@
+				/*		x				*/			FRAME_L_MARGIN,	@	
+				/*		y				*/			Y_LOCF, 		@
+				/*	select databax array	*/		wa_sdbox_elems,	@
+				/* 	data type	array		*/		["ELEMENT"],		@
+				/* 	select databox label array	*/ 	["Element List"],	@
+				/*	select databox collback array	*/ 	[""], @
+				/*	label avove logical	*/			TRUE)     
+			
+				Y_LOCF += INTER_WIDGET_SPACE
+
+				ui_wid_set(frame_wid, "HEIGHT", Y_LOCF)
+				
+				Y_LOC += Y_LOCF + INTER_WIDGET_SPACE	  
+				
+		return frame_wid
+		end function
+		
+		function Apply_Click()
+			
+			string coord_frame[virtual]
+			ui_wid_get_vstring(wa_sdbox_reference(1), "VALUE", coord_frame)
+			
+			string s_axis[virtual]
+			ui_wid_get_vstring(wa_sdbox_reference(2), "VALUE", s_axis)
+
+			real rot_angle
+			ui_wid_get(dbox_rotangle, "value", rot_angle)
+
+			real off_angle
+			ui_wid_get(dbox_offsetang, "VALUE", off_angle)
+
+			integer i_times
+			ui_wid_get(dbox_times, "VALUE", i_times)
+
+			string elem_list[virtual]
+			ui_wid_get_vstring(wa_sdbox_elems(1), "value", elem_list)
+
+			ga_group_create("ideasx_temp")
+			ga_group_clear("ideasx_temp")
+			ga_group_entity_add("ideasx_temp", elem_list)
+			
+			widget opt_Action
+			opt_Action = sys_class_get("Finite_Element_2D", "opt_Action")
+
+			string action_item[virtual]
+			ui_wid_get_vstring(opt_Action, "VALUE", action_item)
+			dump action_item
+
+
+
+			if(action_item == "MOVE")then
+				ga_group_move_rotate( 1, ["ideasx_temp"], coord_frame, s_axis, rot_angle, off_angle, 25 )
+			else if(action_item == "COPY")then
+				ga_group_transform_rotate_1( 1, ["ideasx_temp"], coord_frame, s_axis, rot_angle, off_angle, 24, 4, "", i_times )
+			end if
+
+			ga_group_delete("ideasx_temp")
+			
+		end function
+
+END CLASS

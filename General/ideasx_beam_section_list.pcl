@@ -1,0 +1,40 @@
+/* 
+     get section_name 
+     get section_id
+*/      
+   
+function ideasx_beam_section_list(section_name, shape_name, section_id)
+     dump "ideasx_beam_section_list"
+     string section_name[]()
+     string shape_name[]()
+     integer section_id()
+
+     integer status
+     status = db_get_all_beam_section_ids()
+
+     integer idx, sec_id
+     idx = 0
+
+     sys_allocate_array(section_name, 1, 1)
+     sys_allocate_array(shape_name, 1, 1)
+     sys_allocate_array(section_id, 1, 1)
+
+     integer nrec, bytes_per_rec
+     
+     dump status
+     
+     WHILE ((status = db_get_next_beam_section_id(sec_id)) == 0 )
+          idx += 1
+          
+          sys_reallocate_array(section_name, 1, idx)
+          sys_reallocate_array(shape_name, 1, idx)
+          sys_reallocate_array(section_id, 1, idx)
+          section_id(idx) = sec_id
+          
+          dump idx
+          status = db_get_beam_section( section_id(idx), shape_name(idx), section_name(idx), nrec, bytes_per_rec)
+    END WHILE
+
+    return idx
+    
+end function

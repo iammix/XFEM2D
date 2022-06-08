@@ -1,0 +1,16 @@
+function xfem_get_result_id(loadcase_title, subcase_title, pri_label, sec_label, res_id)
+string loadcase_title[], subcase_title[], pri_label[], sec_label[]
+integer loadcase_id, subcase_id, pri_id, sec_id, layer_id, res_id()
+     
+       db_get_load_case_id (loadcase_title, loadcase_id)
+	db_get_sub_case_id (loadcase_id, subcase_title, subcase_id)
+	db_get_primary_res_id(pri_label, pri_id) 
+	db_get_secondary_res_id(pri_id, sec_label, sec_id)
+	$ res_data_get_layerpos_id(layer_label, layer_id)
+	
+	res_id(1)=loadcase_id
+   	res_id(2)=subcase_id
+	res_id(3)=pri_id
+	res_id(4)=sec_id
+	
+end function

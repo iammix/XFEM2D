@@ -1,0 +1,283 @@
+#define PI 3.14159265358979
+
+#define CLASSNAME BucklingABS
+#define CLASS_STR "BucklingABS"
+
+CLASS CLASSNAME
+$ StartFunction Buckling_Factor_ksx
+FUNCTION ksx(C1, kapa)
+	real C1, kapa
+	real ks
+
+	if(kapa <= 1 && kapa >= 0) then
+		ks = 8.4 / (kapa + 1.1)
+	else if(kapa < 0 && kapa > -1) then
+		ks = 7.63 - 6.4 * kapa + 10 * kapa**2
+	END if
+
+	return C1 * ks
+
+END FUNCTION
+$ EndFunction
+
+$ StartFunction Buckling_Factor_ksy
+FUNCTION ksy(span, space, C2, kapa)
+real span, space, C2, kapa
+real alpha, ks
+
+alpha = span / space
+
+if (kapa < 1 / 3 && alpha >= 1 && alpha <= 2) then
+    ks = (1.0875 * (1 + 1 / alpha**2)**2 - 18 / alpha**2) * (1 + kapa) + 24 / alpha**2
+else if (kapa < 1 / 3 && alpha > 2) then
+    ks = (1.0875 * (1 + 1 / alpha**2)**2 - 9 / alpha**2) * (1 + kapa) + 12 / alpha**2
+else if (kapa >= 1 / 3) then
+    ks = (1 + 1 / alpha**2)**2 * (1.675 - 0.675 * kapa)
+END if
+    
+return ks * C2
+
+END FUNCTION
+$ EndFunction
+
+$ StartFunction Buckling_Factor_kst
+FUNCTION kst(span, space, C1)
+real span, space, C1
+real ks
+
+    ks = (4 * (space / span)**2 + 5.34)
+
+return C1 * ks
+
+END FUNCTION
+$ EndFunction
+
+$ StartFunction Elastic_Buckling_Stress
+FUNCTION Elastic_Buckling_Stress(ELAS, PR, ks, tnet, space)
+real ELAS, PR, ks, tnet, space, se
+
+    se = ks * (((PI**2 * ELAS) / (12 * (1 - PR**2))) * (tnet / space)**2)
+
+return se
+END FUNCTION
+$ EndFunction
+
+$ StartFunction Critical_Buckling_Stress
+FUNCTION Critical_Buckling_Stress(ReH, PR, se)
+	real ReH, PR, se, sc
+
+	if(se <= PR * ReH) then
+		sc = se
+	else if(se > PR * ReH) then
+		sc = ReH * (1 - PR * (1 - PR) * ReH / se)
+	END if
+
+	return sc
+
+END FUNCTION
+
+END CLASS
+
+
+
+
+
+
+
+
+
+
+
+
+
+$ StartClass BucklingFunction
+CLASS BucklingFunction
+$ StartFunction stress_reduction
+FUNCTION stress_reduction(sigxy, sigyx)
+real sigxy, sigyx
+
+return (sigxy - 0.3 * sigyx) / 0.91
+
+END FUNCTION
+$ EndFunction
+
+
+
+
+
+
+
+
+$ StartFunction Critical_Buckling_Stress
+FUNCTION Critical_Buckling_Stress(ReH, Pr, EBS)
+real ReH, Pr, EBS, CBS
+
+if(EBS <= Pr * ReH) then
+    CBS = EBS
+else if(EBS > Pr * ReH) then
+    CBS = ReH * (1 - Pr * (1 - Pr) * ReH / EBS)
+END if
+
+return CBS
+
+END FUNCTION
+$ EndFunction
+
+$ StartFunction Buckling_Factor_ksbL
+FUNCTION Buckling_Factor_ksbL(C1)
+real C1    
+    return 24 * C1
+
+END FUNCTION
+$ EndFunction
+
+$ StartFunction Buckling_Factor_ksbT
+FUNCTION Buckling_Factor_ksbT(span, space, C2)
+real span, space, C2
+real alpha
+real ks
+    
+    alpha = space / span
+    
+    if (span / space >= 1.0 && span / space <= 2.0) then
+        ks = 24 * alpha**2 * C2
+    else if (span / space > 2.0) then
+        ks = 12 * alpha * C2
+    END if
+    
+    return ks
+
+END FUNCTION
+$ EndFunction
+END CLASS
+$ EndClass
+
+FUNCTION EulerStress(s,ct,k)
+global real E, NU
+real s,k,ct,result
+	
+	option.terminal_00()
+
+	result=3.14159**2.*E/(12*(1-NU**2.))*(ct/s)**2.*k
+
+return result
+END FUNCTION
+
+$
+FUNCTION sig_c(sigf, l, s, ct, nbc, c, sigec, sigpc)
+integer nbc(), i
+real k(3),l,s,ct,c,alpha,sigec(),sigpc(),sigf,tauf
+
+	FOR (i=1 TO 3)
+		k(i) = b_boundary_fac(nbc(i),l,s)
+	END FOR
+		
+		sigec(1) = EulerStress(s,ct,k(1))
+		sigpc(1) = sig_f_plastic(sigf,sigec(1))
+
+		sigec(2) = c*EulerStress(s,ct,k(2))
+		sigpc(2) = sig_f_plastic(sigf,sigec(2))
+
+		sigec(3) = EulerStress(s,ct,k(3))
+		tauf = sigf / sqrt(3.)
+		sigpc(3) = sig_f_plastic(tauf,sigec(3))
+
+return 0
+END FUNCTION
+
+$ 
+FUNCTION sig_f_plastic(sigf,sige)
+real sige,sigp,sigf
+
+	IF (sige > 0.5*sigf) THEN
+		sigp=sigf*(1.-sigf/(4.*sige))
+    ELSE
+        sigp=sige
+    END IF
+	
+return sigp
+END FUNCTION
+
+
+$ 
+FUNCTION DNV2(sigf, l, s, ct, nbc, cc, sig, sigpc, e_sigc, sf)
+
+integer nbc(), i
+real sigf, tauf, l, s, ct, cc(), sig(), sigpc(), sf(), lamdae2
+real R(3),e_sig, sigec(3), e_sigc, c
+
+
+	sig_c(sigf, l, s, ct, nbc, cc, sigec, sigpc)
+
+	FOR (i=1 TO 3 )
+		IF(i==3) THEN
+			tauf = sigf / sqrt(3.)
+			sigpc(i) = tauf / sqrt(1+(tauf/sigec(i))**2)
+		ELSE 
+			sigpc(i) = sigf / sqrt(1+(sigf/sigec(i))**2)
+		END IF
+
+		sf(i) = sig(i) / sigpc(i)
+		R(i)=sig(i)/sigec(i)
+	END FOR
+
+	e_sig=sqrt(sig(1)**2+sig(2)**2-sig(1)*sig(2)+3*sig(3)**2)
+
+	c= 2- s/l
+
+	lamdae2 = (sigf/e_sig)*(R(1)**c + R(2)**c + R(3)**c)**(1/c)
+	e_sigc=sigf/sqrt(1+lamdae2**2)
+
+	sf(4)=0.0
+	sf(5)=e_sig/e_sigc
+
+END FUNCTION
+
+$ 
+FUNCTION b_boundary_fac(cond,l,s)
+integer cond
+real l,s, c
+	
+	SWITCH(cond)
+		CASE(1)
+			c=4.0
+		CASE(2)
+			c=5.34+4*(s/l)**2
+		CASE(3)
+			c=(1+(s/l)**2)**2
+		case(4)
+			c=9.0+5.6*(s/l)**2-2.0*(s/l)**3
+		case(5)
+			c=5.3+2.3*s/l-3.4*(s/l)**2+8.4*(s/l)**3
+		case(6)
+			c=9.0+5.6*(s/l)**2
+		case(7)
+			c=7.0
+		case(8)
+			c=1.0+2.5*(s/l)**2+5.0*(s/l)**4
+		DEFAULT
+	END SWITCH
+return c	
+END FUNCTION
+
+$ 
+FUNCTION NewtonRampson(R,P,sig)
+real R(),P,sig,K1,K2,X1,X2,f1x,f2x,fx
+	K1=R(3)**2.0
+    K2=R(1)**P+R(2)**P
+
+    X1=0
+    X2=1000.0
+
+    REPEAT
+        X1=X2
+        f1x=K1*X1**2.0+K2*X1**P-1
+        f2x=2*K1*X1+P*K2*X1**(P-1)
+
+        X2=X1-f1x/f2x
+    UNTIL(mth_abs(X2-X1)<0.001)
+
+    fx=sig*X2
+
+return fx
+END FUNCTION

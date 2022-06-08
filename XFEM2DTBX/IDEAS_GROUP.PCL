@@ -1,0 +1,37 @@
+/************************************************************************************
+                iDEASoft ( Patran Modeling & Analysis Tools R2009 )
+                DEVELOPED BY JEONG WOO-YEOL
+*************************************************************************************/
+CLASS IDEAS_GROUP
+
+function auto_plot_fem
+
+     function_exec("au_auto_plot_fem")
+
+end function
+
+function GRP_TOOLS
+
+     function_exec("GROUP_TOOLS")
+
+end function
+
+FUNCTION edit_multi_group()
+
+     function_exec("am_edit_multi_group")
+
+END FUNCTION
+
+function DEL_EMP_GROUPS()
+
+     GROUP_UTL.Delete_empty_groups()
+
+end function
+
+function plot_all_fem()
+
+     gm_plot_erase_fem(1)
+
+end function
+
+END CLASS

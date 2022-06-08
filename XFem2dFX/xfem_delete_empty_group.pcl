@@ -1,0 +1,23 @@
+FUNCTION xfem_delete_empty_group()
+INTEGER	i
+INTEGER	num_groups, group_ids
+STRING	group_name[31](virtual), grp_members[virtual]
+	   
+	   ga_group_ngroups_get(num_groups)
+	   if (num_groups == 0) then return (0)
+	   
+	   sys_allocate_array(group_name, 1, num_groups)
+	   
+	   ga_group_groups_get(group_name)
+   
+	   for (i = 1 to num_groups)
+		  db_get_group_id(group_name(i), group_ids)
+		  uil_group_members_get (group_name(i), grp_members)
+		  IF(grp_members == "") THEN
+			ga_group_delete(group_name(i))
+			ui_writec("%s", "deleted " // group_name(i))
+		  END IF
+ 	   end for
+	   
+	   return (0)
+END FUNCTION

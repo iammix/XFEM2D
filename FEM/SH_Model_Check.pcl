@@ -1,0 +1,235 @@
+#include "appforms.p"
+
+CLASS SH_Model_Check
+
+/* Classwide Variables */
+   CLASSWIDE WIDGET form_id, btn_SelectFile, dbox_file, dbox_tolerance1, dbox_tolerance2, Btn_FEMDLCHK, Btn_Cancel, opt_Option, Btn_View
+
+   $ ==============================================================================
+   FUNCTION init()
+      REAL box_length=0.0
+      REAL yloc_main
+
+      form_id=ui_form_create(                 @
+      /* callback */           "",              @
+      /*     x    */           FORM_X_LOC_SML,  @
+      /*     y    */           FORM_Y_LOC,      @
+      /* position */           "UL",            @
+      /*   width  */           FORM_WID_SML,    @
+      /*  height  */           FORM_HGT_TALL,    @
+      /*   label  */           "ABS Model Check",              @
+      /*  unused  */           "")
+
+      yloc_main = FORM_T_MARGIN
+
+      box_length = DBOX_WID_SINGLE  - @
+                   0.
+
+      btn_SelectFile=ui_button_create(                     @
+      /*   parent  */         form_id,           @
+      /*  callback */         "cb_SelectFile",             @
+      /*     x     */         BUTTON_HALF_X_LOC1,  @
+      /*     y     */         yloc_main,           @
+      /*   width   */         BUTTON_WID_FULL,     @
+      /*   height  */         BUTTON_DEFAULT_HGT,  @
+      /*   label   */         "Select BDF File",                @
+      /*    TRUE   */         TRUE,                @
+      /* highlight */         FALSE)
+
+      yloc_main += BUTTON_DEFAULT_HGT  + @
+                   INTER_WIDGET_SPACE
+                   
+      dbox_file=ui_databox_create(                          @
+      /*    parent    */                   form_id,                @
+      /*   callback   */                   "",                       @
+      /*       x      */                   FORM_L_MARGIN,            @
+      /*       y      */                   yloc_main,                @
+      /* label_length */                   0.,                       @
+      /*  box_length  */                   box_length,               @
+      /*     label    */                   "Nastran File ",  @
+      /*     value    */                   "",                       @
+      /*  label_above */                   TRUE,                    @
+      /*   datatype   */                   "STRING",                @
+      /*   num_vals   */                   1)
+
+      yloc_main += DBOX_HGT_LABOVE  + @
+                   INTER_WIDGET_SPACE
+
+      opt_Option=ui_optionmenu_create(                @
+      /*    parent    */             form_id,        @
+      /*   callback   */             "",    @
+      /*       x      */             FORM_L_MARGIN,  @
+      /*       y      */             yloc_main,      @
+      /* label_length */             0.,             @
+      /*     label    */             "Option",       @
+      /*  label_above */             FALSE)
+      
+      ui_item_create(opt_Option, "0" , "Check Model Only " , TRUE)
+      ui_item_create(opt_Option, "1" , "Auto Fix. " , TRUE)
+	  ui_item_create(opt_Option, "2" , "Auto Fix without merging coincident nodes" , TRUE)
+	  
+      yloc_main += OPT_MENU_HGT_NO_LABOVE  + @
+                   INTER_WIDGET_SPACE
+                   
+      dbox_tolerance1=ui_databox_create(                          @
+      /*    parent    */                   form_id,                @
+      /*   callback   */                   "",                       @
+      /*       x      */                   FORM_L_MARGIN,            @
+      /*       y      */                   yloc_main,                @
+      /* label_length */                   0.,                       @
+      /*  box_length  */                   box_length,               @
+      /*     label    */                   "Tolerance for coincident node check",  @
+      /*     value    */                   0.,                      @
+      /*  label_above */                   TRUE,                    @
+      /*   datatype   */                   "REAL",                @
+      /*   num_vals   */                   1)
+
+      yloc_main += DBOX_HGT_LABOVE  + @
+                   INTER_WIDGET_SPACE
+
+      dbox_tolerance2=ui_databox_create(                          @
+      /*    parent    */                   form_id,                @
+      /*   callback   */                   "",                       @
+      /*       x      */                   FORM_L_MARGIN,            @
+      /*       y      */                   yloc_main,                @
+      /* label_length */                   0.,                       @
+      /*  box_length  */                   box_length,               @
+      /*     label    */                   "Tolerance for angle check(in Degree)",  @
+      /*     value    */                   0.,                       @
+      /*  label_above */                   TRUE,                    @
+      /*   datatype   */                   "REAL",                @
+      /*   num_vals   */                   1)
+
+      yloc_main += DBOX_HGT_LABOVE  + @
+                   INTER_WIDGET_SPACE
+
+      Btn_FEMDLCHK=ui_button_create(                     @
+      /*   parent  */         form_id,           @
+      /*  callback */         "FEMDLCHK_cb",             @
+      /*     x     */         BUTTON_HALF_X_LOC1,  @
+      /*     y     */         yloc_main,           @
+      /*   width   */         BUTTON_WID_FULL,     @
+      /*   height  */         BUTTON_DEFAULT_HGT,  @
+      /*   label   */         "FEMDLCHK",                @
+      /*    TRUE   */         TRUE,                @
+      /* highlight */         FALSE)
+
+      yloc_main += BUTTON_DEFAULT_HGT  + @
+                   INTER_WIDGET_SPACE
+
+      Btn_View = ui_button_create(                     @
+      /*   parent  */         form_id,           @
+      /*  callback */         "cb_View",             @
+      /*     x     */         BUTTON_HALF_X_LOC1,  @
+      /*     y     */         yloc_main,           @
+      /*   width   */         BUTTON_WID_FULL,     @
+      /*   height  */         BUTTON_DEFAULT_HGT,  @
+      /*   label   */         "View",                @
+      /*    TRUE   */         TRUE,                @
+      /* highlight */         FALSE)
+
+      yloc_main += BUTTON_DEFAULT_HGT  + @
+                   INTER_WIDGET_SPACE
+                   
+      Btn_Cancel=ui_button_create(                     @
+      /*   parent  */             form_id,           @
+      /*  callback */             "Cancel_cb",         @
+      /*     x     */             BUTTON_HALF_X_LOC1,  @
+      /*     y     */             yloc_main,           @
+      /*   width   */             BUTTON_WID_FULL,     @
+      /*   height  */             BUTTON_DEFAULT_HGT,  @
+      /*   label   */             "Cancel",            @
+      /*    TRUE   */             TRUE,                @
+      /* highlight */             FALSE)
+
+      yloc_main += BUTTON_DEFAULT_HGT  + @
+                   INTER_WIDGET_SPACE
+      
+      
+      LOGICAL l_confirm
+      INTEGER i_warning_message
+      REAL TOR
+      
+      pref_global_get(l_confirm,i_warning_message,TOR)
+      
+      ui_wid_set(dbox_tolerance1,"VALUE",TOR)
+
+   END FUNCTION /* init */
+
+   $ 
+   FUNCTION display()
+      ui_form_display("SH_Model_Check")
+   END FUNCTION /* display */
+
+   $
+   FUNCTION cb_selectfile()
+		ModelChkSelectFile.init()
+		ModelChkSelectFile.display()
+   END FUNCTION
+  
+	function set_NastranFile( BdfFile )
+      string BdfFile[]
+      ui_wid_set(dbox_file, "VALUE", BdfFile)     
+	end function
+
+	function cb_View()
+		STRING Nastran_File[1024]
+		ui_wid_get(dbox_file,"VALUE",Nastran_File)
+		
+		string b_name[64], d_name[128], e_name[64]
+   
+		file_get_bfname(Nastran_File, b_name)
+		file_get_dfname(Nastran_File, d_name)
+		file_get_efname(Nastran_File, e_name)
+		   
+		ui_sys_command("c:\windows\notepad.exe " // b_name // ".MCH")
+		
+		dump "c:\windows\notepad.exe " // b_name // ".MCH"
+		
+	end function
+	
+   FUNCTION FEMDLCHK_cb()
+/*
+ * This is a callback for the button named Btn_OK
+ */
+   
+   STRING Nastran_File[1024]
+   REAL DTOL, ATOL
+   STRING OPTION[3]
+   
+   ui_wid_get(dbox_file,"VALUE",Nastran_File)
+   ui_wid_get(opt_Option,"VALUE",OPTION)
+   ui_wid_get(dbox_tolerance1,"VALUE",DTOL)
+   ui_wid_get(dbox_tolerance2,"VALUE",ATOL)
+   
+   string chk_command[256]
+   global string XFEM2D_HOME[64]
+   string b_name[64], d_name[128], e_name[64]
+   
+   file_get_bfname(Nastran_File, b_name)
+   file_get_dfname(Nastran_File, d_name)
+   file_get_efname(Nastran_File, e_name)
+   
+   string f_name[64]
+   
+   f_name = b_name // "." // e_name
+   
+   chk_command = XFEM2D_HOME // "FEMDLCHK.EXE" // " " // f_name // " " // OPTION // " " // str_from_real(DTOL) // " " // str_from_real(ATOL)
+	
+    ui_sys_command(chk_command)
+	
+   END FUNCTION /* OK_cb */
+
+   $ 
+   FUNCTION Cancel_cb()
+/*
+ * This is a callback for the button named Btn_Cancel
+ */
+	ui_form_hide("SH_Model_Check")
+$	ui_form_delete("SH_Model_Check")
+
+   END FUNCTION /* Cancel_cb */
+
+END CLASS /* FIND_SMALL_EDGE */
+
+$ 

@@ -1,0 +1,47 @@
+#define CLASSNAME FRAME_EXCLUDE_FREEEDGE
+#define CLASS_STR "FRAME_EXCLUDE_FREEEDGE"
+#define UI_INIT UI_FRAME_EXCLUDE_FREEEDGE
+
+CLASS CLASSNAME
+    classwide widget frame_01, sframe_01, wa_Sdbox_01(1)
+
+    function UI_INIT(parent_id, y_loc)
+        widget parent_id
+        real y_loc
+
+        widget frame_wid
+        
+        frame_wid=ui_frame_create(                   @
+        /* parent */             parent_id,           @
+        /*  name  */             "",                @
+        /*    x   */             FRAME_X_LOC_COL1,  @
+        /*    y   */             y_loc,         @
+        /*  width */             FRAME_L_MARGIN + FRAME_WID_SINGLE + FRAME_R_MARGIN,  @
+        /* height */             0.0,               @
+        /*  label */             "Tank Search")
+
+        REAL Y_LOCF = 0
+ 	
+		Y_LOCF = FRAME_T_MARGIN
+
+		sframe_01 = ui_select_frame_set(				@
+		/* parent widget id(input) 	*/	frame_wid,		@
+		/*	select frame callback	*/	CLASS_STR // ".Apply_Click",	@	
+		/* 	select frame label		*/	"Autoexec",	@
+		/*		x				*/	FORM_L_MARGIN,	@	
+		/*		y				*/	Y_LOCF, 		@
+		/*	select databax array	*/	wa_sdbox_01,	@
+		/* 	data type	array		*/	["ELEMENT"],		@
+		/* 	select databox label array	*/ 	["Select Elements"],	@
+		/*	select databox collback array	*/ 	[""], @
+		/*	label avove logical	*/			TRUE)	             
+		  
+        Y_LOCF += INTER_WIDGET_SPACE
+
+        ui_wid_set(frame_wid, "HEIGHT", Y_LOCF)
+
+        y_loc += Y_LOCF + INTER_WIDGET_SPACE
+
+    end function
+
+END CLASS

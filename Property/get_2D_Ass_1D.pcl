@@ -1,0 +1,53 @@
+#include "lpenums.i"
+
+FUNCTION get_2D_Ass_1D(ElemList_1D, Elem2D)
+
+	string ElemList_1D[]
+	integer Elem2D()
+
+	integer n1D, status
+	n1D = fem_u_count_id_list(LP_SUBLIST_ELEMENT, ElemList_1D, FALSE, status)
+
+	integer Elem_1D(virtual)
+	sys_allocate_array(Elem_1D, 1, n1D)
+
+     fem_u_get_id_list(LP_SUBLIST_ELEMENT, ElemList_1D, n1D, TRUE, Elem_1D)
+
+	integer nNode1D, Node1D(2), ElemShape(virtual), nNode2D, Node2D(virtual)
+	integer nElem, ElemID(virtual), node_count
+	integer count = 0
+     sys_allocate_array(Elem2D, 1, 1)
+
+	integer i, j, k
+	FOR(i=1 to n1D)
+		db_get_elem_nodes(Elem_1D(i), nNode1D, Node1D)
+
+          FemFx.get_elems_ass_nodes(nNode1D, Node1D, nElem, ElemID)
+$		db_get_elem_use_all_node(nNode1D, Node1D, nElem, ElemID)
+
+     	sys_allocate_array(ElemShape, 1, nElem)
+		db_get_elem_shape_for_id(nElem, ElemID, ElemShape)
+          
+		FOR(j=1 to nElem)
+			IF(ElemShape(j) == 3 || ElemShape(j) == 4) THEN
+          		sys_allocate_array(Node2D, 1, ElemShape(j))
+				db_get_elem_nodes(ElemID(j), nNode2D, Node2D)
+				node_count = 0
+				FOR(k=1 to nNode2D)
+					IF(Node2D(k) == Node1D(1) || Node2D(k) == Node1D(2)) THEN
+						node_count += 1
+					END IF
+				END FOR
+				IF(node_count == 2)THEN
+					count += 1
+					sys_reallocate_array(Elem2D, 1, count)
+					Elem2D(count) = ElemID(j)
+				END IF	
+			END IF
+
+		END FOR
+	END FOR
+
+	RETURN count
+END FUNCTION
+

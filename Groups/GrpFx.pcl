@@ -1,0 +1,675 @@
+#include "lpenums.i"
+#define CLASSNAME GrpFx
+
+CLASS CLASSNAME
+    Function NodeXYZ(w_sdbox, ra_xyz)
+        widget w_sdbox
+        real ra_xyz()
+        
+        string vs_nodeId[virtual]
+        
+        ui_wid_get_vstring(w_sdbox, "VALUE", vs_nodeId)
+
+        integer nnode, status
+        nnode = fem_u_count_id_list( LP_SUBLIST_NODE, vs_nodeId, FALSE, status)
+
+        if(status != 0) then return status
+
+        integer nodeId(1)
+
+        fem_u_get_id_list(LP_SUBLIST_NODE, vs_nodeId, 1, TRUE, nodeId)
+    
+        db_get_node(nodeId(1), ra_xyz)
+        
+        return status
+     End Function
+            
+     function group_add_elem_in_box(s_group_name, corner1, corner2)
+            string s_group_name[]
+            real corner1()
+            real corner2()
+
+          /* =============== group element information ====================== */
+          integer MaxElemID, ia_ElemID(virtual)
+
+          db_get_max_elem_id(MaxElemID)
+
+          sys_allocate_array(ia_ElemID, 1, MaxElemID)
+
+          integer nElem, ElemID(virtual)
+
+          db_count_elems(nElem)
+          sys_allocate_array(ElemID, 1, nElem)
+
+          db_get_elem_ids(nElem, ElemID)
+
+          string ElemList[virtual]
+
+          app_int_array_to_vstring("Element", nElem, ElemID, ElemList)
+
+          integer ecnt
+          real r_loc(virtual)
+
+          fem_geom_elem_location (ElemList, r_loc, ecnt)
+
+          /* =============== create group range ========================== */
+
+          integer idx
+          real ra_loc(virtual)
+          logical chk(virtual)
+
+          sys_allocate_array(chk, 1, MaxElemID)
+          sys_allocate_array(ra_loc, 1, MaxElemID, 1, 3)
+
+          integer ia_gelem(virtual)
+
+          sys_allocate_array(ia_gelem, 1, 1)
+
+          for(idx = 1 to nElem)
+
+              ia_ElemId(ElemID(idx)) = ElemID(idx)
+              ra_loc(ElemID(idx),1:3)= r_loc(idx,1:3)
+              chk(ElemID(idx)) = TRUE
+
+          end for
+
+        integer cnt
+        cnt = 0
+        for(idx=1 to MaxElemID)
+          	if(chk(idx) == TRUE) then
+                  if(ra_loc(idx,1) >= mth_min(corner1(1), corner2(1)) && ra_loc(idx,1) <= mth_max(corner1(1), corner2(1))) then
+                      if(ra_loc(idx,2) >= mth_min(corner1(2), corner2(2)) && ra_loc(idx,2) <= mth_max(corner1(2), corner2(2)))  then
+                          if(ra_loc(idx,3) >= mth_min(corner1(3), corner2(3)) && ra_loc(idx,3) <= mth_max(corner1(3), corner2(3))) then
+                              cnt +=1
+                              sys_reallocate_array(ia_gelem, 1, cnt)
+                              ia_gelem(cnt) = ia_ElemID(idx)
+                          end if
+                      end if
+                   end if
+               end if
+        end for
+
+          string gElemList[virtual]
+
+          if(cnt == 0)then
+            dump "Elements are empty in a " // s_group_name 
+            dump "The " // s_group_name // " is not made !!!"
+            return -1
+          end if
+          
+          app_int_array_to_vstring("Element", cnt, ia_gelem, gElemList)
+
+          ga_group_create(s_group_name)
+          ga_group_entity_add(s_group_name, gElemList)
+
+          integer node_count, iv_node_id(virtual)
+          db_get_node_ass_elem (cnt, ia_gelem, node_count, iv_node_id)
+
+          string NodeInGroup[virtual]
+          app_int_array_to_vstring("Node", node_count, iv_node_id, NodeInGroup)
+          ga_group_entity_add(s_group_name, NodeInGroup)
+
+          CLASSNAME.group_add_node_in_box(s_group_name, corner1, corner2)
+          
+          ga_group_current_set(s_group_name)
+
+          string view_group[63](1)
+
+          view_group(1) = s_group_name
+          uil_viewport_post_groups.posted_groups( "default_viewport", 1, view_group )
+
+          gu_fit_view()
+
+          sys_free_array(ia_gelem)
+
+     end function
+
+     function get_elem_in_box(corner1, corner2, ia_gelem)
+        real corner1()
+        real corner2()
+		integer ia_gelem()
+
+          /* =============== group element information ====================== */
+          integer MaxElemID, ia_ElemID(virtual)
+
+          db_get_max_elem_id(MaxElemID)
+
+          sys_allocate_array(ia_ElemID, 1, MaxElemID)
+
+          integer nElem, ElemID(virtual)
+
+          db_count_elems(nElem)
+          sys_allocate_array(ElemID, 1, nElem)
+
+          db_get_elem_ids(nElem, ElemID)
+
+          string ElemList[virtual]
+
+          app_int_array_to_vstring("Element", nElem, ElemID, ElemList)
+
+          integer ecnt
+          real r_loc(virtual)
+
+          fem_geom_elem_location (ElemList, r_loc, ecnt)
+
+          /* =============== create group range ========================== */
+
+          integer idx
+          real ra_loc(virtual)
+          logical chk(virtual)
+
+          sys_allocate_array(chk, 1, MaxElemID)
+          sys_allocate_array(ra_loc, 1, MaxElemID, 1, 3)
+          sys_allocate_array(ia_gelem, 1, 1)
+
+          for(idx = 1 to nElem)
+
+              ia_ElemId(ElemID(idx)) = ElemID(idx)
+              ra_loc(ElemID(idx),1:3)= r_loc(idx,1:3)
+              chk(ElemID(idx)) = TRUE
+
+          end for
+
+        integer cnt
+          cnt = 0
+        for(idx=1 to MaxElemID)
+          	if(chk(idx) == TRUE) then
+                  if(ra_loc(idx,1) >= mth_min(corner1(1), corner2(1)) && ra_loc(idx,1) <= mth_max(corner1(1), corner2(1))) then
+                      if(ra_loc(idx,2) >= mth_min(corner1(2), corner2(2)) && ra_loc(idx,2) <= mth_max(corner1(2), corner2(2)))  then
+                          if(ra_loc(idx,3) >= mth_min(corner1(3), corner2(3)) && ra_loc(idx,3) <= mth_max(corner1(3), corner2(3))) then
+                              cnt +=1
+                              sys_reallocate_array(ia_gelem, 1, cnt)
+                              ia_gelem(cnt) = ia_ElemID(idx)
+                          end if
+                      end if
+                   end if
+               end if
+        end for
+
+        return cnt
+     end function
+
+     function group_add_surface_in_box(s_group_name, corner1, corner2)
+            string s_group_name[]
+            real corner1()
+            real corner2()
+
+          /* =============== group element information ====================== */
+          integer MaxSurfID, ia_SurfID(virtual)
+
+          db_get_max_surface_label(MaxSurfID)
+
+		sys_allocate_array(ia_SurfID, 1, MaxSurfID)
+
+		integer nSurf
+		db_count_surface(nSurf)          
+     
+     	integer sid = 0
+     	integer i
+     	
+		for(i = 1 to MaxSurfID)
+     		db_get_surface_id(i, ia_SurfID(i))
+     	end for
+
+		string SurfList[virtual]
+
+          app_int_array_to_vstring("Surface", MaxSurfID, ia_SurfID, SurfList)
+
+          integer ecnt
+          real r_loc(virtual)
+
+          fem_geom_elem_location (SurfList, r_loc, ecnt)
+
+          /* =============== create group range ========================== */
+
+    	logical l_confirm
+		integer i_wm_opt
+		real r_tol
+
+		  pref_global_get( l_confirm, i_wm_opt, r_tol )
+
+          real spnt(3), epnt(3)
+
+          for(i=1 to 3)
+            if(corner1(i) <= corner2(i)) then
+                spnt(i) = corner1(i)
+                epnt(i) = corner2(i)
+            else if(corner1(i) > corner2(i)) then
+                spnt(i) = corner2(i)
+                epnt(i) = corner1(i)
+            end if
+          end for
+
+          integer ia_gsurf(virtual)
+          sys_allocate_array(ia_gsurf, 1, 1)
+
+		integer cnt = 0
+		integer idx     
+          for(idx=1 to MaxSurfID)
+          	if(ia_SurfID(idx) != 0) then
+                  if(ra_loc(idx,1) >= spnt(1)-r_tol && ra_loc(idx,1) <= epnt(1)+r_tol) then
+                      if(ra_loc(idx,2) >= spnt(2)-r_tol && ra_loc(idx,2) <= epnt(2)+r_tol)  then
+                          if(ra_loc(idx,3) >= spnt(3)-r_tol && ra_loc(idx,3) <= epnt(3)+r_tol) then
+                              cnt +=1
+                              sys_reallocate_array(ia_gsurf, 1, cnt)
+                              ia_gsurf(cnt) = ia_SurfID(idx)
+                          end if
+                      end if
+                   end if
+               end if
+          end for
+
+          string gSurfList[virtual]
+
+          if(cnt == 0)then
+            dump "Elements are empty in a " // s_group_name 
+            dump "The " // s_group_name // " is not made !!!"
+            return -1
+          end if
+          
+          app_int_array_to_vstring("Surface", cnt, ia_gsurf, gSurfList)
+
+          ga_group_create(s_group_name)
+          ga_group_entity_add(s_group_name, gSurfList)
+
+          ga_group_current_set(s_group_name)
+
+          string view_group[63](1)
+
+          view_group(1) = s_group_name
+          uil_viewport_post_groups.posted_groups( "default_viewport", 1, view_group )
+
+          gu_fit_view()
+
+          sys_free_array(ia_SurfID)
+		sys_free_array(ia_gsurf)
+
+     end function
+     
+     function group_add_node_in_box(s_group_name, spnt, epnt)
+          string s_group_name[]
+          real spnt(), epnt()
+     
+          integer nn
+          db_count_nodes(nn)
+          
+          integer ia_NodeID(virtual)
+          sys_allocate_array(ia_NodeID, 1, nn)
+          db_get_node_ids(nn, ia_NodeID)
+     
+          integer ref(virtual), analy(virtual)
+          real xyzs(virtual)
+          sys_allocate_array(ref, 1, nn)
+          sys_allocate_array(analy, 1, nn)
+          sys_allocate_array(xyzs, 1, nn, 1, 3)
+               
+          db_get_nodes(nn, ia_NodeID, ref, analy, xyzs)
+     
+          integer MaxNodeID
+          db_get_max_node_id(MaxNodeID)
+     
+          integer nid
+          nid = 0
+          
+          integer ia_gnode(virtual)
+          integer idx
+          
+            for(idx=1 to nn)
+                  if(xyzs(idx,1) >= mth_min(spnt(1), epnt(1)) && xyzs(idx,1) <= mth_max(spnt(1),epnt(1))) then
+                      if(xyzs(idx,2) >= mth_min(spnt(2), epnt(2)) && xyzs(idx,2) <= mth_max(spnt(2),epnt(2)))  then
+                          if(xyzs(idx,3) >= mth_min(spnt(3), epnt(3)) && xyzs(idx,3) <= mth_max(spnt(3),epnt(3))) then
+                              nid +=1
+                              sys_reallocate_array(ia_gnode, 1, nid)
+                              ia_gnode(nid) = ia_NodeID(idx)
+                          end if
+                      end if
+                   end if      
+          end for
+
+          string gNodeList[virtual]
+
+          if(nid == 0) then
+            dump "Nodes are empty in a " // s_group_name 
+            dump "The " // s_group_name // " is not made !!!"
+            return -1
+          end if
+          
+          app_int_array_to_vstring("Node", nid, ia_gnode, gNodeList)
+
+          ga_group_create(s_group_name)
+          ga_group_entity_add(s_group_name, gNodeList)
+               
+               
+     end function
+
+     function get_node_in_box(spnt, epnt, ia_gnode)
+          real spnt(), epnt()
+          integer ia_gnode()
+     
+          integer nn
+          db_count_nodes(nn)
+          
+          integer ia_NodeID(virtual)
+          sys_allocate_array(ia_NodeID, 1, nn)
+          db_get_node_ids(nn, ia_NodeID)
+     
+          integer ref(virtual), analy(virtual)
+          real xyzs(virtual)
+          sys_allocate_array(ref, 1, nn)
+          sys_allocate_array(analy, 1, nn)
+          sys_allocate_array(xyzs, 1, nn, 1, 3)
+               
+          db_get_nodes(nn, ia_NodeID, ref, analy, xyzs)
+     
+          integer MaxNodeID
+          db_get_max_node_id(MaxNodeID)
+     
+          integer nid
+          nid = 0
+          
+          integer idx
+          
+          for(idx=1 to nn)
+                  if(xyzs(idx,1) >= mth_min(spnt(1), epnt(1)) && xyzs(idx,1) <= mth_max(spnt(1),epnt(1))) then
+                      if(xyzs(idx,2) >= mth_min(spnt(2), epnt(2)) && xyzs(idx,2) <= mth_max(spnt(2),epnt(2)))  then
+                          if(xyzs(idx,3) >= mth_min(spnt(3), epnt(3)) && xyzs(idx,3) <= mth_max(spnt(3),epnt(3))) then
+                              nid +=1
+                              sys_reallocate_array(ia_gnode, 1, nid)
+                              ia_gnode(nid) = ia_NodeID(idx)
+                          end if
+                      end if
+                   end if      
+          end for
+
+          if(nid == 0) then
+            dump "Nodes are empty in the group"
+            return -1
+          end if
+          
+        return nid
+     end function
+    
+    function get_1DElems_Ass_2DElems(i_nElem, ia_ElemId, ElemList)
+
+      	integer i_nElem, ia_ElemId()
+      	integer i_nNode, ia_NodeId(virtual)
+      
+      	db_get_node_ass_elem(i_nElem, ia_ElemId, i_nNode, ia_NodeId)
+      
+      	integer i_nElemAss, ia_ElemIdAss(virtual)
+      	db_get_elem_use_all_node (i_nNode, ia_NodeId, i_nElemAss, ia_ElemIdAss)
+      
+      	integer ia_ShapeId(virtual), ia_ElemId_1d(virtual), cnt, i
+      
+      	sys_allocate_array(ia_ShapeId, 1, i_nElemAss)
+      	db_get_elem_shape_for_id(i_nElemAss, ia_ElemIdAss, ia_ShapeId)
+      
+      	cnt = 0
+      	for(i=1 TO i_nElemAss)
+      		if (ia_ShapeId(i) == 2) then
+      			cnt += 1
+      			sys_reallocate_array(ia_ElemId_1d, 1, cnt)
+      			ia_ElemId_1d(cnt) = ia_ElemIdAss(i)
+      		end if
+      	end for
+      
+      	if(cnt == 0) then
+      		return
+      	end if
+      
+      	string ElemList[]
+      	app_int_array_to_vstring("Element", cnt, ia_ElemId_1d, ElemList)
+    
+    end function
+
+function exclude_free_edge_elements(i_group_id, s_group_name)
+    integer i_group_id
+    string s_group_name[]
+
+    integer i_nelm, iv_elem_id(virtual)
+
+        db_count_elems_in_group(i_group_id, i_nelm)
+
+        if(i_nelm == 0) then
+            return 0
+        end if
+        
+        sys_allocate_array(iv_elem_id, 1, i_nelm)
+        db_get_elem_ids_in_group(i_nelm, i_group_id, iv_elem_id)
+
+    integer max_nodes = 4
+    integer iv_etop(virtual), iv_geo_type(virtual), iv_geo_id(virtual), iv_econ(virtual)
+
+        sys_allocate_array(iv_etop, 1, i_nelm)
+        sys_allocate_array(iv_geo_type, 1, i_nelm)
+        sys_allocate_array(iv_geo_id, 1, i_nelm)
+        sys_allocate_array(iv_econ, 1, i_nelm, 1, max_nodes)
+
+        db_get_elems(i_nelm, max_nodes, iv_elem_id, iv_etop, iv_geo_type, iv_geo_id, iv_econ)
+
+    integer iv_shape_id(virtual)
+        sys_allocate_array(iv_shape_id, 1, i_nelm)
+
+        db_get_elem_shape_for_id(i_nelm, iv_elem_id, iv_shape_id)
+
+    integer iv_el_nodes(virtual)
+        sys_allocate_array(iv_el_nodes, 1, i_nelm)
+
+    integer i
+        for(i=1 to i_nelm)
+            iv_el_nodes(i) = 4
+        end for
+
+    integer iv_edge_el_ids(virtual), iv_edge_ids(virtual), i_free_edges
+        sys_allocate_array(iv_edge_el_ids, 1, i_nelm*4)
+        sys_allocate_array(iv_edge_ids, 1, i_nelm*4)
+
+
+        fem_u_get_free_edges (   iv_elem_id,           @
+                                max_nodes,      @
+                                2,             @
+                                4,             @
+                                i_nelm,         @
+                                iv_econ,          @
+                                iv_shape_id,           @
+                                iv_el_nodes,   @
+                                iv_edge_el_ids,@
+                                iv_edge_ids,   @
+                                i_free_edges )
+
+    string s_elem_ids[virtual]
+        app_int_array_to_vstring("Element", i_free_edges, iv_edge_el_ids, s_elem_ids)
+
+        ga_group_entity_remove( s_group_name, s_elem_ids)
+        
+    sys_free_array(iv_elem_id)
+    sys_free_array(iv_etop)
+    sys_free_array(iv_geo_type)
+    sys_free_array(iv_geo_id)
+    sys_free_array(iv_econ)
+    sys_free_array(iv_shape_id)
+    sys_free_array(iv_el_nodes)
+    sys_free_array(iv_edge_el_ids)
+    sys_free_array(iv_edge_ids)
+
+return i_free_edges
+
+end function
+
+function remove_nodes_in_group(i_group_id, s_group_name)
+integer i_group_id
+string s_group_name[]
+
+     integer i_nnod
+     db_count_nodes_in_group ( i_group_id, i_nnod )
+
+     if(i_nnod != 0)then
+        integer iv_node_id(virtual)
+        sys_allocate_array(iv_node_id, 1, i_nnod)
+
+        db_get_all_node_ids_in_group ( i_nnod, i_group_id, iv_node_id)
+
+        string s_node_id[virtual]
+        app_int_array_to_vstring("Node", i_nnod, iv_node_id, s_node_id)
+
+        ga_group_entity_remove( s_group_name, s_node_id)
+     end if
+
+end function
+
+function remove_1d_elems_in_group(i_group_id, s_group_name)
+integer i_group_id
+string s_group_name[]
+
+     integer i_nelm, iv_elem_id(virtual)
+     db_count_elems_in_group(i_group_id, i_nelm)
+
+     if(i_nelm == 0) then
+          return 0
+     end if
+
+     sys_allocate_array(iv_elem_id, 1, i_nelm)
+     db_get_elem_ids_in_group(i_nelm, i_group_id, iv_elem_id)
+
+     integer iv_shape_id(virtual)
+     sys_allocate_array(iv_shape_id, 1, i_nelm)
+     db_get_elem_shape_for_id(i_nelm, iv_elem_id, iv_shape_id)
+
+     integer i, iv_elem_1d_id(virtual)
+     integer idx = 0
+
+     for(i=1 to i_nelm)
+          if(iv_shape_id(i) == 2)then
+               idx += 1
+               sys_reallocate_array(iv_elem_1d_id, 1, idx)
+               iv_elem_1d_id(idx) = iv_elem_id(i)
+          end if
+     end for
+
+     if(idx == 0)then
+          return 0
+     end if
+
+     string s_elem_1d_id[virtual]
+     app_int_array_to_vstring("Element", idx, iv_elem_1d_id, s_elem_1d_id)
+
+     ga_group_entity_remove( s_group_name, s_elem_1d_id)
+end function
+
+FUNCTION Delete_Empty_Groups()
+    integer i
+    integer num_groups, group_ids
+    string	group_name[31](virtual), grp_members[virtual]
+
+	ga_group_ngroups_get(num_groups)
+	if (num_groups == 0) then return (0)
+
+	sys_allocate_array(group_name, 1, num_groups)
+
+	ga_group_groups_get(group_name)
+
+	for (i = 1 to num_groups)
+	    db_get_group_id(group_name(i), group_ids)
+		  uil_group_members_get (group_name(i), grp_members)
+	    
+        if(grp_members == "") THEN
+			ga_group_delete(group_name(i))
+            dump group_name(i) // " group is deleted."
+	    end if
+ 	end for
+
+	   return (0)
+END FUNCTION
+
+function get_elem_inBox_inView(corner1, corner2)
+real corner1()
+real corner2()
+
+
+string s_cur_vp[128](1)
+ga_viewport_current_get (s_cur_vp(1))
+
+string s_elem_list[virtual]
+list_create_ent_ass_vp (1, s_cur_vp, 1, ["Element"], s_elem_list)
+
+integer ecnt
+real r_loc(virtual)
+fem_geom_elem_location (s_elem_list, r_loc, ecnt)
+
+integer i_status, nElem, ia_ElemID(virtual), ia_gelem(virtual)
+nElem = fem_u_count_id_list(LP_SUBLIST_ELEMENT, s_elem_list, TRUE, i_status)
+sys_allocate_array(ia_ElemID,1, nElem)
+fem_u_get_id_list(LP_SUBLIST_ELEMENT, s_elem_list, nElem, TRUE, ia_ElemId)
+
+integer idx, cnt
+for(idx=1 to nElem)
+    if(r_loc(idx,1) >= mth_min(corner1(1), corner2(1)) && r_loc(idx,1) <= mth_max(corner1(1), corner2(1))) then
+        if(r_loc(idx,2) >= mth_min(corner1(2), corner2(2)) && r_loc(idx,2) <= mth_max(corner1(2), corner2(2)))  then
+            if(r_loc(idx,3) >= mth_min(corner1(3), corner2(3)) && r_loc(idx,3) <= mth_max(corner1(3), corner2(3))) then
+                cnt +=1
+                sys_reallocate_array(ia_gelem, 1, cnt)
+                ia_gelem(cnt) = ia_ElemID(idx)
+            end if
+        end if
+    end if
+end for
+
+string grp_elem_list[virtual]
+app_int_array_to_vstring("Element", cnt, ia_gelem, grp_elem_list)
+
+sys_free_array(r_loc)
+sys_free_array(ia_ElemID)
+sys_free_array(ia_gelem)
+return grp_elem_list
+
+end function
+
+function get_node_inBox_inView(corner1, corner2)
+real corner1()
+real corner2()
+
+string s_cur_vp[128](1)
+ga_viewport_current_get (s_cur_vp(1))
+
+string s_Node_list[virtual]
+list_create_ent_ass_vp (1, s_cur_vp, 1, ["Node"], s_node_list)
+
+integer i_status, nNode, ia_NodeID(virtual)
+nNode = fem_u_count_id_list(LP_SUBLIST_NODE, s_Node_list, TRUE, i_status)
+sys_allocate_array(ia_NodeID,1, nNode)
+fem_u_get_id_list(LP_SUBLIST_NODE, s_Node_list, nNode, TRUE, ia_NodeId)
+
+integer ref(virtual), analy(virtual)
+real r_loc(virtual)
+sys_allocate_array(ref, 1, nNode)
+sys_allocate_array(analy, 1, nNode)
+sys_allocate_array(r_loc, 1, nNode, 1, 3)
+               
+db_get_nodes(nNode, ia_NodeID, ref, analy, r_loc)
+
+integer idx, cnt, ia_gnode(virtual)
+for(idx=1 to nNode)
+    if(r_loc(idx,1) >= mth_min(corner1(1), corner2(1)) && r_loc(idx,1) <= mth_max(corner1(1), corner2(1))) then
+        if(r_loc(idx,2) >= mth_min(corner1(2), corner2(2)) && r_loc(idx,2) <= mth_max(corner1(2), corner2(2)))  then
+            if(r_loc(idx,3) >= mth_min(corner1(3), corner2(3)) && r_loc(idx,3) <= mth_max(corner1(3), corner2(3))) then
+                cnt +=1
+                sys_reallocate_array(ia_gnode, 1, cnt)
+                ia_gnode(cnt) = ia_NodeID(idx)
+            end if
+        end if
+    end if
+end for
+
+string grp_node_list[virtual]
+app_int_array_to_vstring("Node", cnt, ia_gnode, grp_node_list)
+
+sys_free_array(ref)
+sys_free_array(analy)
+sys_free_array(r_loc)
+sys_free_array(ia_NodeID)
+sys_free_array(ia_gnode)
+return grp_node_list
+
+end function
+
+END CLASS      

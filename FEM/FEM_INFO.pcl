@@ -1,0 +1,103 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME FRAME_GROUP_BOX
+#define CLASS_STR "FRAME_GROUP_BOX"
+#define UI_INIT UI_FRAME_GROUP_BOX
+
+CLASS CLASSNAME
+    classwide widget sframe_01, wa_sdbox_corner(2), dbox_GroupName
+
+    function UI_INIT(parent_id, y_loc)
+        widget parent_id
+        real y_loc
+
+        widget frame_wid
+        
+        frame_wid=ui_frame_create(                   @
+        /* parent */             parent_id,           @
+        /*  name  */             "",                @
+        /*    x   */             FRAME_X_LOC_COL1,  @
+        /*    y   */             y_loc,         @
+        /*  width */             FRAME_L_MARGIN + FRAME_WID_SINGLE + FRAME_R_MARGIN,  @
+        /* height */             0.0,               @
+        /*  label */             "Tank Search")
+
+        REAL Y_LOCF = 0
+ 	
+		Y_LOCF = FRAME_T_MARGIN
+
+        dbox_GroupName = ui_databox_create(                         @
+            /*    parent    */                  frame_wid,               @
+            /*   callback   */                  "",                     @
+            /*       x      */                  FRAME_L_MARGIN,         @
+            /*       y      */                  Y_LOCF,                  @
+            /* label_length */                  DBOX_WID_SINGLE,     @
+            /*  box_length  */                  DBOX_WID_SINGLE,      @
+            /*     label    */                  "Group Name :",         @
+            /*     value    */                  "",                     @
+            /*  label_above */                  TRUE,                  @
+            /*   datatype   */                  "STRING",               @
+            /*   num_vals   */                  1)
+
+        Y_LOCF += DBOX_HGT_LABOVE + INTER_WIDGET_SPACE
+
+        string sa_data_type[16](2) = ["POINT", "POINT"]
+        string sa_label[16](2) = ["Corner-1", "Corner-2"]
+        string sa_call_back[32](2) = ["FRAME_GROUP_BOX.cb_Corner1", "FRAME_GROUP_BOX.cb_Corner2"]
+
+        sframe_01 = ui_select_frame_set(				@
+		/* parent widget id(input) 	*/	frame_wid,		@
+		/*	select frame callback	*/	CLASS_STR // ".Apply_Click",	@	
+		/* 	select frame label		*/	"Autoexec",	@
+		/*		x				*/	FORM_L_MARGIN,	@	
+		/*		y				*/	Y_LOCF, 		@
+		/*	select databax array	*/	wa_sdbox_corner,	@
+		/* 	data type	array		*/	sa_data_type,		@
+		/* 	select databox label array	*/ 	sa_label,	@
+		/*	select databox collback array	*/ 	sa_call_back, @
+		/*	label avove logical	*/			TRUE)	             
+		  
+        Y_LOCF += INTER_WIDGET_SPACE
+
+        ui_wid_set(frame_wid, "HEIGHT", Y_LOCF)
+
+        y_loc += Y_LOCF + INTER_WIDGET_SPACE
+
+        return frame_wid
+    end function
+
+    function cb_Corner1(s_input)
+        string s_input[]
+    
+        integer status
+        real ra_xyz(3)
+        status = GrpFx.NodeXYZ(wa_sdbox_corner(1), ra_xyz)
+        
+        if(status != 0) then return status
+
+        string s_xyz[128]
+        s_xyz = "[ " // str_from_real(ra_xyz(1)) // "," // str_from_real(ra_xyz(2)) // "," // str_from_real(ra_xyz(3)) // " ]"
+
+        ui_wid_set(wa_sdbox_corner(1), "VALUE", s_xyz)
+
+    end function
+
+    function cb_Corner2(s_input)
+        string s_input[]
+    
+        integer status
+        real ra_xyz(3)
+        status = GrpFx.NodeXYZ(wa_sdbox_corner(2), ra_xyz)
+        
+        if(status != 0) then return status
+
+        string s_xyz[128]
+        s_xyz = "[ " // str_from_real(ra_xyz(1)) // "," // str_from_real(ra_xyz(2)) // "," // str_from_real(ra_xyz(3)) // " ]"
+
+        ui_wid_set(wa_sdbox_corner(2), "VALUE", s_xyz)
+    end function
+
+    function Apply_Click()
+        
+    end function
+END CLASS

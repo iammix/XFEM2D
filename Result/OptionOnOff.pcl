@@ -1,0 +1,70 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME OptionOnOff
+#define CLASS_STR "OptionOnOff"
+
+class CLASSNAME
+
+classwide widget mform_id, optOnOff, wdbox_option
+CLASSWIDE WIDGET BTN_OK
+
+function init()
+real YLOC = 0.0
+
+   mform_id = ui_modalform_create(CLASS_STR,       @
+          /* x location */  FORM_X_LOC ,     @
+          /* y location */  FORM_Y_LOC,"UL", @
+          /* width      */  FORM_WID_SML,    @
+          /* height     */  LBOX_3L_HGT_NO_LABOVE + FORM_T_MARGIN + FORM_B_MARGIN,   @
+          /* label      */  "",       @
+                            0)
+    YLOC = FORM_T_MARGIN
+
+      optOnOff = ui_optionmenu_create(                @
+      /*    parent    */              mform_id,        @
+      /*   callback   */              "",     @
+      /*       x      */              FORM_L_MARGIN,  @
+      /*       y      */              YLOC,      @
+      /* label_length */              FORM_WID_SML/3,            @
+      /*     label    */              "Elem Edge",        @
+      /*  label_above */              FALSE)
+        
+        ui_item_create(optOnOff,"ON", "ON", TRUE)
+        ui_item_create(optOnOff,"OFF", "OFF", TRUE)
+                
+      YLOC =+ OPT_MENU_HGT_NO_LABOVE + INTER_WIDGET_SPACE
+
+    BTN_OK = ui_button_create(                     @
+      /*   parent  */              mform_id,             @
+      /*  callback */              "cb_OK",       @
+      /*     x     */              BUTTON_HALF_X_LOC1 + BUTTON_WID_HALF/2,  @
+      /*     y     */              YLOC,           @
+      /*   width   */              BUTTON_WID_HALF,     @
+      /*   height  */              BUTTON_DEFAULT_HGT,  @
+      /*   label   */              "OK",    @
+      /*    TRUE   */              TRUE,                @
+      /* highlight */              FALSE)
+    
+    
+end function
+
+function display()
+
+    ui_form_display(CLASS_STR)
+    
+end function
+
+function cb_OK()
+    string toggle[5]
+    
+    ui_wid_get(optOnOff, "VALUE", toggle)
+          
+    ui_wid_set(wdbox_option, "VALUE", toggle)
+
+    ui_form_hide(CLASS_STR)
+  
+end function
+
+end class
+
+

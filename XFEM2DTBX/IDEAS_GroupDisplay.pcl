@@ -1,0 +1,95 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME IDEAS_GroupDisplay
+#define CLASS_STR "IDEAS_GroupDisplay"
+
+CLASS CLASSNAME
+
+/* Classwide Variables */
+   CLASSWIDE WIDGET form_id, lstbox_group
+   CLASSWIDE WIDGET btnApply, dbox_prefix
+
+ FUNCTION init()
+
+      REAL box_length=0.0
+      REAL y_loc
+
+      form_id=ui_form_create(                     @
+      /* callback */         "",                  @
+      /*     x    */         FORM_X_LOC_SML,      @
+      /*     y    */         FORM_Y_LOC,          @
+      /* position */         "UL",                @
+      /*   width  */         FORM_WID_SML,        @
+      /*  height  */         FORM_HGT_TALL,       @
+      /*   label  */         "Group Display",  @
+      /*  unused  */         "")
+
+	y_loc = FORM_T_MARGIN
+
+	lstbox_group  =ui_listbox_create(                  	@
+      /*     parent     */              form_id,          @
+      /*    callback    */              "cb_grouplist", @
+      /*        x       */              FORM_L_MARGIN,    @
+      /*        y       */              y_loc,        @
+      /*      width     */              LBOX_WID_SINGLE,  @
+      /*    num_rows    */              30,                @
+      /*      label     */              "Group List",  @
+      /* selection_type */              "EXTEND",         @
+      /*      sort      */              TRUE)
+
+     y_loc += LBOX_5L_HGT_NO_LABOVE * 6 - LBOX_1L_HGT_NO_LABOVE
+
+$      y_loc += BUTTON_DEFAULT_HGT  + @
+$                   INTER_WIDGET_SPACE
+
+      ui_wid_set(form_id,"HEIGHT",y_loc)
+
+   End Function /* init */
+
+FUNCTION display()
+
+    ui_exec_function(CLASS_STR, "init")
+    ui_form_display(CLASS_STR)
+    gui_group_listbox(lstbox_group)
+
+END FUNCTION /* display */
+
+/*
+FUNCTION cb_Apply()
+
+	ui_form_hide(CLASS_STR)
+     ui_form_delete(CLASS_STR)
+
+END FUNCTION
+*/
+/*
+FUNCTION cb_prefix(event)
+string event[], prefix[32]
+
+ if(event == "LOSE") then
+    ui_wid_get(dbox_prefix, "VALUE", prefix)
+    RESULT_TOOL.Load_Result_Group(lstbox_result_group, prefix)
+ end if
+
+END FUNCTION
+*/
+
+FUNCTION cb_grouplist(idx, sel_group)
+integer idx
+string sel_group[]()
+
+string viewport_name[31]
+
+ga_viewport_current_get(viewport_name)
+
+uil_viewport_post_groups.posted_groups( viewport_name, 1, sel_group )
+
+	ui_form_hide(CLASS_STR)
+     ui_form_delete(CLASS_STR)
+
+$ gu_fit_view()
+
+END FUNCTION
+
+END CLASS
+

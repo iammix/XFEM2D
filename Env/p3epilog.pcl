@@ -1,0 +1,176 @@
+/* p3epilog.pcl */
+  
+/*
+ * This p3epilog.pcl file should be located in either the "patran3" directory
+ * or an individual user's directory.  If located in the "patran3" directory,
+ * all users will have access to the PCL tools provided by this file. When
+ * located in an individual user's home directory, only that user will have
+ * access to the PCL tools.
+ *
+ *   REVISION  DATE             AUTHOR
+ *   --------  -----------      ---------------
+ *   1         03-May-1995      Marcel Edelkamp / MSC BENELUX - The Netherlands
+ *   2         10-Jul-1995      Marcel Edelkamp / MSC BENELUX - The Netherlands
+ *   3         18-Aug-1995      Stuart MacMillan 
+ *   4         01-Feb-1996      Marcel Edelkamp / MSC BENELUX - The Netherlands
+ *   5         23-Aug-1996      Marcel Edelkamp / MSC BENELUX - The Netherlands
+ *   6         13-Jun-2000      Stuart MacMillan
+ *   7         24-May-2006      Marcel Edelkamp / MSC
+ *   8         26-Jun-2006      Marcel Edelkamp / MSC
+ *
+ *   REVISION number and reason
+ *   --------------------------
+ *   1   Creation.
+ *   2   Call to "sys_path( "ADD", utilities_pcl_directory )" commented,
+ *       because it was not necessary and resulted in double execution
+ *       if no user p3epilog.pcl was found.
+ *   3   Added check for batch running. As per TAN request.
+ *       If code running in batch uses utilities calls then remove the
+ *       is_batch() check and the corresponding end if check.
+ *   4   Because V5 contains a toolbar, don't display quickpick2 anymore.
+ *   5   -Shareware substituted by utilities
+ *       -Call to bv_utilities.set_path added. This defines the root
+ *        path where the utilities exist.
+ *        The path can be retrieved by calling:
+ *        bv_utilities.get_path( my_path )
+ *       -Removed the global string for bv_materials.
+ *   6   Added Linux plb
+ *   7   -Disabled display of disclaimer.
+ *   8   -Cleaned up messages to make clear that p3epilog.pcl from Utilities
+ *        directory has been used.
+ *
+ */
+
+UI_WRITE(" ")
+UI_WRITE("Executing PCL Commands to Activate Utilities ...")
+
+STRING  patran3_directory[256]
+STRING  utilities_pcl_directory[256]
+STRING  platform_type[32]
+STRING  utilities_library[32]
+STRING  quickpick_library[32]
+
+LOGICAl quickpick_new
+
+GLOBAL LOGICAL auto_display_pda_quickpick
+
+/* If auto_display_pda_quickpick=true, quickpick will be displayed automatically */
+
+auto_display_pda_quickpick = false
+
+/* If quickpick_new is true, the new quickpick will be used */
+
+quickpick_new = false
+
+/* Determine the "patran3" directory */
+
+sys_get_env( "P3_HOME", patran3_directory )
+
+utilities_pcl_directory = patran3_directory// @
+                          "/shareware/msc/unsupported/utilities"
+
+/* Set PCL path */
+
+$ sys_path( "ADD", utilities_pcl_directory )
+sys_path( "ADD", utilities_pcl_directory//"/icons" )
+sys_path( "ADD", utilities_pcl_directory//"/plb" )
+sys_path( "ADD", utilities_pcl_directory//"/extra_files" )
+
+sys_get_info( 1, platform_type )
+
+IF ( platform_type == "DECS" ) THEN
+
+$ ui_write( "Platform is most likely DEC/ULTRIX" )
+
+$ utilities_library = "DEC_ULTRIX_utilities.plb"
+$ quickpick_library = "DEC_ULTRIX_quickpick2.plb"
+
+ELSE IF ( platform_type == "ALPHA" ) THEN
+
+  ui_write( "Platform is most likely DEC/ALPHA" )
+
+  utilities_library = "DEC_OSF_utilities.plb"
+  quickpick_library = "DEC_OSF_quickpick2.plb"
+
+ELSE IF ( platform_type == "WINNT" ) THEN
+
+  utilities_library = "utilities.plb"
+  quickpick_library = "quickpick2.plb"
+
+ELSE IF ( platform_type == "LX86" ) THEN
+
+  utilities_library = "LX86_utilities.plb"
+
+ELSE
+
+  utilities_library = "utilities.plb"
+  quickpick_library = "quickpick2.plb"
+
+END IF
+
+/*
+ * If Patran session in batch uses calls to utilities 
+ * code then remove the following  line and the 
+ * corresponding END IF line at line 129.
+ *
+ * IF (!is_batch() ) THEN
+ */
+
+/* Load the utilities library */
+
+sys_library( "add", utilities_library )
+
+/* Load the new quickpick library */
+
+IF ( quickpick_new ) THEN
+
+  sys_library( "add", quickpick_library )
+
+END IF
+
+/* Store utilities path */
+
+ bv_utilities.set_path( utilities_pcl_directory )
+
+/*
+ * Add pulldown menu(s) to P3's Top Menubar.  Note that at least one pulldown
+ * definition file (p3_user_menu.def, p3_user_menu.*.def) must be present in
+ * the user's home directory or the "utilities" directory.
+ */
+ 
+/* Disable Disclaimer Message */
+
+bv_disclaimer.enable( false )
+
+$ au_main_user_menu.enable_check( true, true )
+ui_exec_function( "au_main_user_menu", "display" )
+
+/*
+ * END IF
+ */
+
+ui_write( " " )
+ui_write( "Execution to Activate Utilities has been completed ..." )
+
+/* EOF */
+
+/*
+sys_path( "ADD", patran3_directory//"/SHI/2014")
+
+sys_library( "add", "common.plb" )
+sys_library( "add", "shi_buckling.plb" )
+sys_library( "add", "sacs.plb" )
+
+!!input patran3_directory//"/SHI/2014/mapping_file_ui.cpp"
+
+SHI_Menu_to_raon.init()
+*/
+/* Set IDEASX PCL path */
+
+
+sys_path( "ADD", "C://MSC.Software//IDEASX//" )
+sys_path( "ADD", "C://MSC.Software//IDEASX//icons" )
+
+!! library IDEASX_V60.plb
+IDEASX.init()
+

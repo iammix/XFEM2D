@@ -1,0 +1,426 @@
+#include "appforms.p"
+#include "lpenums.i"
+#define CLASSNAME PROFILE_DEFINITION
+#define CLASS_STR "PROFILE_DEFINITION"
+
+class CLASSNAME
+
+classwide widget form_id, opt_Action, opt_Type, btn_Apply, btn_Exit
+classwide widget frame_id, dbox_child(6), type_item(5), btn_profile, beam_icon
+
+function init()
+    real y_loc = 0
+
+   form_id = ui_form_create("",       @
+          /* x location */  FORM_X_LOC ,     @
+          /* y location */  FORM_Y_LOC,"ul", @
+          /* width      */  FORM_WID_SML,    @
+          /* height     */  FORM_HGT_TALL,   @
+          /* label      */  CLASS_STR,       @
+                            "")
+
+    opt_Action = ui_optionmenu_create(  form_id,            @
+                                        "cb_Action",        @
+                                        AOM_MENU_X_LOC,     @
+                                        ACTION_MENU_Y_LOC,  @
+                                        AOM_MENU_LABEL_LEN, @
+                                        "Action",           @
+                                        FALSE )
+
+    ui_item_create(	opt_Action, "Create", "Create", FALSE)
+    ui_item_create(	opt_Action, "Modity", "Modify", FALSE)
+    ui_item_create(	opt_Action, "Report", "Report", FALSE)
+    ui_item_create(	opt_Action, "Delete", "Delete", FALSE)
+
+    opt_Type = ui_optionmenu_create(  form_id,                @
+                                        "cb_Type",            @
+                                        AOM_MENU_X_LOC,         @
+                                        OBJECT_MENU_Y_LOC,      @
+                                        AOM_MENU_LABEL_LEN,     @
+                                        "Type",               @
+                                        FALSE )
+
+    type_item(1) = ui_item_create(	opt_Type, "Angle", "Angle", TRUE)
+    type_item(2) = ui_item_create(	opt_Type, "FlatBar", "Flat Bar", TRUE)
+    type_item(3) = ui_item_create(	opt_Type, "T-Face", "T-Face", TRUE)
+    type_item(3) = ui_item_create(	opt_Type, "BuiltUp-T", "BuiltUp T", TRUE)
+    type_item(4) = ui_item_create(	opt_Type, "BuiltUp-L", "BuiltUp L", TRUE)
+
+    ui_separator_create (   form_id, "",           @
+                            0.0,                   @
+                            AOM_SEPARATOR_Y_LOC,   @
+                            FORM_WID_SML,          @
+                            TRUE )
+
+     y_loc += AOM_SEPARATOR_Y_LOC + INTER_WIDGET_SPACE
+
+     string ficon[64]
+
+     blgetlabelicon ("L", ficon)
+     beam_icon = ui_labelicon_create(form_id, "", INFO_INDENT + INTER_WIDGET_SPACE, y_loc, ficon)
+
+     y_loc += INTER_WIDGET_SPACE * 10
+
+     btn_profile = ui_button_create (form_id,"cb_profile",   @
+								 BUTTON_HALF_X_LOC1,       @
+								 y_loc,                     @
+								 BUTTON_WID_FULL,          @
+								 BUTTON_DEFAULT_HGT,       @
+								 "Section Profile List",   @
+								 true, false)
+
+     y_loc += BUTTON_DEFAULT_HGT + INTER_WIDGET_SPACE
+
+     CLASSNAME.frame_1(y_loc)
+
+      btn_Apply = ui_button_create(                  @
+      /*   parent  */           form_id,             @
+      /*  callback */           "cb_Apply",          @
+      /*     x     */           BUTTON_HALF_X_LOC1,  @
+      /*     y     */           y_loc,               @
+      /*   width   */           BUTTON_WID_HALF,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Apply",             @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           TRUE)
+
+      btn_Exit = ui_button_create(                    @
+      /*   parent  */            form_id,             @
+      /*  callback */            "cb_Exit",           @
+      /*     x     */            BUTTON_HALF_X_LOC2,  @
+      /*     y     */            y_loc,               @
+      /*   width   */            BUTTON_WID_HALF,     @
+      /*   height  */            BUTTON_DEFAULT_HGT,  @
+      /*   label   */            "Exit",              @
+      /*    TRUE   */            TRUE,                @
+      /* highlight */            FALSE)
+
+end function
+
+function cb_Type(s_item)
+
+string s_item[]
+string ficon[64]
+
+    switch(s_item)
+
+        case("Angle");  blgetlabelicon ("L", ficon)
+        case("FlatBar"); blgetlabelicon ("BAR", ficon)
+        case("T-Face"); blgetlabelicon ("T", ficon)
+        case("BuiltUp-T"); blgetlabelicon ("T", ficon)
+        case("BuiltUp-L"); blgetlabelicon ("L", ficon)
+
+    end switch
+
+        ui_wid_set(beam_icon, "ICON", ficon)
+
+end function
+
+FUNCTION frame_1(yloc)
+      real yloc
+
+      frame_id =ui_frame_create(form_id,"", @
+								 FRAME_X_LOC_COL1, @
+								 yloc, @
+								 FRAME_WID_SINGLE, @
+								 0, @
+								 "")
+
+      string dbox_labels[64](6) = [ "Web height      (WH)",     @
+                                    "Web Thick.      (Wt)",    @
+                                    "Flange width    (FW)",     @
+                                    "Flange thick.   (Ft)",    @
+                                    "Att. Plt width  (AW)",     @
+                                    "Att. Plt. thick (At)"      ]
+
+      string dbox_datatype[11](6) = ["Real", "Real", "Real", "Real", "Real", "Real"]
+      string dbox_callback[32](6) = ["","","","","",""]
+
+      real frame_yloc
+
+      frame_yloc = FRAME_T_MARGIN
+      
+$      ui_databox_create     _set(frame_id, dbox_child, dbox_labels, dbox_datatype, dbox_callback, frame_yloc)
+
+integer idx
+
+    for(idx=1 to 6)
+    	  dbox_child(idx) = ui_databox_create(                   @
+          /*    parent    */          frame_id,          @
+          /*   callback   */          dbox_callback(idx),                @
+          /*       x      */          FRAME_L_MARGIN,     @
+          /*       y      */          frame_yloc,     @
+          /* label_length */          FRAME_WID_SINGLE*2/3,   @
+          /*  box_length  */          FRAME_WID_SINGLE/3,   @
+          /*     label    */          dbox_labels(idx),  @
+          /*     value    */          0.0,                @
+          /*  label_above */          FALSE,              @
+          /*   datatype   */          dbox_datatype(idx),          @
+          /*   num_vals   */          1)
+        
+       frame_yloc += DBOX_HGT_NO_LABOVE + INTER_WIDGET_SPACE 
+    end for             
+      real hgt
+
+      hgt = FRAME_T_MARGIN + (DBOX_HGT_NO_LABOVE * 7 + INTER_WIDGET_SPACE * 7)
+
+      ui_wid_set(frame_id, "HEIGHT", hgt)
+
+      yloc += hgt + INTER_WIDGET_SPACE
+
+END FUNCTION
+
+function display()
+
+$    dump ui_form_exists("PROFILE_DEFINITION")
+$    dump ui_form_exists(CLASS_STR)
+
+$	if(ui_form_exists(CLASS_STR) == FALSE) then
+$        ui_exec_function(CLASS_STR, "init")
+$	end if
+
+    ui_exec_function(CLASS_STR, "init")
+    ui_form_display(CLASS_STR)
+
+end function
+
+function cb_Apply()
+
+     uil_primary_file.db_save()
+
+     string s_action[16]
+
+     ui_wid_get(opt_Action, "VALUE", s_action)
+
+     switch(s_action)
+        case("Create");
+            CLASSNAME.Create_Profile()
+     end switch
+	
+	
+	if(ui_form_exists("Profile_List") == true) then
+		ui_exec_function("Profile_List", "display")
+	end if
+            
+end function
+
+function cb_Exit()
+
+    
+    ui_form_hide(CLASS_STR)
+    ui_form_delete(CLASS_STR)
+
+end function
+
+function cb_Action(s_item)
+string s_item[]
+
+end function
+
+function cb_Object(s_item)
+string s_item[]
+
+end function
+
+/* ============================================================= */
+function Create_Profile()
+
+string s_Type[15]
+
+ui_wid_get(opt_Type, "VALUE", s_Type)
+
+integer i
+real r_size(6)
+
+for(i = 1 to 6)
+    ui_wid_get(dbox_child(i), "VALUE", r_size(i))
+end for
+
+
+if(r_size(5) == 0. || r_size(6) == 0.) then
+     CLASSNAME.create_section(s_Type, r_size)
+else
+     CLASSNAME.create_section_with_attplt(s_Type, r_size)
+end if
+
+end function
+/* ============================================================= */
+FUNCTION cb_profile()
+
+    ui_exec_function("Profile_List","init")
+    Profile_List.display()
+    widget btn
+    btn = sys_class_get("Profile_List", "btn_Apply")
+    ui_wid_set(btn, "ENABLE", FALSE)
+
+END FUNCTION
+/* ============================================================= */
+FUNCTION create_section(s_Type, r_size)
+
+string s_Type[]
+real r_size()
+
+string section_name[63]
+string s_size[15](virtual)
+string shape[3]
+
+$ bw = r_size(1), tw = r_size(2), bf = r_size(3), tf = r_size(4), ba = r_size(5), ta = r_size(6)
+
+SWITCH(s_type)
+
+	CASE("Angle")
+			sys_allocate_array(s_size, 1, 4)
+			s_size(1) = str_from_real(r_size(3)); s_size(2) = str_from_real(r_size(1))
+			s_size(3) = str_from_real(r_size(4)); s_size(4) = str_from_real(r_size(2))
+			shape = "L"
+            section_name = s_size(2) // "X" // s_size(1) // "X" // s_size(4) // "-" // s_size(3) // "_A"
+
+	CASE("FlatBar")
+			sys_allocate_array(s_size, 1, 2)
+			s_size(1) = str_from_real(r_size(2)); s_size(2) = str_from_real(r_size(1))
+			shape = "BAR"
+            section_name = s_size(2) // "X" // s_size(1) // "_FB"
+
+	CASE("T-Face")
+			sys_allocate_array(s_size, 1, 4)
+			s_size(1) = str_from_real(r_size(3)); s_size(2) = str_from_real(r_size(1))
+			s_size(3) = str_from_real(r_size(4)); s_size(4) = str_from_real(r_size(2))
+			shape = "T"
+      	section_name = s_size(2) // "X" // s_size(1) // "X" // s_size(4) // "-" // s_size(3) // "_T"
+      
+	CASE("BuiltUp-T")
+			sys_allocate_array(s_size, 1, 4)
+			s_size(1) = str_from_real(r_size(3)); s_size(2) = str_from_real(r_size(1)+r_size(4))
+			s_size(3) = str_from_real(r_size(4)); s_size(4) = str_from_real(r_size(2))
+			shape = "T"
+            section_name = s_size(2) // "X" // s_size(4) // "-" // s_size(1) // "X" // s_size(3) // "_T"
+
+     CASE("BuiltUp-L")
+			sys_allocate_array(s_size, 1, 4)
+			s_size(1) = str_from_real(r_size(3)); s_size(2) = str_from_real(r_size(1))
+			s_size(3) = str_from_real(r_size(4)); s_size(4) = str_from_real(r_size(2))
+			shape = "L"
+            section_name = s_size(2) // "X" // s_size(4) // "-" // s_size(1) // "X" // s_size(3) // "_L"
+END SWITCH
+
+beam_section_create(section_name, shape, s_size)
+
+END FUNCTION
+
+$==============================================================================================
+FUNCTION create_section_with_attplt(s_Type, r_size)
+
+string s_Type[]
+real r_size()
+
+REAL	pnt(virtual)
+INTEGER npnts
+INTEGER loops(1)
+INTEGER stress_recovery(4)
+REAL	bw, tw, bf, tf, ba, ta
+STRING section_name[127]
+
+bw = r_size(1)
+tw = r_size(2)
+bf = r_size(3)
+tf = r_size(4)
+ba = r_size(5)
+ta = r_size(6)
+
+IF(s_Type == "Angle") THEN
+	npnts = 10
+	sys_allocate_array(pnt, 1, npnts, 1, 2)
+     pnt(1,1) = -ba/2;   pnt(1,2) = 0.
+     pnt(2,1) = ba/2;   pnt(2,2) = 0.
+     pnt(3,1) = ba/2;   pnt(3,2) = ta
+     pnt(4,1)=tw/2;		pnt(4,2)= ta
+     pnt(5,1)=tw/2;		pnt(5,2)= ta+bw-tf
+	pnt(6,1)=bf-tw/2;	pnt(6,2)= ta+bw-tf
+	pnt(7,1)=bf-tw/2;	pnt(7,2)= ta+bw
+	pnt(8,1)=-tw/2;	pnt(8,2)= ta+bw
+	pnt(9,1)=-tw/2;	pnt(9,2)=  ta
+     pnt(10,1)=-ba/2;	pnt(10,2)=  ta
+	stress_recovery = [1, 2, 7 , 8]
+     section_name = str_from_real(bw)//"X"//str_from_real(bf)//"X"//str_from_real(tw)//"-"//str_from_real(tf)//"_A"//"-"//str_from_real(ba)//"X"//str_from_real(ta)
+END IF
+
+IF(s_Type == "FlatBar") THEN
+	npnts = 8
+	sys_allocate_array(pnt, 1, npnts, 1, 2)
+     pnt(1,1) = -ba/2;   pnt(1,2) = 0.
+     pnt(2,1) = ba/2;   pnt(2,2) = 0.
+     pnt(3,1) = ba/2;   pnt(3,2) = ta
+     pnt(4,1)=tw/2;		pnt(4,2)= ta
+	pnt(5,1)=tw/2;		pnt(5,2)=ta+bw
+	pnt(6,1)=-tw/2;		pnt(6,2)=ta+bw
+	pnt(7,1)=-tw/2;		pnt(7,2)=ta
+     pnt(8,1)=-ba/2;		pnt(8,2)=ta
+	stress_recovery = [1, 2, 5, 6]
+     section_name = str_from_real(bw)//"X"//str_from_real(tw)//"_FB"//"-"//str_from_real(ba)//"X"//str_from_real(ta)
+END IF
+
+IF(s_Type == "T-Face") THEN
+	npnts = 12
+     sys_allocate_array(pnt, 1, npnts, 1, 2)
+     pnt(1,1) = -ba/2;   pnt(1,2) = 0.
+     pnt(2,1) = ba/2;   pnt(2,2) = 0.
+     pnt(3,1) = ba/2;   pnt(3,2) = ta
+     pnt(4,1)=tw/2;		pnt(4,2)= ta
+     pnt(5,1)=tw/2;		pnt(5,2)= ta+bw-tf
+	pnt(6,1)=bf/2;	    pnt(6,2)= ta+bw-tf
+	pnt(7,1)=bf/2;	    pnt(7,2)= ta+bw
+	pnt(8,1)=-bf/2;	pnt(8,2)= ta+bw
+	pnt(9,1)=-bf/2;	pnt(9,2)=  ta+bw-tf
+     pnt(10,1)=-tw/2;	pnt(10,2)=  ta+bw-tf
+     pnt(11,1)=-tw/2;	pnt(11,2)=  ta
+     pnt(12,1)=-ba/2;	pnt(12,2)=  ta
+	stress_recovery = [1, 2, 7 , 8]
+     section_name = str_from_real(bw)//"X"//str_from_real(bf)//"X"//str_from_real(tw)//"-"//str_from_real(tf)//"_T"//"-"//str_from_real(ba)//"X"//str_from_real(ta)
+
+END IF
+
+IF(s_Type == "BuiltUp-T") THEN
+	npnts = 12
+     sys_allocate_array(pnt, 1, npnts, 1, 2)
+     pnt(1,1) = -ba/2;   pnt(1,2) = 0.
+     pnt(2,1) = ba/2;   pnt(2,2) = 0.
+     pnt(3,1) = ba/2;   pnt(3,2) = ta
+     pnt(4,1)=tw/2;		pnt(4,2)= ta
+     pnt(5,1)=tw/2;		pnt(5,2)= ta+bw
+	pnt(6,1)=bf/2;	    pnt(6,2)= ta+bw
+	pnt(7,1)=bf/2;	    pnt(7,2)= ta+bw+tf
+	pnt(8,1)=-bf/2;	pnt(8,2)= ta+bw+tf
+	pnt(9,1)=-bf/2;	pnt(9,2)=  ta+bw
+     pnt(10,1)=-tw/2;	pnt(10,2)=  ta+bw
+     pnt(11,1)=-tw/2;	pnt(11,2)=  ta
+     pnt(12,1)=-ba/2;	pnt(12,2)=  ta
+	stress_recovery = [1, 2, 7 , 8]
+     section_name = str_from_real(bw)//"X"//str_from_real(tw)//"-"//str_from_real(bf)//"X"//str_from_real(tf)//"_T"//"-"//str_from_real(ba)//"X"//str_from_real(ta)
+
+END IF
+
+IF(s_Type == "BuiltUp-L") THEN
+	npnts = 10
+	sys_allocate_array(pnt, 1, npnts, 1, 2)
+     pnt(1,1) = -ba/2;   pnt(1,2) = 0.
+     pnt(2,1) = ba/2;   pnt(2,2) = 0.
+     pnt(3,1) = ba/2;   pnt(3,2) = ta
+     pnt(4,1)=tw/2;		pnt(4,2)= ta
+     pnt(5,1)=tw/2;		pnt(5,2)= ta+bw
+	pnt(6,1)=bf-tw/2;	pnt(6,2)= ta+bw
+	pnt(7,1)=bf-tw/2;	pnt(7,2)= ta+bw+tf
+	pnt(8,1)=-tw/2;	pnt(8,2)= ta+bw+tf
+	pnt(9,1)=-tw/2;	pnt(9,2)=  ta
+     pnt(10,1)=-ba/2;	pnt(10,2)=  ta
+	stress_recovery = [1, 2, 7 , 8]
+     section_name = str_from_real(bw)//"X"//str_from_real(bf)//"X"//str_from_real(tw)//"-"//str_from_real(tf)//"_A"//"-"//str_from_real(ba)//"X"//str_from_real(ta)
+END IF
+
+     loops(1) = npnts
+     arbitrary_section_create( section_name, npnts, 1, pnt, loops, stress_recovery )
+
+sys_free_array(pnt)
+
+END FUNCTION
+
+end class

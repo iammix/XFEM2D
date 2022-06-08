@@ -1,0 +1,163 @@
+#include "appforms.p"
+#include "lpenums.p"
+
+class BEAM_TO_BAR
+classwide widget form_id, btnConvert
+
+function init()
+	
+	integer yloc_main
+	
+	form_id=ui_form_create(                 @
+	      /* callback */         "",              @
+	      /*     x    */         FORM_X_LOC_SML,  @
+	      /*     y    */         FORM_Y_LOC,      @
+	      /* position */         "UL",            @
+	      /*   width  */         FORM_WID_SML,    @
+	      /*  height  */         FORM_HGT_TALL,   @
+	      /*   label  */         "Beam To Bar",      @
+	      /*  unused  */         "")
+	
+
+	yloc_main = INTER_WIDGET_SPACE + BUTTON_DEFAULT_HGT
+	
+	btnConvert=ui_button_create(                     @
+      /*   parent  */           form_id,             @
+      /*  callback */           "cb_property_convert",                  @
+      /*     x     */           BUTTON_HALF_X_LOC1,  @
+      /*     y     */           yloc_main,           @
+      /*   width   */           BUTTON_WID_FULL,     @
+      /*   height  */           BUTTON_DEFAULT_HGT,  @
+      /*   label   */           "Beam To Bar",             @
+      /*    TRUE   */           TRUE,                @
+      /* highlight */           FALSE)
+
+     yloc_main += BUTTON_DEFAULT_HGT  + @
+                   INTER_WIDGET_SPACE
+
+$      ui_wid_set(form_id,"HEIGHT",yloc_main)
+
+end function /* init */
+
+
+function display()
+   
+	ui_form_display("BEAM_TO_BAR")
+
+end function /* display */	
+
+function cb_property_convert()
+	integer num_regions
+	integer status
+	
+	status = db_count_region_ids(num_regions)
+	
+	integer region_ids(virtual)
+	string region_names[63](virtual)
+	
+	status = SYS_ALLOCATE_ARRAY(region_ids,1,num_regions)
+	status = SYS_ALLOCATE_ARRAY(region_names,1,num_regions)
+	
+	status = db_get_region_ids_and_names(num_regions,region_ids,region_names)
+	
+	integer idx, idz
+	integer num_elem
+	integer elem_ids(virtual)
+	string s_elem_ids[virtual], prop_set_name[63], s_val[63]
+	integer elem_type_id, dof_set_flag, condense_flag, geom_flag, form_flag, lam_flag
+	integer layer_count, material_id, material_lin, material_dir
+	integer nword, word_id, prop_dat_type, i_val, coord_id, node_id, field_id
+	integer property_ids(9), property_types(9), mstat
+	string property_data[63](9), mat_name[64], shape_name[15], section_name[63]
+	real r_val(3), off_vct1(3), off_vct2(3), ori_vct(3)
+	integer nrec, rec
+	
+	for(idx=1 to num_regions) doloop
+		status = db_count_elements_in_region(region_ids(idx),num_elem)
+		dump status
+		if(status != 0) then CONTINUE doloop
+
+/*
+		IF (status != 0) THEN 
+			mstat = msg_to_form(status,3,0,0.0,0,"")
+			IF (mstat == 1) THEN CONTINUE doloop
+		END IF
+*/    
+		status = sys_allocate_array(elem_ids,1, num_elem)
+		
+		status = db_get_elements_in_region(num_elem,region_ids(idx),elem_ids)
+$		dump region_names(idx)
+		app_int_array_to_vstring("Element", num_elem, elem_ids, s_elem_ids)
+
+		db_get_region_definition (	region_ids(idx),		@
+									prop_set_name,		@
+									elem_type_id,		@
+									dof_set_flag,		@
+									condense_flag,		@
+									geom_flag,  		@
+									form_flag,		@
+									lam_flag,			@
+									layer_count,		@
+									material_id,		@
+									material_lin,		@
+									material_dir )
+									
+		if(elem_type_id == 11 && geom_flag == 36) then
+			
+			LIST(word_id = 6, 13, 39, 4042, 4043)
+				db_get_prop_value ( region_ids(idx),	@
+									word_id,		@
+									material_id,		@
+									prop_dat_type,		@
+									i_val,			@
+									r_val,			@
+									s_val,			@
+									coord_id,			@
+									node_id,			@
+									field_id)
+			switch(word_id)
+               	case(6)
+                    	ori_vct = r_val
+                	case(13)
+                    	db_get_material_name_from_id(material_id, mat_name)
+                	case(39)
+                    	db_get_beam_section( i_val, shape_name, section_name, nrec, rec)
+                    case(4042)
+               		off_vct1 = r_val
+               	case(4043)
+               		off_vct2 = r_val
+             	end switch
+             
+		 END LIST					
+				
+			geom_flag = 2
+			
+			property_data(1) = section_name
+     		property_data(2) = "m:" // mat_name
+			property_data(3) = xfem_str_from_vector(ori_vct)
+     		property_data(4) = xfem_str_from_vector(off_vct1)
+     		property_data(5) = xfem_str_from_vector(off_vct2)
+		     property_data(7) = "Analysis"
+		     property_data(8) = "Analysis"
+		     property_data(9) = "Analysis"
+
+     		property_ids = [39, 13, 6, 4042, 4043, 4061, 8200, 8201, 8202]
+     		property_types = [11, 5, 2, 2, 2, 6, 4, 4, 4]
+     
+			status = elementprops_modify(prop_set_name, prop_set_name, elem_type_id, geom_flag, condense_flag,form_flag, lam_flag, dof_set_flag, property_ids, property_types, property_data, s_elem_ids)
+			
+			if(status == 0) then
+				dump prop_set_name // " was converted to bar property"
+			else
+				dump status
+			end if
+			
+		end if
+	end for
+
+      ui_form_hide("BEAM_TO_BAR")
+      ui_form_delete("BEAM_TO_BAR")
+
+end function
+
+end class

@@ -1,0 +1,56 @@
+FUNCTION get_element_info()
+
+integer group_id
+db_get_current_group_id (group_id)
+
+integer nElem
+db_count_elems_in_group ( group_id, nElem)
+
+integer ia_ElemId(virtual)
+sys_allocate_array(ia_ElemId, 1, nElem)
+
+db_get_elem_ids_in_group ( nElem, group_id, ia_ElemId )
+
+string s_ElemIds[virtual]
+app_int_array_to_vstring("Element", nElem, ia_ElemId, s_ElemIds)
+
+string fname[32]
+integer fid
+
+fname = "elem_info.out"
+
+text_open(fname,"nowv",0,0,fid)
+
+
+integer idx, idk
+integer nnod
+integer i_node_id(16)
+integer i_dat(virtual)
+real r_dat(virtual), r_xyz(3)
+string s_format[126], s_dat[1](1)
+
+for(idx=1 to nElem)
+       s_format = ""
+       db_get_elem_nodes( ia_ElemId(idx), nnod, i_node_id )
+       
+       sys_allocate_array(i_dat, 1, nnod+1)
+       sys_allocate_array(r_dat, 1, nnod, 1, 3)
+
+       i_dat(1) = ia_ElemId(idx)
+       
+       for(idk=1 to nnod)
+              i_dat(idk+1) = i_node_id(idk)
+              db_get_node(i_node_id(idk), r_xyz)
+              r_dat(idk, 1:3) = r_xyz
+       end for
+       
+       s_format = "%" // str_from_integer(nnod+1) // "I10%%" // str_from_integer(nnod*3) // "F15.3%" // s_format
+       dump s_format
+       text_write(fid, s_format , i_dat, r_dat, s_dat)
+       
+       s_format =""
+end for
+
+text_close(fid, "")
+
+END FUNCTION
